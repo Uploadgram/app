@@ -124,17 +124,23 @@ class FileWidgetState extends State<FileWidget> {
                             //    color: widget.selected == true
                             //        ? Colors.blue.shade600
                             //        : Colors.grey.shade700
-                            child: AnimatedCrossFade(
-                                firstChild: Icon(widget.icon,
-                                    size: 24, color: Colors.grey.shade700),
-                                secondChild: Icon(Icons.check_circle,
-                                    size: 24, color: Colors.blue.shade600),
-                                firstCurve: Curves.easeInOut,
-                                secondCurve: Curves.easeInOut,
-                                crossFadeState: widget.selected == true
-                                    ? CrossFadeState.showSecond
-                                    : CrossFadeState.showFirst,
-                                duration: Duration(milliseconds: 150))),
+                            child: InkWell(
+                              child: AnimatedCrossFade(
+                                  firstChild: Icon(widget.icon,
+                                      size: 24, color: Colors.grey.shade700),
+                                  secondChild: Icon(Icons.check_circle,
+                                      size: 24, color: Colors.blue.shade600),
+                                  firstCurve: Curves.easeInOut,
+                                  secondCurve: Curves.easeInOut,
+                                  crossFadeState: widget.selected == true
+                                      ? CrossFadeState.showSecond
+                                      : CrossFadeState.showFirst,
+                                  duration: Duration(milliseconds: 150)),
+                              onTap: widget.onLongPress,
+                              onLongPress: widget.onLongPress,
+                              hoverColor: Colors.transparent,
+                              splashColor: Colors.transparent,
+                            )),
                       ],
                     ),
                     Flexible(
@@ -173,20 +179,25 @@ class FileWidgetState extends State<FileWidget> {
       List<Widget> columnChildren = [
         LinearProgressIndicator(
           value: widget.progress,
+          valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).primaryColorLight),
         )
       ];
       if (widget.progress != null)
         columnChildren.insert(
             0,
-            Text((widget.progress != null
-                    ? (widget.progress * 100).ceil().toString()
-                    : '0') +
-                '%'));
+            Text(
+              (widget.progress != null
+                      ? (widget.progress * 100).ceil().toString()
+                      : '0') +
+                  '%',
+              style: TextStyle(color: Colors.white),
+            ));
       return Stack(children: [
         container,
         Positioned.fill(
           child: DecoratedBox(
-            decoration: BoxDecoration(color: Color(0x66000000)),
+            decoration: BoxDecoration(color: Color(0x88000000)),
           ),
         ),
         Positioned.fill(
@@ -211,8 +222,9 @@ class FileWidgetState extends State<FileWidget> {
           child: Center(
               child: Text(
             widget.error,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
+              color: Colors.red[400],
               fontSize: 16,
             ),
           )),

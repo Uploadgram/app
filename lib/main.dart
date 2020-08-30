@@ -32,6 +32,7 @@ class UploadgramApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           primaryColorDark: Colors.grey[300],
           accentColor: Colors.blue,
+          primaryColorLight: Colors.blue,
           // This makes the visual density adapt to the platform that you run
           // the app on. For desktop platforms, the controls will be smaller and
           // closer together (more dense) than on mobile platforms.
@@ -143,7 +144,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       deleteList.forEach((delete) async {
         print('deleting $delete');
         Map result = await api.deleteFile(delete);
-        setState(() => _files.remove(delete));
         if (result['ok']) {
           return;
         }
@@ -153,6 +153,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   Text('File not found. It was probably already deleted')));
         }
       });
+      setState(() => deleteList.forEach((key) => _files.remove(key)));
       saveFiles();
     }
   }
@@ -205,9 +206,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     print('got file ${file["name"]}');
     setState(() {
       _uploadingQueue.add({
-        "key": GlobalKey<FileWidgetState>(),
-        "fileObject": file,
-        'locked': false
+        'key': GlobalKey<FileWidgetState>(),
+        'fileObject': file,
+        'locked': false,
+        'stream': null
       });
       return true;
     });
@@ -239,8 +241,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       Map file = object['fileObject'];
       IconData fileIcon =
           fileIcons[file['name'].split('.').last] ?? fileIcons['default'];
+      Stream _uploadStream = object['stream'] ??
+          (object['stream'] = _uploadFileStream(object['key'], file));
       rows.add(StreamBuilder(
-          stream: _uploadFileStream(object['key'], file),
+          stream: _uploadStream,
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             double _progress;
             String _error;
