@@ -2,42 +2,41 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:uploadgram/settingsRoute.dart';
 import 'fileWidget.dart';
-import 'apiWrapperStub.dart'
-    if (dart.library.io) 'androidApiWrapper.dart'
-    if (dart.library.html) 'webApiWrapper.dart';
+import 'appSettings.dart';
 
-const uploadgramAccent = Color(0x3498db);
 void main() => runApp(UploadgramApp());
 
 class UploadgramApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: kIsWeb ? 'Upload a file — Uploadgram' : 'Uploadgram',
-        darkTheme: ThemeData(
-          primarySwatch: Colors.grey,
-          accentColor: Color(0xFF222222),
-          primaryColorDark: Colors.grey[900],
-          primaryColorLight: Colors.blue,
-          primaryIconTheme: IconThemeData(color: Colors.white),
-          primaryColor: Colors.black,
-          primaryColorBrightness: Brightness.dark,
-          brightness: Brightness.dark,
-          canvasColor: Colors.black,
-        ),
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          primaryColorDark: Colors.grey[300],
-          accentColor: Colors.blue,
-          primaryColorLight: Colors.blue,
-          brightness: Brightness.light,
-          // This makes the visual density adapt to the platform that you run
-          // the app on. For desktop platforms, the controls will be smaller and
-          // closer together (more dense) than on mobile platforms.
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: UploadgramRoute());
+      title: kIsWeb ? 'Upload a file — Uploadgram' : 'Uploadgram',
+      darkTheme: ThemeData(
+        primarySwatch: Colors.grey,
+        accentColor: Color(0xFF222222),
+        primaryColorDark: Colors.grey[900],
+        primaryColorLight: Colors.blue,
+        primaryIconTheme: IconThemeData(color: Colors.white),
+        primaryColor: Colors.black,
+        primaryColorBrightness: Brightness.dark,
+        brightness: Brightness.dark,
+        canvasColor: Colors.black,
+      ),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        primaryColorDark: Colors.grey[300],
+        accentColor: Colors.blue,
+        primaryColorLight: Colors.blue,
+        brightness: Brightness.light,
+        // This makes the visual density adapt to the platform that you run
+        // the app on. For desktop platforms, the controls will be smaller and
+        // closer together (more dense) than on mobile platforms.
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: UploadgramRoute(),
+    );
   }
 }
 
@@ -49,6 +48,8 @@ class UploadgramRoute extends StatefulWidget {
 }
 
 class _UploadgramRouteState extends State<UploadgramRoute> {
+  // TODO: for next version, maybe avoid using setState on the Route to have better performance
+  // TODO: and split into several StatefulWidgets.
   static const Map<String, IconData> fileIcons = {
     'apk': Icons.android,
     'zip': Icons.archive,
@@ -91,7 +92,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   List<Map> _uploadingQueue = [];
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   Map _files;
-  APIWrapper api = APIWrapper();
+  AppSettings settings = AppSettings();
 
   void selectWidget(String id) => setState(() {
         _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
@@ -153,11 +154,11 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           });
       return;
     }
-    Map result = await api.renameFile(delete, newName);
+    Map result = await settings.api.renameFile(delete, newName);
     if (result['ok']) {
       onDone(result['new_filename']);
       setState(() => _files[delete]['filename'] = result['new_filename']);
-      saveFiles();
+      settings.saveFiles();
     } else
       _scaffoldKey.currentState
           .showSnackBar(SnackBar(content: Text(result['message'])));
@@ -200,20 +201,22 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             );
           });
     } else {
+      String _message;
       deleteList.forEach((delete) async {
         print('deleting $delete');
-        Map result = await api.deleteFile(delete);
+        Map result = await settings.api.deleteFile(delete);
         if (result['ok']) {
           return;
         }
         if (result['statusCode'] == 403) {
-          _scaffoldKey.currentState.showSnackBar(SnackBar(
-              content:
-                  Text('File not found. It was probably already deleted')));
+          _message = 'File not found. It was probably deleted';
         }
       });
+      if (_message != null)
+        _scaffoldKey.currentState
+            .showSnackBar(SnackBar(content: Text(_message)));
       setState(() => deleteList.forEach((key) => _files.remove(key)));
-      saveFiles();
+      settings.saveFiles();
     }
   }
 
@@ -226,7 +229,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
       }
-      var result = await api.uploadFile(file,
+      var result = await settings.api.uploadFile(file,
           onProgress: (int loaded, int total) {
             print('loaded: $loaded, total: $total');
             controller.add({'type': 'progress', 'value': loaded / total});
@@ -247,7 +250,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           'type': 'end',
           'value': {'file': fileObj, 'delete': result['delete']},
         });
-        saveFiles();
+        settings.saveFiles();
       } else {
         controller.add({'type': 'errorEnd', 'value': null});
       }
@@ -260,7 +263,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   Future<void> _uploadFile() async {
     print('asking for file');
-    Map file = await api.getFile();
+    Map file = await settings.api.getFile();
     if (file == null) return;
     if (file['error'] == 'PERMISSION_NOT_GRANTED') {
       showDialog(
@@ -308,7 +311,8 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         handleDelete: (String delete, {Function onYes}) =>
             _handleFileDelete([delete], onYes: onYes),
         handleRename: _handleFileRename,
-        handleCopy: api.copy,
+        handleCopy: settings.api.copy,
+        compact: AppSettings.filesTheme == 'new_compact',
       ));
     });
     var len = _uploadingQueue.length;
@@ -378,6 +382,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               handleRename: _uploading ? null : _handleFileRename,
               onPressed: _uploading ? () => null : null,
               onLongPress: _uploading ? () => null : null,
+              compact: AppSettings.filesTheme == 'new_compact',
             );
           }));
     }
@@ -391,19 +396,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _initStateAsync() async {
-    Map files = await api.getFiles();
+    Map files = await settings.getFiles();
+    await settings.getSettings();
     setState(() {
+      // TODO: maybe remove _files and use AppSettings.files?
       _files = Map.from(files);
     });
-  }
-
-  void saveFiles() {
-    Map cleanFileMap = Map.from(_files);
-    cleanFileMap.map((key, value) => MapEntry(key, value..remove('widgetKey')));
-    api.saveFiles(cleanFileMap).then((value) {
-      if (value == false) print('Couldn\'t save files');
-    });
-    cleanFileMap = null;
   }
 
   @override
@@ -420,6 +418,11 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     if (_selected.length > 0) {
       actions = [
         IconButton(
+          icon: Icon(Icons.select_all),
+          onPressed: () =>
+              setState(() => _selected = List<String>.from(_files.keys)),
+        ),
+        IconButton(
             icon: Icon(Icons.delete),
             onPressed: () {
               _handleFileDelete(List.from(_selected),
@@ -435,7 +438,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               String _filename = 'uploadgram_files.json';
               if (_selected.length == 1)
                 _filename = _exportFiles[_selected[0]]['filename'] + '.json';
-              api.saveFile(_filename, json.encode(_exportFiles));
+              settings.api.saveFile(_filename, json.encode(_exportFiles));
             })
       ];
       if (_selected.length == 1) {
@@ -453,16 +456,39 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           icon: Icon(Icons.more_vert),
           onSelected: (selected) async {
             switch (selected) {
+              case 'settings':
+                await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (BuildContext context) => SettingsRoute()));
+                settings.saveSettings();
+                setState(() => null);
+                break;
               case 'export':
-                api.saveFile('uploadgram_files.json', json.encode(_files));
+                if (_files == null || _files.isEmpty) {
+                  _scaffoldKey.currentState.showSnackBar(SnackBar(
+                    content: Text(
+                        'Your files list is empty. Upload some files before exporting them.'),
+                  ));
+                  break;
+                }
+                settings.api
+                    .saveFile('uploadgram_files.json', json.encode(_files));
                 break;
               case 'import':
-                _files.addAll(await api.importFiles());
-                saveFiles();
+                Map _importedFiles = await settings.api.importFiles();
+                print('_importedFiles = ${_importedFiles.toString()}');
+                if (_importedFiles == null) {
+                  _scaffoldKey.currentState.showSnackBar(SnackBar(
+                      content: Text('The selected file is not valid')));
+                  break;
+                }
+                _files.addAll(_importedFiles);
+                settings.saveFiles();
                 setState(() => _files = _files);
                 break;
               case 'dlapp':
-                api.downloadApp();
+                settings.api.downloadApp();
                 break;
             }
           },
@@ -488,8 +514,18 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     Container(width: 5),
                     Text('Export files list'),
                   ])),
+              PopupMenuItem(
+                  value: 'settings',
+                  child: Row(children: [
+                    Icon(Icons.settings,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
+                    Container(width: 5),
+                    Text('Settings'),
+                  ])),
             ];
-            if (api.isWebAndroid() == true)
+            if (settings.api.isWebAndroid() == true)
               items.add(PopupMenuItem(
                   value: 'dlapp',
                   child: Row(children: [
@@ -536,6 +572,11 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           : ((_files.length > 0 || _uploadingQueue.length > 0)
               ? GridView(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      childAspectRatio: AppSettings.filesTheme == 'new'
+                          ? 1 / 1
+                          : AppSettings.filesTheme == 'new_compact'
+                              ? 170 / 48.1
+                              : 1,
                       mainAxisSpacing: 5,
                       crossAxisSpacing: 5,
                       crossAxisCount: gridSize > 0 ? gridSize : 1),
@@ -554,11 +595,16 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     textAlign: TextAlign.center,
                   ),
                 )),
-      floatingActionButton: FloatingActionButton.extended(
-          onPressed: _uploadFile,
-          label: Text("UPLOAD"),
-          icon: const Icon(Icons.cloud_upload)),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: AppSettings.fabTheme == 'extended'
+          ? FloatingActionButton.extended(
+              onPressed: _uploadFile,
+              label: Text("UPLOAD"),
+              icon: const Icon(Icons.cloud_upload))
+          : FloatingActionButton(
+              onPressed: _uploadFile, child: const Icon(Icons.cloud_upload)),
+      floatingActionButtonLocation: AppSettings.fabTheme == 'extended'
+          ? FloatingActionButtonLocation.centerFloat
+          : FloatingActionButtonLocation.endFloat,
     );
   }
 }

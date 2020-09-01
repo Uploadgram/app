@@ -35,30 +35,12 @@ public class MainActivity extends FlutterActivity {
                 .setMethodCallHandler((call, result) -> {
                     String name;
                     switch(call.method) {
-                        case "saveFiles":
-                            result.success(_sharedPrefs.edit().putString("uploaded_files", call.argument("files")).commit());
+                        case "saveString":
+                            result.success(_sharedPrefs.edit().putString(call.argument("name"), call.argument("content")).commit());
                             break;
-                        case "setBool":
-                            name = call.argument("name");
-                            if (name == "uploaded_files") {
-                                System.out.println("Error: you can't use uploaded_files as name for bool");
-                                result.success(false);
-                                break;
-                            }
-                            result.success(_sharedPrefs.edit().putBoolean(name, call.argument("value")).commit());
-                            break;
-                        case "getFiles":
+                        case "getString":
                             result.success(
-                                    _sharedPrefs.getString("uploaded_files", "{}"));
-                            break;
-                        case "getBool":
-                            name = call.argument("name");
-                            if (name == "uploaded_files") {
-                                System.out.println("Error: you can't use uploaded_files as name for bool");
-                                result.success(false);
-                                break;
-                            }
-                            result.success(_sharedPrefs.getBoolean(name, false));
+                                    _sharedPrefs.getString(call.argument("name"), call.argument("default")));
                             break;
                         case "getFile":
                             _pendingResult = result;

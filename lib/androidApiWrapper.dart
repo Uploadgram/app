@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'utils.dart';
@@ -24,17 +25,26 @@ class APIWrapper {
   Future<Map> importFiles() async {
     Map fileMap = await getFile();
     File file = fileMap['realFile'];
-    Map files = json.decode(await file.readAsString());
+    Uint8List fileBytes = await file.readAsBytes();
+    if (String.fromCharCode(fileBytes.first) != '{' ||
+        String.fromCharCode(fileBytes.last) != '}') return null;
+    Map files = json.decode(String.fromCharCodes(fileBytes));
     return files;
   }
 
   Future<bool> saveFiles(Map files) =>
-      _methodChannel.invokeMethod('saveFiles', <String, dynamic>{
-        'files': json.encode(files),
-      });
+      saveString('uploaded_files', json.encode(files));
+
+  Future<bool> saveString(String name, String content) =>
+      _methodChannel.invokeMethod(
+          'saveString', <String, String>{'name': name, 'content': content});
 
   Future<Map> getFiles() async =>
-      json.decode(await _methodChannel.invokeMethod('getFiles'));
+      json.decode(await getString('uploaded_files', '{}'));
+
+  Future<String> getString(String name, String defaultValue) =>
+      _methodChannel.invokeMethod(
+          'getString', <String, String>{'name': name, 'default': defaultValue});
 
   Future<Map> getFile() async {
     String filePath = await _methodChannel.invokeMethod('getFile');

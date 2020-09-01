@@ -2,18 +2,27 @@
 import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'utils.dart';
 
 class APIWrapper {
   void dispose() => null;
 
   Future<bool> saveFiles(Map files) async {
-    html.window.localStorage['uploaded_files'] = json.encode(files);
+    saveString('uploaded_files', json.encode(files));
+    return true;
+  }
+
+  Future<bool> saveString(String name, String content) async {
+    html.window.localStorage[name] = content;
     return true;
   }
 
   Future<Map> getFiles() async =>
-      json.decode(html.window.localStorage['uploaded_files'] ?? '{}');
+      json.decode(await getString('uploaded_files', '{}'));
+
+  Future<String> getString(String name, String defaultValue) async =>
+      html.window.localStorage[name] ?? defaultValue;
 
   bool copy(String text, {Function onSuccess, Function onError}) {
     if (onSuccess == null) onSuccess = () => null;
@@ -55,9 +64,12 @@ class APIWrapper {
     if (fileMap == null) return null;
     html.File file = fileMap['realFile'];
     html.FileReader reader = html.FileReader();
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
     await reader.onLoad.first;
-    Map files = json.decode(reader.result);
+    Uint8List bytes = Uint8List.view(reader.result);
+    if (String.fromCharCode(bytes.first) != '{' ||
+        String.fromCharCode(bytes.last) != '}') return null;
+    Map files = json.decode(String.fromCharCodes(bytes));
     return files;
   }
 
@@ -85,7 +97,6 @@ class APIWrapper {
         (file['size'] is int || file['size'] is double) &&
         file['name'] is String))
       throw UnsupportedError('Non-valid file map provided for the upload.');
-    /** @ */
 
     html.HttpRequest xhr = html.HttpRequest();
     html.FormData formData = html.FormData();

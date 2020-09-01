@@ -20,6 +20,7 @@ class FileWidget extends StatefulWidget {
   Function(String, {Function onSuccess, Function onError}) handleCopy;
   String error;
   double progress = 0;
+  bool compact;
 
   FileWidget({
     Key key,
@@ -31,13 +32,14 @@ class FileWidget extends StatefulWidget {
     @required this.fileSize,
     @required this.url,
     @required this.icon,
-    this.progress,
+    this.progress = 0,
     this.error,
     this.onLongPress,
     this.handleDelete,
     this.handleRename,
     this.handleCopy,
     this.onPressed,
+    this.compact = false,
   }) : super(key: key);
 
   static _FileWidgetState of(BuildContext c) =>
@@ -90,6 +92,66 @@ class _FileWidgetState extends State<FileWidget> {
     } else {
       widget.onPressed = widget.onLongPress = () => null;
     }
+    List<Widget> columnChildren = [
+      Container(
+        margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+        alignment: Alignment.centerLeft,
+        child: Row(
+          children: [
+            Column(
+              children: [
+                Container(
+                    alignment: Alignment.center,
+                    margin: EdgeInsets.only(left: 5, right: 10),
+                    child: GestureDetector(
+                      child: AnimatedCrossFade(
+                          firstChild: Icon(widget.icon,
+                              size: 24, color: Colors.grey.shade700),
+                          secondChild: Icon(Icons.check_circle,
+                              size: 24, color: Colors.blue.shade600),
+                          firstCurve: Curves.easeInOut,
+                          secondCurve: Curves.easeInOut,
+                          crossFadeState: widget.selected == true
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: Duration(milliseconds: 150)),
+                      onTap: widget.onLongPress,
+                      onLongPress: widget.onLongPress,
+                    )),
+              ],
+            ),
+            Flexible(
+                child: Column(
+              children: [
+                Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  Expanded(
+                      child: Text(
+                    widget.filename,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  )),
+                  Padding(padding: EdgeInsets.symmetric(vertical: 5)),
+                ]),
+                Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  Expanded(
+                      child: Text(
+                    humanSize(widget.fileSize),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  )),
+                ]),
+              ],
+            )),
+          ],
+        ),
+      )
+    ];
+    if (!widget.compact)
+      columnChildren.insert(
+          0,
+          Expanded(
+            child: Icon(widget.icon, size: 37, color: Colors.grey.shade700),
+          ));
     Widget container = AnimatedContainer(
       duration: Duration(milliseconds: 150),
       curve: Curves.easeInOut,
@@ -100,7 +162,7 @@ class _FileWidgetState extends State<FileWidget> {
                 : (Theme.of(context).brightness == Brightness.dark
                     ? Colors.grey.shade900
                     : Colors.grey.shade300),
-            width: 1.5),
+            width: 2.0),
         borderRadius: BorderRadius.circular(2),
       ),
       child: InkWell(
@@ -109,67 +171,7 @@ class _FileWidgetState extends State<FileWidget> {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Icon(widget.icon, size: 37, color: Colors.grey.shade700),
-              ),
-              Container(
-                margin: EdgeInsets.only(left: 5, right: 5, bottom: 10),
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  children: [
-                    Column(
-                      children: [
-                        Container(
-                            alignment: Alignment.center,
-                            margin: EdgeInsets.only(left: 5, right: 10),
-                            child: GestureDetector(
-                              child: AnimatedCrossFade(
-                                  firstChild: Icon(widget.icon,
-                                      size: 24, color: Colors.grey.shade700),
-                                  secondChild: Icon(Icons.check_circle,
-                                      size: 24, color: Colors.blue.shade600),
-                                  firstCurve: Curves.easeInOut,
-                                  secondCurve: Curves.easeInOut,
-                                  crossFadeState: widget.selected == true
-                                      ? CrossFadeState.showSecond
-                                      : CrossFadeState.showFirst,
-                                  duration: Duration(milliseconds: 150)),
-                              onTap: widget.onLongPress,
-                              onLongPress: widget.onLongPress,
-                            )),
-                      ],
-                    ),
-                    Flexible(
-                        child: Column(
-                      children: [
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                  child: Text(
-                                widget.filename,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              )),
-                              Padding(padding: EdgeInsets.only(bottom: 5)),
-                            ]),
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                  child: Text(
-                                humanSize(widget.fileSize),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              )),
-                            ]),
-                      ],
-                    )),
-                  ],
-                ),
-              )
-            ],
+            children: columnChildren,
           )),
     );
     if (widget.uploading == true) {
