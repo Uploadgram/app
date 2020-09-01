@@ -21,11 +21,9 @@ environment:
   sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
-  file_picker: ^1.13.3
-  file_picker_web: ^1.0.2+1
   js: ^0.6.2
   dio: ^3.0.10
-  shared_preferences: ^0.5.10
+  intl: ^0.16.1
   flutter:
     sdk: flutter
 

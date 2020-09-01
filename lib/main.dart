@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'fileWidget.dart';
 import 'apiWrapperStub.dart'
     if (dart.library.io) 'androidApiWrapper.dart'
@@ -12,7 +11,6 @@ const uploadgramAccent = Color(0x3498db);
 void main() => runApp(UploadgramApp());
 
 class UploadgramApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -33,6 +31,7 @@ class UploadgramApp extends StatelessWidget {
           primaryColorDark: Colors.grey[300],
           accentColor: Colors.blue,
           primaryColorLight: Colors.blue,
+          brightness: Brightness.light,
           // This makes the visual density adapt to the platform that you run
           // the app on. For desktop platforms, the controls will be smaller and
           // closer together (more dense) than on mobile platforms.
@@ -51,7 +50,7 @@ class UploadgramRoute extends StatefulWidget {
 
 class _UploadgramRouteState extends State<UploadgramRoute> {
   static const Map<String, IconData> fileIcons = {
-    'apk': Icons.android_sharp,
+    'apk': Icons.android,
     'zip': Icons.archive,
     '7z': Icons.archive,
     'rar': Icons.archive,
@@ -91,16 +90,77 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  Map _files = {};
-  SharedPreferences _sharedPreferences;
+  Map _files;
   APIWrapper api = APIWrapper();
 
   void selectWidget(String id) => setState(() {
         _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
       });
 
-  Future<void> _handleFileRename(String delete, {Function onRename}) async {
-    // TODO: implement this
+  Future<void> _handleFileRename(String delete,
+      {Function(String) onDone, String newName, String oldName = ''}) async {
+    if (onDone == null) onDone = (_) => null;
+    if (newName == null) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            String _text = '';
+            return AlertDialog(
+              title: Text('Rename file'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Enter a new name for this file',
+                  ),
+                  TextFormField(
+                    initialValue: oldName,
+                    maxLength: 255,
+                    showCursor: true,
+                    onChanged: (newText) => _text = newText,
+                    decoration: InputDecoration(filled: true),
+                  ),
+                ],
+              ),
+              // content: TextField(
+              //   maxLength: 255,
+              //   showCursor: true,
+              //   controller: _controller,
+              //   decoration: InputDecoration(),
+              // ),
+              actions: [
+                FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('CANCEL'),
+                  textColor: Theme.of(context).primaryColorLight,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                ),
+                FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() => _selected.clear());
+                    _handleFileRename(delete, onDone: onDone, newName: _text);
+                  },
+                  child: Text('OK'),
+                  textColor: Theme.of(context).primaryColorLight,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                )
+              ],
+            );
+          });
+      return;
+    }
+    Map result = await api.renameFile(delete, newName);
+    if (result['ok']) {
+      onDone(result['new_filename']);
+      setState(() => _files[delete]['filename'] = result['new_filename']);
+      saveFiles();
+    } else
+      _scaffoldKey.currentState
+          .showSnackBar(SnackBar(content: Text(result['message'])));
   }
 
   Future<void> _handleFileDelete(List<String> deleteList,
@@ -123,18 +183,17 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               actions: [
                 FlatButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('No'),
+                  child: Text('NO'),
                   textColor: Theme.of(context).primaryColorLight,
                 ),
                 FlatButton(
                   onPressed: () {
                     print(deleteList);
                     _handleFileDelete(deleteList, noDialog: true);
-                    print('calling onYES');
                     Navigator.pop(context);
                     onYes();
                   },
-                  child: Text('Yes'),
+                  child: Text('YES'),
                   textColor: Theme.of(context).primaryColorLight,
                 ),
               ],
@@ -158,7 +217,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     }
   }
 
-  Stream _uploadFileStream(GlobalKey<FileWidgetState> key, Map file) {
+  Stream _uploadFileStream(UniqueKey key, Map file) {
     if (file['locked'] == true) return null;
     file['locked'] = true;
     // ignore: close_sinks
@@ -203,10 +262,25 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     print('asking for file');
     Map file = await api.getFile();
     if (file == null) return;
+    if (file['error'] == 'PERMISSION_NOT_GRANTED') {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+                  title: Text('Error'),
+                  content: Text(
+                      'Permissions not granted. Click the button to try again, or grant them in the settings.'),
+                  actions: [
+                    FlatButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('OK'),
+                        textColor: Theme.of(context).primaryColorLight),
+                  ]));
+      return;
+    }
     print('got file ${file["name"]}');
     setState(() {
       _uploadingQueue.add({
-        'key': GlobalKey<FileWidgetState>(),
+        'key': UniqueKey(),
         'fileObject': file,
         'locked': false,
         'stream': null
@@ -215,28 +289,31 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     });
   }
 
-  List<Widget> _filesWidgets(Map files, List uploadingQueue) {
+  List<Widget> _filesWidgets() {
     print('a');
     List<Widget> rows = [];
-    files.forEach((delete, fileObject) {
+    _files.forEach((delete, fileObject) {
       IconData fileIcon = fileIcons[fileObject['filename'].split('.').last] ??
           fileIcons['default'];
+      print(_files);
       rows.add(FileWidget(
         selected: _selected.contains(delete),
         selectOnPress: _selected.length > 0,
         icon: fileIcon,
         delete: delete,
         uploading: false,
-        fileObject: fileObject,
+        filename: fileObject['filename'],
+        fileSize: fileObject['size'].toDouble(),
+        url: fileObject['url'],
         handleDelete: (String delete, {Function onYes}) =>
             _handleFileDelete([delete], onYes: onYes),
         handleRename: _handleFileRename,
+        handleCopy: api.copy,
       ));
     });
-    print(uploadingQueue);
-    var len = uploadingQueue.length;
+    var len = _uploadingQueue.length;
     for (int key = 0; key < len; key++) {
-      var object = uploadingQueue[key];
+      var object = _uploadingQueue[key];
       print(object);
       Map file = object['fileObject'];
       IconData fileIcon =
@@ -291,7 +368,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               uploading: _uploading,
               progress: _progress,
               error: _error,
-              fileObject: _file,
+              filename: _file['filename'],
+              fileSize: _file['size'].toDouble(),
+              url: _file['url'],
               handleDelete: _uploading
                   ? null
                   : (String delete, {Function onYes}) =>
@@ -307,32 +386,35 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   @override
   void initState() {
-    api.migrateFiles(); // this method will be transferring files from the uploaded_files name to flutter.uploaded_files
-    // TODO: reimplement shared_preferences but with jsons
     _initStateAsync();
     super.initState();
   }
 
   Future<void> _initStateAsync() async {
-    // TODO: setState here might be removed
-    _sharedPreferences = await SharedPreferences.getInstance();
-    print(_sharedPreferences.getString('uploaded_files'));
+    Map files = await api.getFiles();
     setState(() {
-      _files = _sharedPreferences.containsKey('uploaded_files')
-          ? Map.from(
-              json.decode(_sharedPreferences.getString('uploaded_files')))
-          : {};
+      _files = Map.from(files);
     });
   }
 
   void saveFiles() {
-    _sharedPreferences.setString('uploaded_files', json.encode(_files));
+    Map cleanFileMap = Map.from(_files);
+    cleanFileMap.map((key, value) => MapEntry(key, value..remove('widgetKey')));
+    api.saveFiles(cleanFileMap).then((value) {
+      if (value == false) print('Couldn\'t save files');
+    });
+    cleanFileMap = null;
+  }
+
+  @override
+  void dispose() {
+    _files = null;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     int gridSize = (MediaQuery.of(context).size.width / 170).floor();
-    // TODO: add circularprogressindicator while waiting for files.
     List<Widget> actions = [];
     print('Reloaded state!');
     if (_selected.length > 0) {
@@ -343,16 +425,85 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               _handleFileDelete(List.from(_selected),
                   onYes: () => setState(() => _selected.clear()));
             }),
-        IconButton(icon: Icon(Icons.get_app), onPressed: () => print('get'))
+        IconButton(
+            icon: Icon(Icons.get_app),
+            onPressed: () {
+              // we need to export ONLY _selected here
+              // _selected is a list of _files keys, so it should be easy to export.
+              Map _exportFiles = {};
+              _selected.forEach((e) => _exportFiles[e] = _files[e]);
+              String _filename = 'uploadgram_files.json';
+              if (_selected.length == 1)
+                _filename = _exportFiles[_selected[0]]['filename'] + '.json';
+              api.saveFile(_filename, json.encode(_exportFiles));
+            })
       ];
       if (_selected.length == 1) {
         actions.insert(
             1,
             IconButton(
               icon: Icon(Icons.edit),
-              onPressed: () => print('not implemented yet'),
+              onPressed: () => _handleFileRename(_selected[0],
+                  oldName: _files[_selected[0]]['filename']),
             ));
       }
+    } else {
+      actions = [
+        PopupMenuButton(
+          icon: Icon(Icons.more_vert),
+          onSelected: (selected) async {
+            switch (selected) {
+              case 'export':
+                api.saveFile('uploadgram_files.json', json.encode(_files));
+                break;
+              case 'import':
+                _files.addAll(await api.importFiles());
+                saveFiles();
+                setState(() => _files = _files);
+                break;
+              case 'dlapp':
+                api.downloadApp();
+                break;
+            }
+          },
+          itemBuilder: (context) {
+            List<PopupMenuEntry<dynamic>> items = [
+              PopupMenuItem(
+                  value: 'import',
+                  child: Row(children: [
+                    Icon(Icons.publish,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
+                    SizedBox(width: 5),
+                    Text('Import files list'),
+                  ])),
+              PopupMenuItem(
+                  value: 'export',
+                  child: Row(children: [
+                    Icon(Icons.get_app,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
+                    Container(width: 5),
+                    Text('Export files list'),
+                  ])),
+            ];
+            if (api.isWebAndroid() == true)
+              items.add(PopupMenuItem(
+                  value: 'dlapp',
+                  child: Row(children: [
+                    Icon(Icons.android,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
+                    Container(width: 5),
+                    Text('Download the app!'),
+                  ])));
+            return items;
+          },
+        ),
+      ];
     }
     return Scaffold(
       key: _scaffoldKey,
@@ -388,7 +539,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                       mainAxisSpacing: 5,
                       crossAxisSpacing: 5,
                       crossAxisCount: gridSize > 0 ? gridSize : 1),
-                  children: _filesWidgets(_files, _uploadingQueue),
+                  children: _filesWidgets(),
                   padding: EdgeInsets.only(
                       left: 15,
                       right: 15,

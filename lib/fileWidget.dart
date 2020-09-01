@@ -5,7 +5,9 @@ import 'fileInfo.dart';
 
 // ignore: must_be_immutable
 class FileWidget extends StatefulWidget {
-  Map fileObject;
+  String filename;
+  double fileSize;
+  String url;
   String delete;
   bool selected;
   bool uploading;
@@ -14,7 +16,8 @@ class FileWidget extends StatefulWidget {
   Function onPressed;
   Function onLongPress;
   Function(String, {Function onYes}) handleDelete;
-  Function(String) handleRename;
+  Function(String, {Function(String) onDone, String oldName}) handleRename;
+  Function(String, {Function onSuccess, Function onError}) handleCopy;
   String error;
   double progress = 0;
 
@@ -24,36 +27,39 @@ class FileWidget extends StatefulWidget {
     this.uploading = false,
     this.selectOnPress = false,
     @required this.delete,
-    @required this.fileObject,
+    @required this.filename,
+    @required this.fileSize,
+    @required this.url,
     @required this.icon,
     this.progress,
     this.error,
     this.onLongPress,
     this.handleDelete,
     this.handleRename,
+    this.handleCopy,
     this.onPressed,
   }) : super(key: key);
+
+  static _FileWidgetState of(BuildContext c) =>
+      c.findAncestorStateOfType<_FileWidgetState>();
+
   @override
-  FileWidgetState createState() => FileWidgetState();
+  _FileWidgetState createState() => _FileWidgetState();
 }
 
-class FileWidgetState extends State<FileWidget> {
-  void setUploadProgress(double value) =>
-      setState(() => widget.progress = value);
-  //void finishUpload(String url, String delete) => setState(() {
-  //      widget.uploading = false;
-  //      widget.fileObject['url'] = url;
-  //      widget.delete = delete;
-  //    });
-  //void uploadError(String error) => setState(() {
-  //      widget.uploading = false;
-  //      _error = error;
-  //      widget.onPressed = widget.onLongPress = () => null;
-  //    });
+class _FileWidgetState extends State<FileWidget> {
+  void setProperty({bool waiting, String filename}) => setState(() {
+        if (waiting != null) {
+          widget.uploading = waiting;
+          if (waiting) widget.progress = null;
+        }
+        if (filename != null) {
+          widget.filename = filename;
+        }
+      });
 
   @override
   Widget build(BuildContext context) {
-    print(widget.fileObject);
     assert((widget.uploading == false && widget.onPressed != null ||
             (widget.handleDelete != null && widget.handleRename != null)) ||
         widget.uploading);
@@ -66,13 +72,14 @@ class FileWidgetState extends State<FileWidget> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => FileInfoRoute(
-                              filename: widget.fileObject['filename'],
-                              fileSize: widget.fileObject['size'].toDouble(),
+                              filename: widget.filename,
+                              fileSize: widget.fileSize,
                               fileIcon: widget.icon,
                               delete: widget.delete,
                               handleDelete: widget.handleDelete,
                               handleRename: widget.handleRename,
-                              url: widget.fileObject['url'],
+                              handleCopy: widget.handleCopy,
+                              url: widget.url,
                             )));
               };
       }
@@ -116,15 +123,7 @@ class FileWidgetState extends State<FileWidget> {
                         Container(
                             alignment: Alignment.center,
                             margin: EdgeInsets.only(left: 5, right: 10),
-                            //child: Icon(
-                            //    widget.selected == true
-                            //        ? Icons.check_circle
-                            //        : widget.icon,
-                            //    size: 24,
-                            //    color: widget.selected == true
-                            //        ? Colors.blue.shade600
-                            //        : Colors.grey.shade700
-                            child: InkWell(
+                            child: GestureDetector(
                               child: AnimatedCrossFade(
                                   firstChild: Icon(widget.icon,
                                       size: 24, color: Colors.grey.shade700),
@@ -138,8 +137,6 @@ class FileWidgetState extends State<FileWidget> {
                                   duration: Duration(milliseconds: 150)),
                               onTap: widget.onLongPress,
                               onLongPress: widget.onLongPress,
-                              hoverColor: Colors.transparent,
-                              splashColor: Colors.transparent,
                             )),
                       ],
                     ),
@@ -151,7 +148,7 @@ class FileWidgetState extends State<FileWidget> {
                             children: [
                               Expanded(
                                   child: Text(
-                                widget.fileObject['filename'],
+                                widget.filename,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
@@ -162,7 +159,7 @@ class FileWidgetState extends State<FileWidget> {
                             children: [
                               Expanded(
                                   child: Text(
-                                humanSize(widget.fileObject['size'].toDouble()),
+                                humanSize(widget.fileSize),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),

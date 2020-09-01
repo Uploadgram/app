@@ -1,23 +1,62 @@
-import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'utils.dart';
 import 'package:http_parser/http_parser.dart';
 
 class APIWrapper {
   Dio _dio = Dio(BaseOptions(
     followRedirects: true,
-    validateStatus: (status) => status < 500,
+    validateStatus: (status) => true,
   ));
+  final MethodChannel _methodChannel =
+      const MethodChannel('com.pato05.uploadgram');
+
+  bool copy(String text, {Function onSuccess, Function onError}) {
+    Clipboard.setData(ClipboardData(text: text));
+    if (onSuccess != null) onSuccess();
+    return true;
+  }
+
+  bool isWebAndroid() => false;
+  void downloadApp() => null;
+  Future<Map> importFiles() async {
+    Map fileMap = await getFile();
+    File file = fileMap['realFile'];
+    Map files = json.decode(await file.readAsString());
+    return files;
+  }
+
+  Future<bool> saveFiles(Map files) =>
+      _methodChannel.invokeMethod('saveFiles', <String, dynamic>{
+        'files': json.encode(files),
+      });
+
+  Future<Map> getFiles() async =>
+      json.decode(await _methodChannel.invokeMethod('getFiles'));
 
   Future<Map> getFile() async {
-    File file = await FilePicker.getFile(allowCompression: false);
-    if (file == null) return null;
+    String filePath = await _methodChannel.invokeMethod('getFile');
+    print(filePath);
+    if (filePath == 'PERMISSION_NOT_GRANTED') {
+      return {'error': 'PERMISSION_NOT_GRANTED'};
+    }
+    if (filePath == null) return null;
+    File file = File(filePath);
     return {
       'realFile': file,
       'size': await file.length(),
       'name': file.path.split('/').last,
     };
+  }
+
+  Future<bool> saveFile(String filename, String content) async {
+    String filePath = await _methodChannel
+        .invokeMethod('saveFile', <String, String>{'filename': filename});
+    if (filePath == null) return null;
+    await File(filePath).writeAsString(content);
+    return null;
   }
 
   Future<Map> uploadFile(
@@ -40,8 +79,8 @@ class APIWrapper {
 
     String fileName = file['name'];
     int fileSize = file['size'];
-    MediaType mime =
-        mimeTypes[fileName.split('.').last] ?? 'application/octet-stream';
+    MediaType mime = mimeTypes[fileName.split('.').last] ??
+        MediaType('application', 'octet-stream');
     print(mime);
     print('processing file upload');
     FormData formData = FormData.fromMap({
@@ -68,7 +107,6 @@ class APIWrapper {
       return {
         'ok': false,
         'statusCode': response.statusCode,
-        'statusMessage': response.statusMessage,
       };
     }
     return response.data;
@@ -76,16 +114,15 @@ class APIWrapper {
 
   Future<Map> renameFile(String file, String newName) async {
     Response response = await _dio.post('https://uploadgram.me/rename/$file',
-        data: {'new_name': parseName(newName)});
+        data: {'new_filename': await parseName(newName)});
     if (response.statusCode != 200) {
       return {
         'ok': false,
         'statusCode': response.statusCode,
-        'statusMessage': response.statusMessage,
+        'message': response.data['message'] ??
+            'Error ${response.statusCode}: ${response.statusMessage}'
       };
     }
     return response.data;
   }
-
-  Future<void> migrateFiles() => null;
 }

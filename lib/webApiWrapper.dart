@@ -1,20 +1,64 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:js_util';
 import 'dart:async';
 import 'dart:convert';
-import 'package:file_picker_web/file_picker_web.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'utils.dart';
 
 class APIWrapper {
   void dispose() => null;
 
+  Future<bool> saveFiles(Map files) async {
+    html.window.localStorage['uploaded_files'] = json.encode(files);
+    return true;
+  }
+
+  Future<Map> getFiles() async =>
+      json.decode(html.window.localStorage['uploaded_files'] ?? '{}');
+
+  bool copy(String text, {Function onSuccess, Function onError}) {
+    if (onSuccess == null) onSuccess = () => null;
+    if (onError == null) onError = () => null;
+    print('called APIWrapper.copy($text)');
+    html.InputElement input = html.document.createElement('input');
+    input.type = 'text';
+    input.value = text;
+    input.select();
+    html.document.body.append(input);
+    bool copyStatus = html.document.execCommand('copy');
+    copyStatus ? onSuccess() : onError();
+    input.remove();
+    return copyStatus;
+  }
+
   Future<Map> getFile() async {
-    html.File file = await FilePicker.getFile();
+    html.InputElement inputFile = html.document.createElement('input');
+    inputFile.type = 'file';
+    html.document.body.append(inputFile);
+    inputFile.click();
+    html.File file = inputFile.files[0];
+    inputFile.remove();
+    inputFile = null;
     return {'realFile': file, 'size': file.size, 'name': file.name};
   }
+
+  bool isWebAndroid() {
+    print(html.window.navigator.userAgent);
+    return html.window.navigator.userAgent.contains('Android');
+  }
+
+  void downloadApp() =>
+      html.window.location.replace('https://uploadgram.me/uploadgram_app.apk');
+  Future<Map> importFiles() async {
+    Map fileMap = await getFile();
+    html.File file = fileMap['realFile'];
+    html.FileReader reader = html.FileReader();
+    reader.readAsText(file);
+    await reader.onLoad.first;
+    Map files = json.decode(reader.result);
+    return files;
+  }
+
+  Future<bool> saveFile(String filename, String content) async => null;
 
   Future<Map> uploadFile(
     Map file, {
@@ -29,14 +73,12 @@ class APIWrapper {
         file['name'] is String))
       throw UnsupportedError('Non-valid file map provided for the upload.');
     /** @ */
-    html.File realFile = file['realFile'];
 
     html.HttpRequest xhr = html.HttpRequest();
     html.FormData formData = html.FormData();
     formData.append('file_size', file['size'].toString());
     formData.appendBlob('file_upload', file['realFile']);
     xhr.open('POST', 'https://uploadgram.me/upload');
-    // TODO: find out how to show progress
     xhr.upload.onProgress
         .listen((html.ProgressEvent e) => onProgress(e.loaded, e.total));
     xhr.onError.listen((e) => onError());
@@ -49,8 +91,8 @@ class APIWrapper {
     }
     return {
       'ok': false,
-      'statusCode': 400,
-      'message': 'An error occurred',
+      'statusCode': xhr.status,
+      'message': 'Error ${xhr.status}: ${xhr.statusText}',
     };
   }
 
@@ -63,8 +105,7 @@ class APIWrapper {
     return {
       'ok': false,
       'statusCode': xhr.status,
-      'statusMessage': xhr.statusText,
-      'message': xhr.statusText
+      'message': xhr.statusText,
     };
   }
 
@@ -72,23 +113,19 @@ class APIWrapper {
     html.HttpRequest xhr = html.HttpRequest();
     html.window.console.log(xhr);
     xhr.open('POST', 'https://uploadgram.me/rename/$file');
-    xhr.send(json.encode({'new_name': parseName(newName)}));
+    xhr.send(json
+        .encode(<String, String>{'new_filename': await parseName(newName)}));
     await xhr.onLoad.first;
     if (xhr.status == 200) return json.decode(xhr.responseText);
+    var jsonError;
+    if (xhr.responseText.substring(0, 1) == '{')
+      jsonError = json.decode(xhr.responseText);
+    var altMessage = 'Error ${xhr.status}: ${xhr.statusText}';
     return {
       'ok': false,
       'statusCode': xhr.status,
-      'statusMessage': xhr.statusText,
-      'message': xhr.statusText
+      'message':
+          jsonError == null ? altMessage : (jsonError['message'] ?? altMessage),
     };
-  }
-
-  Future<void> migrateFiles() async {
-    if (html.window.localStorage.keys.contains('uploaded_files')) {
-      var sharedPreferences = await SharedPreferences.getInstance();
-      sharedPreferences.setString(
-          'uploaded_files', html.window.localStorage['uploaded_files']);
-      html.window.localStorage.remove('uploaded_files');
-    }
   }
 }

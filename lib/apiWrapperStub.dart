@@ -2,6 +2,19 @@
 // to make requests, on the web we will be using XMLHttpRequest, since Dio
 // doesn't include some needed features yet.
 class APIWrapper {
+  bool copy(String text, {Function onSuccess, Function onError}) =>
+      throw UnsupportedError('');
+
+  bool isWebAndroid() => throw UnsupportedError('');
+  void downloadApp() => throw UnsupportedError('');
+  Future<Map> importFiles() => throw UnsupportedError('');
+
+  Future<Map> getFile() => throw UnsupportedError('');
+  Future<bool> saveFile(String filename, String content) =>
+      throw UnsupportedError('');
+  Future<bool> saveFiles(Map files) => throw UnsupportedError('');
+  Future<Map> getFiles() => throw UnsupportedError('');
+
   Future<Map> uploadFile(
     Map file, {
     Function(int, int) onProgress,
@@ -14,6 +27,4 @@ class APIWrapper {
   Future<Map> deleteFile(String delete) => throw UnsupportedError('');
   Future<Map> renameFile(String delete, String newName) =>
       throw UnsupportedError('');
-  Future<dynamic> getFile() => throw UnsupportedError('');
-  Future<void> migrateFiles() => throw UnsupportedError('');
 }
