@@ -17,7 +17,6 @@ class FileWidget extends StatefulWidget {
   Function onLongPress;
   Function(String, {Function onYes}) handleDelete;
   Function(String, {Function(String) onDone, String oldName}) handleRename;
-  Function(String, {Function onSuccess, Function onError}) handleCopy;
   String error;
   double progress = 0;
   bool compact;
@@ -37,7 +36,6 @@ class FileWidget extends StatefulWidget {
     this.onLongPress,
     this.handleDelete,
     this.handleRename,
-    this.handleCopy,
     this.onPressed,
     this.compact = false,
   }) : super(key: key);
@@ -80,7 +78,6 @@ class _FileWidgetState extends State<FileWidget> {
                               delete: widget.delete,
                               handleDelete: widget.handleDelete,
                               handleRename: widget.handleRename,
-                              handleCopy: widget.handleCopy,
                               url: widget.url,
                             )));
               };
@@ -94,15 +91,18 @@ class _FileWidgetState extends State<FileWidget> {
     }
     List<Widget> columnChildren = [
       Container(
-        margin: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-        alignment: Alignment.centerLeft,
+        padding: EdgeInsets.symmetric(vertical: 10),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
             Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Container(
                     alignment: Alignment.center,
-                    margin: EdgeInsets.only(left: 5, right: 10),
+                    margin: EdgeInsets.symmetric(horizontal: 10),
                     child: GestureDetector(
                       child: AnimatedCrossFade(
                           firstChild: Icon(widget.icon,
@@ -120,28 +120,37 @@ class _FileWidgetState extends State<FileWidget> {
                     )),
               ],
             ),
-            Flexible(
-                child: Column(
-              children: [
-                Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                  Expanded(
-                      child: Text(
-                    widget.filename,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  )),
-                  Padding(padding: EdgeInsets.symmetric(vertical: 5)),
-                ]),
-                Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                  Expanded(
-                      child: Text(
-                    humanSize(widget.fileSize),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  )),
-                ]),
-              ],
-            )),
+            Expanded(
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                widget.filename,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              )),
+                              Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 5)),
+                            ]),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                  child: Text(
+                                humanSize(widget.fileSize),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              )),
+                            ]),
+                      ],
+                    ))),
           ],
         ),
       )
@@ -170,7 +179,7 @@ class _FileWidgetState extends State<FileWidget> {
           onLongPress: widget.onLongPress,
           child: Column(
             mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: columnChildren,
           )),
     );

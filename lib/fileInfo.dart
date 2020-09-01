@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uploadgram/fileWidget.dart';
 import 'package:intl/intl.dart';
 import 'utils.dart';
+import 'appSettings.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
@@ -11,7 +12,6 @@ class FileInfoRoute extends StatefulWidget {
   IconData fileIcon;
   Function(String, {Function onYes}) handleDelete;
   Function(String, {Function(String) onDone, String oldName}) handleRename;
-  Function(String, {Function onSuccess, Function onError}) handleCopy;
   String delete;
 
   FileInfoRoute({
@@ -21,7 +21,6 @@ class FileInfoRoute extends StatefulWidget {
     @required this.delete,
     @required this.handleDelete,
     @required this.handleRename,
-    @required this.handleCopy,
     @required this.url,
   });
   _FileInfoRouteState createState() => _FileInfoRouteState();
@@ -48,16 +47,14 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
           actions: [
             IconButton(
               icon: Icon(Icons.copy),
-              onPressed: () => widget.handleCopy(
-                widget.url,
-                onSuccess: () => _scaffoldKey.currentState.showSnackBar(
-                    SnackBar(
-                        content:
-                            Text('Link copied to clipboard successfully!'))),
-                onError: () => _scaffoldKey.currentState.showSnackBar(SnackBar(
-                    content: Text(
-                        'Unable to copy file link. Please copy it manually.'))),
-              ),
+              onPressed: () async {
+                _scaffoldKey.currentState.showSnackBar(SnackBar(
+                    content: Text(await AppSettings.api.copy(
+                  widget.url,
+                )
+                        ? 'Link copied to clipboard successfully!'
+                        : 'Unable to copy file link. Please copy it manually.')));
+              },
               tooltip: 'Copy this file\'s link',
             ),
             IconButton(
@@ -80,96 +77,57 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
             )
           ],
         ),
-        body: ListView(children: [
-          Padding(
+        body: Padding(
             padding: EdgeInsets.symmetric(horizontal: 15, vertical: 50),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: 170),
-                  child: Center(
-                      child: Icon(widget.fileIcon,
-                          size: 56, color: Colors.grey.shade700)),
-                ),
-                Padding(
-                    child: Text(
-                      widget.filename,
-                      style:
-                          TextStyle(fontSize: 26, fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.visible,
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 23)),
-                //Expanded(
-                //    child: GridView.count(
-                //  crossAxisCount: 2,
-                //  childAspectRatio: 1 / 0.25,
-                //  children: [
-                //    Container(
-                //        child:
-                //            Text('Size', style: TextStyle(fontSize: fontSize))),
-                //    Container(
-                //        child: Text(humanSize(widget.fileSize),
-                //            style: TextStyle(fontSize: fontSize))),
-                //    Container(
-                //        child: Text('URL', style: TextStyle(fontSize: fontSize))),
-                //    Container(
-                //        child: SelectableText(widget.url,
-                //            style: TextStyle(fontSize: fontSize))),
-                //  ],
-                //))
-                Table(
-                  columnWidths: {
-                    0: const FlexColumnWidth(0.3),
-                    1: const FixedColumnWidth(0.0),
-                    2: const FlexColumnWidth(0.7),
-                  },
-                  children: [
-                    TableRow(children: [
-                      TableCell(
-                          child: Text(
-                        'Size',
-                        style: TextStyle(fontSize: fontSize),
-                      )),
-                      Container(width: 0, height: 50),
-                      TableCell(
-                          child: Text(
-                        humanSize(widget.fileSize),
-                        style: TextStyle(fontSize: fontSize),
-                      )),
-                    ]),
-                    TableRow(children: [
-                      TableCell(
-                          child: SelectableText(
-                        'URL',
-                        style: TextStyle(fontSize: fontSize),
-                      )),
-                      Container(width: 0, height: 75),
-                      TableCell(
-                          child: SelectableText(
-                        widget.url,
-                        style: TextStyle(fontSize: fontSize),
-                      )),
-                    ]),
-                    TableRow(children: [
-                      TableCell(
-                          child: Text(
-                        'Uploaded on',
-                        style: TextStyle(fontSize: fontSize),
-                      )),
-                      Container(width: 0, height: 0),
-                      TableCell(
-                          child: Text(
-                        uploadDateFormatted,
-                        style: TextStyle(fontSize: fontSize),
-                      ))
-                    ])
+            child: ListView(children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 170),
+                child: Center(
+                    child: Icon(widget.fileIcon,
+                        size: 56, color: Colors.grey.shade700)),
+              ),
+              Padding(
+                  child: Text(
+                    widget.filename,
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.visible,
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 23)),
+              Table(
+                columnWidths: {
+                  0: const FlexColumnWidth(0.3),
+                  2: const FlexColumnWidth(0.7),
+                },
+                children: [
+                  [
+                    Text('Size', style: TextStyle(fontSize: fontSize)),
+                    Text(humanSize(widget.fileSize),
+                        style: TextStyle(fontSize: fontSize))
                   ],
-                ),
-              ],
-            ),
-          )
-        ]));
+                  [
+                    Text('URL', style: TextStyle(fontSize: fontSize)),
+                    SelectableText(widget.url,
+                        style: TextStyle(fontSize: fontSize))
+                  ],
+                  [
+                    Text('Uploaded on', style: TextStyle(fontSize: fontSize)),
+                    Text(
+                      uploadDateFormatted,
+                      style: TextStyle(fontSize: fontSize),
+                    )
+                  ]
+                ]
+                    .map((e) => TableRow(
+                        children: e
+                            .map((wid) => TableCell(
+                                verticalAlignment:
+                                    TableCellVerticalAlignment.middle,
+                                child: Container(
+                                    child: wid,
+                                    margin: EdgeInsets.only(bottom: 30))))
+                            .toList()))
+                    .toList(),
+              ),
+            ])));
   }
 }

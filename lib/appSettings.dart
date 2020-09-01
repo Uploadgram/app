@@ -4,33 +4,34 @@ import 'apiWrapperStub.dart'
 
 class AppSettings {
   static Map files;
-  APIWrapper api;
+  static APIWrapper api = APIWrapper();
   static String filesTheme = 'new';
   static String fabTheme = 'extended';
 
-  AppSettings() {
-    api = APIWrapper();
-  }
+  static Future<bool> copy(
+    String text,
+  ) =>
+      api.copy(text);
 
-  Future<void> getSettings() async {
+  static Future<void> getSettings() async {
     fabTheme = await api.getString('fabTheme', 'extended');
     filesTheme = await api.getString('filesTheme', 'new');
   }
 
-  Future<Map<String, dynamic>> getFiles() async {
+  static Future<Map<String, dynamic>> getFiles() async {
     if (files == null) {
       files = await api.getFiles();
     }
     return files;
   }
 
-  Future<bool> saveFiles() async {
+  static Future<bool> saveFiles() async {
     if (files == null) return false;
     return await api.saveFiles(files);
   }
 
-  Future<bool> saveSettings() async {
-    api.saveString('fabTheme', fabTheme);
-    api.saveString('filesTheme', filesTheme);
+  static Future<bool> saveSettings() async {
+    return await api.saveString('fabTheme', fabTheme) &&
+        await api.saveString('filesTheme', filesTheme);
   }
 }

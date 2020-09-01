@@ -24,17 +24,15 @@ class APIWrapper {
   Future<String> getString(String name, String defaultValue) async =>
       html.window.localStorage[name] ?? defaultValue;
 
-  bool copy(String text, {Function onSuccess, Function onError}) {
-    if (onSuccess == null) onSuccess = () => null;
-    if (onError == null) onError = () => null;
+  Future<bool> copy(String text) async {
     print('called APIWrapper.copy($text)');
     html.InputElement input = html.document.createElement('input');
     input.type = 'text';
     input.value = text;
-    input.select();
+    input.setSelectionRange(0, 50);
     html.document.body.append(input);
+    input.select();
     bool copyStatus = html.document.execCommand('copy');
-    copyStatus ? onSuccess() : onError();
     input.remove();
     return copyStatus;
   }

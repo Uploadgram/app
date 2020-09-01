@@ -2,7 +2,7 @@
 // to make requests, on the web we will be using XMLHttpRequest, since Dio
 // doesn't include some needed features yet.
 class APIWrapper {
-  bool copy(String text, {Function onSuccess, Function onError}) =>
+  Future<bool> copy(String text, {Function onSuccess, Function onError}) =>
       throw UnsupportedError('');
 
   bool isWebAndroid() => throw UnsupportedError('');

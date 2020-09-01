@@ -91,8 +91,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  Map _files;
-  AppSettings settings = AppSettings();
 
   void selectWidget(String id) => setState(() {
         _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
@@ -154,11 +152,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           });
       return;
     }
-    Map result = await settings.api.renameFile(delete, newName);
+    Map result = await AppSettings.api.renameFile(delete, newName);
     if (result['ok']) {
       onDone(result['new_filename']);
-      setState(() => _files[delete]['filename'] = result['new_filename']);
-      settings.saveFiles();
+      setState(
+          () => AppSettings.files[delete]['filename'] = result['new_filename']);
+      AppSettings.saveFiles();
     } else
       _scaffoldKey.currentState
           .showSnackBar(SnackBar(content: Text(result['message'])));
@@ -204,7 +203,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       String _message;
       deleteList.forEach((delete) async {
         print('deleting $delete');
-        Map result = await settings.api.deleteFile(delete);
+        Map result = await AppSettings.api.deleteFile(delete);
         if (result['ok']) {
           return;
         }
@@ -215,8 +214,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       if (_message != null)
         _scaffoldKey.currentState
             .showSnackBar(SnackBar(content: Text(_message)));
-      setState(() => deleteList.forEach((key) => _files.remove(key)));
-      settings.saveFiles();
+      setState(
+          () => deleteList.forEach((key) => AppSettings.files.remove(key)));
+      AppSettings.saveFiles();
     }
   }
 
@@ -229,7 +229,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
       }
-      var result = await settings.api.uploadFile(file,
+      var result = await AppSettings.api.uploadFile(file,
           onProgress: (int loaded, int total) {
             print('loaded: $loaded, total: $total');
             controller.add({'type': 'progress', 'value': loaded / total});
@@ -239,18 +239,19 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           },
           onEnd: () => null,
           onStart: () => null);
+      print(result);
       if (result['ok']) {
         var fileObj = {
           'filename': file['name'],
           'size': file['size'],
           'url': result['url'],
         };
-        _files[result['delete']] = fileObj;
+        AppSettings.files[result['delete']] = fileObj;
         controller.add({
           'type': 'end',
           'value': {'file': fileObj, 'delete': result['delete']},
         });
-        settings.saveFiles();
+        AppSettings.saveFiles();
       } else {
         controller.add({'type': 'errorEnd', 'value': null});
       }
@@ -263,7 +264,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   Future<void> _uploadFile() async {
     print('asking for file');
-    Map file = await settings.api.getFile();
+    Map file = await AppSettings.api.getFile();
     if (file == null) return;
     if (file['error'] == 'PERMISSION_NOT_GRANTED') {
       showDialog(
@@ -293,12 +294,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   List<Widget> _filesWidgets() {
-    print('a');
     List<Widget> rows = [];
-    _files.forEach((delete, fileObject) {
+    AppSettings.files.forEach((delete, fileObject) {
       IconData fileIcon = fileIcons[fileObject['filename'].split('.').last] ??
           fileIcons['default'];
-      print(_files);
       rows.add(FileWidget(
         selected: _selected.contains(delete),
         selectOnPress: _selected.length > 0,
@@ -311,7 +310,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         handleDelete: (String delete, {Function onYes}) =>
             _handleFileDelete([delete], onYes: onYes),
         handleRename: _handleFileRename,
-        handleCopy: settings.api.copy,
         compact: AppSettings.filesTheme == 'new_compact',
       ));
     });
@@ -396,31 +394,31 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _initStateAsync() async {
-    Map files = await settings.getFiles();
-    await settings.getSettings();
-    setState(() {
-      // TODO: maybe remove _files and use AppSettings.files?
-      _files = Map.from(files);
-    });
+    Map files = await AppSettings.getFiles();
+    await AppSettings.getSettings();
+    setState(() => null);
   }
 
   @override
   void dispose() {
-    _files = null;
+    AppSettings.saveFiles();
+    AppSettings.saveSettings();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    int gridSize = (MediaQuery.of(context).size.width / 170).floor();
+    Size size = MediaQuery.of(context).size;
+    int gridSize = (size.width / 170).floor();
+    double aspectRatio = AppSettings.filesTheme == 'new' ? 1 / 1 : 17 / 6;
     List<Widget> actions = [];
     print('Reloaded state!');
     if (_selected.length > 0) {
       actions = [
         IconButton(
           icon: Icon(Icons.select_all),
-          onPressed: () =>
-              setState(() => _selected = List<String>.from(_files.keys)),
+          onPressed: () => setState(
+              () => _selected = List<String>.from(AppSettings.files.keys)),
         ),
         IconButton(
             icon: Icon(Icons.delete),
@@ -434,11 +432,11 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               // we need to export ONLY _selected here
               // _selected is a list of _files keys, so it should be easy to export.
               Map _exportFiles = {};
-              _selected.forEach((e) => _exportFiles[e] = _files[e]);
+              _selected.forEach((e) => _exportFiles[e] = AppSettings.files[e]);
               String _filename = 'uploadgram_files.json';
               if (_selected.length == 1)
                 _filename = _exportFiles[_selected[0]]['filename'] + '.json';
-              settings.api.saveFile(_filename, json.encode(_exportFiles));
+              AppSettings.api.saveFile(_filename, json.encode(_exportFiles));
             })
       ];
       if (_selected.length == 1) {
@@ -447,7 +445,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             IconButton(
               icon: Icon(Icons.edit),
               onPressed: () => _handleFileRename(_selected[0],
-                  oldName: _files[_selected[0]]['filename']),
+                  oldName: AppSettings.files[_selected[0]]['filename']),
             ));
       }
     } else {
@@ -461,34 +459,34 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     context,
                     MaterialPageRoute(
                         builder: (BuildContext context) => SettingsRoute()));
-                settings.saveSettings();
+                AppSettings.saveSettings();
                 setState(() => null);
                 break;
               case 'export':
-                if (_files == null || _files.isEmpty) {
+                if (AppSettings.files.isEmpty) {
                   _scaffoldKey.currentState.showSnackBar(SnackBar(
                     content: Text(
                         'Your files list is empty. Upload some files before exporting them.'),
                   ));
                   break;
                 }
-                settings.api
-                    .saveFile('uploadgram_files.json', json.encode(_files));
+                AppSettings.api.saveFile(
+                    'uploadgram_files.json', json.encode(AppSettings.files));
                 break;
               case 'import':
-                Map _importedFiles = await settings.api.importFiles();
+                Map _importedFiles = await AppSettings.api.importFiles();
                 print('_importedFiles = ${_importedFiles.toString()}');
                 if (_importedFiles == null) {
                   _scaffoldKey.currentState.showSnackBar(SnackBar(
                       content: Text('The selected file is not valid')));
                   break;
                 }
-                _files.addAll(_importedFiles);
-                settings.saveFiles();
-                setState(() => _files = _files);
+                AppSettings.files.addAll(_importedFiles);
+                AppSettings.saveFiles();
+                setState(() => null);
                 break;
               case 'dlapp':
-                settings.api.downloadApp();
+                AppSettings.api.downloadApp();
                 break;
             }
           },
@@ -525,7 +523,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     Text('Settings'),
                   ])),
             ];
-            if (settings.api.isWebAndroid() == true)
+            if (AppSettings.api.isWebAndroid() == true)
               items.add(PopupMenuItem(
                   value: 'dlapp',
                   child: Row(children: [
@@ -562,21 +560,17 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             : null,
         actions: actions,
       ),
-      body: _files == null
+      body: AppSettings.files == null
           ? Center(
               child: SizedBox(
               child: CircularProgressIndicator(),
               width: 100,
               height: 100,
             ))
-          : ((_files.length > 0 || _uploadingQueue.length > 0)
+          : ((AppSettings.files.length > 0 || _uploadingQueue.length > 0)
               ? GridView(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      childAspectRatio: AppSettings.filesTheme == 'new'
-                          ? 1 / 1
-                          : AppSettings.filesTheme == 'new_compact'
-                              ? 170 / 48.1
-                              : 1,
+                      childAspectRatio: aspectRatio,
                       mainAxisSpacing: 5,
                       crossAxisSpacing: 5,
                       crossAxisCount: gridSize > 0 ? gridSize : 1),

@@ -14,9 +14,8 @@ class APIWrapper {
   final MethodChannel _methodChannel =
       const MethodChannel('com.pato05.uploadgram');
 
-  bool copy(String text, {Function onSuccess, Function onError}) {
+  Future<bool> copy(String text) async {
     Clipboard.setData(ClipboardData(text: text));
-    if (onSuccess != null) onSuccess();
     return true;
   }
 
@@ -32,8 +31,10 @@ class APIWrapper {
     return files;
   }
 
-  Future<bool> saveFiles(Map files) =>
-      saveString('uploaded_files', json.encode(files));
+  Future<bool> saveFiles(Map files) {
+    print('called api.saveFiles($files)');
+    return saveString('uploaded_files', json.encode(files));
+  }
 
   Future<bool> saveString(String name, String content) =>
       _methodChannel.invokeMethod(

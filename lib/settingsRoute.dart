@@ -23,6 +23,7 @@ class _SettingsRouteState extends State<SettingsRoute> {
               title: Text('Upload button theme',
                   style: Theme.of(context).textTheme.headline5),
               subtitle: DropdownButton(
+                  isExpanded: true,
                   value: AppSettings.fabTheme,
                   items: [
                     {
@@ -45,6 +46,7 @@ class _SettingsRouteState extends State<SettingsRoute> {
               title:
                   Text('Theme', style: Theme.of(context).textTheme.headline5),
               subtitle: DropdownButton(
+                  isExpanded: true,
                   value: AppSettings.filesTheme,
                   items: [
                     {
