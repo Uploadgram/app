@@ -3,9 +3,11 @@ Uploadgram frontend for Android (and web)
 
 ## Where can I download the app?
 Just go to the [latest release](https://github.com/Pato05/uploadgram-app/releases/latest) and click one of the packages.
-`app-release.apk` is compatible with both ARM and ARM64 (if you are unsure if your device is ARM or ARM64)
-`app-arm64-v8a-release.apk` is the ARM64 release (compatible with most new devices)
-`app-armeabi-v7a-release.apk` is the ARM release
+
+## Files descriptions
+- `app-release.apk` is compatible with both ARM and ARM64 (if you are unsure if your device is ARM or ARM64)
+- `app-arm64-v8a-release.apk` is the ARM64 release (compatible with most new devices)
+- `app-armeabi-v7a-release.apk` is the ARM release
 
 ## How can I build the app for Android?
 To build the app for Android, simply clone this repository and run `flutter build apk --split-per-abi`
