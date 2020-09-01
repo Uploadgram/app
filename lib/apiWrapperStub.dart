@@ -10,7 +10,7 @@ class APIWrapper {
   Future<Map> importFiles() => throw UnsupportedError('');
 
   Future<Map> getFile() => throw UnsupportedError('');
-  Future<bool> saveFile(String filename, String content) =>
+  Future<void> saveFile(String filename, String content) =>
       throw UnsupportedError('');
   Future<bool> saveFiles(Map files) => throw UnsupportedError('');
   Future<Map> getFiles() => throw UnsupportedError('');

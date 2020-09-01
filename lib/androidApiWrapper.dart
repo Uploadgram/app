@@ -51,12 +51,12 @@ class APIWrapper {
     };
   }
 
-  Future<bool> saveFile(String filename, String content) async {
+  Future<void> saveFile(String filename, String content) async {
     String filePath = await _methodChannel
         .invokeMethod('saveFile', <String, String>{'filename': filename});
-    if (filePath == null) return null;
+    if (filePath == null) return;
     await File(filePath).writeAsString(content);
-    return null;
+    return;
   }
 
   Future<Map> uploadFile(

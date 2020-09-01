@@ -35,6 +35,8 @@ class APIWrapper {
     inputFile.type = 'file';
     html.document.body.append(inputFile);
     inputFile.click();
+    await inputFile.onChange.first;
+    if (inputFile.files.length == 0) return null;
     html.File file = inputFile.files[0];
     inputFile.remove();
     inputFile = null;
@@ -50,6 +52,7 @@ class APIWrapper {
       html.window.location.replace('https://uploadgram.me/uploadgram_app.apk');
   Future<Map> importFiles() async {
     Map fileMap = await getFile();
+    if (fileMap == null) return null;
     html.File file = fileMap['realFile'];
     html.FileReader reader = html.FileReader();
     reader.readAsText(file);
@@ -58,7 +61,17 @@ class APIWrapper {
     return files;
   }
 
-  Future<bool> saveFile(String filename, String content) async => null;
+  Future<void> saveFile(String filename, String content) async {
+    html.Blob blob = new html.Blob([content]);
+    html.LinkElement a = html.document.createElement('a');
+    String url = a.href = html.Url.createObjectUrlFromBlob(blob);
+    a.setAttribute('download', filename);
+    html.document.body.append(a);
+    a.click();
+    a.remove();
+    html.Url.revokeObjectUrl(url);
+    return;
+  }
 
   Future<Map> uploadFile(
     Map file, {
