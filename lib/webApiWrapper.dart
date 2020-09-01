@@ -55,8 +55,8 @@ class APIWrapper {
     return html.window.navigator.userAgent.contains('Android');
   }
 
-  void downloadApp() =>
-      html.window.location.replace('https://uploadgram.me/uploadgram_app.apk');
+  void downloadApp() => html.window.location
+      .replace('https://github.com/Pato05/uploadgram-app/releases/latest');
   Future<Map> importFiles() async {
     Map fileMap = await getFile();
     if (fileMap == null) return null;
