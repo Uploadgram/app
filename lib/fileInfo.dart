@@ -77,57 +77,63 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
             )
           ],
         ),
-        body: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 50),
-            child: ListView(children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: 170),
-                child: Center(
-                    child: Icon(widget.fileIcon,
-                        size: 56, color: Colors.grey.shade700)),
-              ),
-              Padding(
-                  child: Text(
-                    widget.filename,
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w500),
-                    overflow: TextOverflow.visible,
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 23)),
-              Table(
-                columnWidths: {
-                  0: const FlexColumnWidth(0.3),
-                  2: const FlexColumnWidth(0.7),
-                },
-                children: [
-                  [
-                    Text('Size', style: TextStyle(fontSize: fontSize)),
-                    Text(humanSize(widget.fileSize),
-                        style: TextStyle(fontSize: fontSize))
-                  ],
-                  [
-                    Text('URL', style: TextStyle(fontSize: fontSize)),
-                    SelectableText(widget.url,
-                        style: TextStyle(fontSize: fontSize))
-                  ],
-                  [
-                    Text('Uploaded on', style: TextStyle(fontSize: fontSize)),
-                    Text(
-                      uploadDateFormatted,
-                      style: TextStyle(fontSize: fontSize),
-                    )
+        body: ListView(children: [
+          Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 50),
+              child: Column(mainAxisSize: MainAxisSize.max, children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: 170),
+                  child: Center(
+                      child: Icon(widget.fileIcon,
+                          size: 56, color: Colors.grey.shade700)),
+                ),
+                Row(children: [
+                  Padding(
+                      child: Text(
+                        widget.filename,
+                        style: TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.visible,
+                        textAlign: TextAlign.start,
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 23))
+                ]),
+                Table(
+                  columnWidths: {
+                    0: const FlexColumnWidth(0.3),
+                    2: const FlexColumnWidth(0.7),
+                  },
+                  children: [
+                    [
+                      Text('Size', style: TextStyle(fontSize: fontSize)),
+                      Text(humanSize(widget.fileSize),
+                          style: TextStyle(fontSize: fontSize))
+                    ],
+                    [
+                      Text('URL', style: TextStyle(fontSize: fontSize)),
+                      SelectableText(widget.url,
+                          style: TextStyle(fontSize: fontSize))
+                    ],
+                    [
+                      Text('Uploaded on', style: TextStyle(fontSize: fontSize)),
+                      Text(
+                        uploadDateFormatted,
+                        style: TextStyle(fontSize: fontSize),
+                      )
+                    ]
                   ]
-                ]
-                    .map((e) => TableRow(
-                        children: e
-                            .map((wid) => TableCell(
-                                verticalAlignment:
-                                    TableCellVerticalAlignment.middle,
-                                child: Container(
-                                    child: wid,
-                                    margin: EdgeInsets.only(bottom: 30))))
-                            .toList()))
-                    .toList(),
-              ),
-            ])));
+                      .map((e) => TableRow(
+                          children: e
+                              .map((wid) => TableCell(
+                                  verticalAlignment:
+                                      TableCellVerticalAlignment.middle,
+                                  child: Container(
+                                      child: wid,
+                                      margin: EdgeInsets.only(bottom: 30))))
+                              .toList()))
+                      .toList(),
+                ),
+              ]))
+        ]));
   }
 }

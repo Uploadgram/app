@@ -6,16 +6,20 @@ import 'dart:typed_data';
 import 'utils.dart';
 
 class APIWrapper {
-  void dispose() => null;
+  // maybe saveFiles in saveObject and json.encode values?
 
   Future<bool> saveFiles(Map files) async {
-    saveString('uploaded_files', json.encode(files));
+    setString('uploaded_files', json.encode(files));
     return true;
   }
 
-  Future<bool> saveString(String name, String content) async {
-    html.window.localStorage[name] = content;
-    return true;
+  Future<bool> setString(String name, String content) async {
+    try {
+      html.window.localStorage[name] = content;
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<Map> getFiles() async =>
@@ -23,6 +27,18 @@ class APIWrapper {
 
   Future<String> getString(String name, String defaultValue) async =>
       html.window.localStorage[name] ?? defaultValue;
+
+  Future<bool> getBool(String name) async =>
+      html.window.localStorage[name] ?? false;
+
+  Future<bool> setBool(String name, bool value) async {
+    try {
+      html.window.localStorage[name] = json.encode(value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   Future<bool> copy(String text) async {
     print('called APIWrapper.copy($text)');

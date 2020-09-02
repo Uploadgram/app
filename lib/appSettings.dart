@@ -3,7 +3,7 @@ import 'apiWrapperStub.dart'
     if (dart.library.html) 'webApiWrapper.dart';
 
 class AppSettings {
-  static Map files;
+  static Map<String, Map> files;
   static APIWrapper api = APIWrapper();
   static String filesTheme = 'new';
   static String fabTheme = 'extended';
@@ -20,7 +20,7 @@ class AppSettings {
 
   static Future<Map<String, dynamic>> getFiles() async {
     if (files == null) {
-      files = await api.getFiles();
+      files = (await api.getFiles()).cast<String, Map>();
     }
     return files;
   }
@@ -31,7 +31,7 @@ class AppSettings {
   }
 
   static Future<bool> saveSettings() async {
-    return await api.saveString('fabTheme', fabTheme) &&
-        await api.saveString('filesTheme', filesTheme);
+    return await api.setString('fabTheme', fabTheme) &&
+        await api.setString('filesTheme', filesTheme);
   }
 }

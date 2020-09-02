@@ -223,8 +223,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   Stream _uploadFileStream(UniqueKey key, Map file) {
     if (file['locked'] == true) return null;
     file['locked'] = true;
-    // ignore: close_sinks
-    var controller = new StreamController();
+    var controller = new StreamController.broadcast();
     var uploadWorker = () async {
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
@@ -281,6 +280,31 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   ]));
       return;
     }
+    if (AppSettings.files.length >= 5 &&
+        AppSettings.api.isWebAndroid() &&
+        await AppSettings.api.getBool('has_asked_app') == false) {
+      AppSettings.api.setBool('has_asked_app', true);
+      showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+                title: Text('Hi!'),
+                content: Text(
+                    'Seems like you are enjoying Uploadgram! Did you know that Uploadgram has an Android app too?'
+                    '\nYou can download the app by clicking the button below or by clicking on the three-dots!'),
+                actions: <Widget>[
+                  FlatButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('NO, THANKS'),
+                    textColor: Theme.of(context).primaryColorLight,
+                  ),
+                  FlatButton(
+                    onPressed: AppSettings.api.downloadApp,
+                    child: Text('DOWNLOAD THE APP!'),
+                    textColor: Theme.of(context).primaryColorLight,
+                  ),
+                ],
+              ));
+    }
     print('got file ${file["name"]}');
     setState(() {
       _uploadingQueue.add({
@@ -295,9 +319,85 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   List<Widget> _filesWidgets() {
     List<Widget> rows = [];
-    AppSettings.files.forEach((delete, fileObject) {
-      IconData fileIcon = fileIcons[fileObject['filename'].split('.').last] ??
-          fileIcons['default'];
+    var len = _uploadingQueue.length;
+    if (len > 0)
+      for (int key = len - 1; key >= 0; key--) {
+        var object = _uploadingQueue[key];
+        print(object);
+        Map file = object['fileObject'];
+        IconData fileIcon =
+            fileIcons[file['name'].split('.').last.toLowerCase()] ??
+                fileIcons['default'];
+        Stream _uploadStream = object['stream'] ??
+            (object['stream'] = _uploadFileStream(object['key'], file));
+        rows.add(StreamBuilder(
+            stream: _uploadStream,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              double _progress;
+              String _error;
+              bool _uploading = true;
+              String _delete = object['key'].toString();
+              Map _file = {
+                'filename': file['name'],
+                'size': file['size'],
+                'url': '',
+              };
+              switch (snapshot.connectionState) {
+                case ConnectionState.active:
+                  print(snapshot.data);
+                  switch (snapshot.data['type']) {
+                    case 'progress':
+                      _progress = snapshot.data['value'];
+                      break;
+                  }
+                  break;
+                case ConnectionState.done:
+                  switch (snapshot.data['type']) {
+                    case 'end':
+                      _uploading = false;
+                      _delete = snapshot.data['value']['delete'];
+                      _file = snapshot.data['value']['file'];
+                      break;
+                    case 'errorEnd':
+                      _uploading = false;
+                      _error = 'An error occurred while obtaining the response';
+                      break;
+                    case 'error':
+                      _uploading = false;
+                      _error = 'An error occurred while uploading';
+                      break;
+                  }
+                  break;
+                default:
+                  break;
+              }
+              return FileWidget(
+                selected: false,
+                icon: fileIcon,
+                delete: _delete,
+                uploading: _uploading,
+                progress: _progress,
+                error: _error,
+                filename: _file['filename'],
+                fileSize: _file['size'].toDouble(),
+                url: _file['url'],
+                handleDelete: _uploading
+                    ? null
+                    : (String delete, {Function onYes}) =>
+                        _handleFileDelete([delete], onYes: onYes),
+                handleRename: _uploading ? null : _handleFileRename,
+                onPressed: _uploading ? () => null : null,
+                onLongPress: _uploading ? () => null : null,
+                compact: AppSettings.filesTheme == 'new_compact',
+              );
+            }));
+      }
+    AppSettings.files.entries.toList().reversed.forEach((MapEntry entry) {
+      String delete = entry.key;
+      Map fileObject = entry.value;
+      IconData fileIcon =
+          fileIcons[fileObject['filename'].split('.').last.toLowerCase()] ??
+              fileIcons['default'];
       rows.add(FileWidget(
         selected: _selected.contains(delete),
         selectOnPress: _selected.length > 0,
@@ -313,77 +413,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         compact: AppSettings.filesTheme == 'new_compact',
       ));
     });
-    var len = _uploadingQueue.length;
-    for (int key = 0; key < len; key++) {
-      var object = _uploadingQueue[key];
-      print(object);
-      Map file = object['fileObject'];
-      IconData fileIcon =
-          fileIcons[file['name'].split('.').last] ?? fileIcons['default'];
-      Stream _uploadStream = object['stream'] ??
-          (object['stream'] = _uploadFileStream(object['key'], file));
-      rows.add(StreamBuilder(
-          stream: _uploadStream,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            double _progress;
-            String _error;
-            bool _uploading = true;
-            String _delete = object['key'].toString();
-            Map _file = {
-              'filename': file['name'],
-              'size': file['size'],
-              'url': '',
-            };
-            switch (snapshot.connectionState) {
-              case ConnectionState.active:
-                print(snapshot.data);
-                switch (snapshot.data['type']) {
-                  case 'progress':
-                    _progress = snapshot.data['value'];
-                    break;
-                }
-                break;
-              case ConnectionState.done:
-                switch (snapshot.data['type']) {
-                  case 'end':
-                    _uploading = false;
-                    _delete = snapshot.data['value']['delete'];
-                    _file = snapshot.data['value']['file'];
-                    break;
-                  case 'errorEnd':
-                    _uploading = false;
-                    _error = 'An error occurred while obtaining the response';
-                    break;
-                  case 'error':
-                    _uploading = false;
-                    _error = 'An error occurred while uploading';
-                    break;
-                }
-                break;
-              default:
-                break;
-            }
-            return FileWidget(
-              selected: false,
-              icon: fileIcon,
-              delete: _delete,
-              uploading: _uploading,
-              progress: _progress,
-              error: _error,
-              filename: _file['filename'],
-              fileSize: _file['size'].toDouble(),
-              url: _file['url'],
-              handleDelete: _uploading
-                  ? null
-                  : (String delete, {Function onYes}) =>
-                      _handleFileDelete([delete], onYes: onYes),
-              handleRename: _uploading ? null : _handleFileRename,
-              onPressed: _uploading ? () => null : null,
-              onLongPress: _uploading ? () => null : null,
-              compact: AppSettings.filesTheme == 'new_compact',
-            );
-          }));
-    }
     return rows;
   }
 
@@ -394,7 +423,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _initStateAsync() async {
-    Map files = await AppSettings.getFiles();
+    await AppSettings.getFiles();
     await AppSettings.getSettings();
     setState(() => null);
   }

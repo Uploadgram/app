@@ -14,10 +14,13 @@ class APIWrapper {
       throw UnsupportedError('');
   Future<bool> saveFiles(Map files) => throw UnsupportedError('');
   Future<Map> getFiles() => throw UnsupportedError('');
-  Future<bool> saveString(String name, String content) =>
+  Future<bool> setString(String name, String content) =>
       throw UnsupportedError('');
-  Future<String> getString(String name, String defaultValue) async =>
+  Future<String> getString(String name, String defaultValue) =>
       throw UnsupportedError('');
+
+  Future<bool> getBool(String name) => throw UnsupportedError('');
+  Future<bool> setBool(String name, bool content) => throw UnsupportedError('');
 
   Future<Map> uploadFile(
     Map file, {

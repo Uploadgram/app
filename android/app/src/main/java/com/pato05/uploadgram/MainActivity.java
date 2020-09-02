@@ -55,6 +55,12 @@ public class MainActivity extends FlutterActivity {
                         default:
                             result.notImplemented();
                             break;
+                        case "setBool":
+                            result.success(_sharedPrefs.edit().putBoolean(call.argument("name"), call.argument("value")).commit());
+                            break;
+                        case "getBool":
+                            result.success(_sharedPrefs.getBoolean(call.argument("name"), false));
+                            break;
                     }
                 });
     }

@@ -33,10 +33,10 @@ class APIWrapper {
 
   Future<bool> saveFiles(Map files) {
     print('called api.saveFiles($files)');
-    return saveString('uploaded_files', json.encode(files));
+    return setString('uploaded_files', json.encode(files));
   }
 
-  Future<bool> saveString(String name, String content) =>
+  Future<bool> setString(String name, String content) =>
       _methodChannel.invokeMethod(
           'saveString', <String, String>{'name': name, 'content': content});
 
@@ -46,6 +46,12 @@ class APIWrapper {
   Future<String> getString(String name, String defaultValue) =>
       _methodChannel.invokeMethod(
           'getString', <String, String>{'name': name, 'default': defaultValue});
+
+  Future<bool> getBool(String name) =>
+      _methodChannel.invokeMethod('getBool', <String, String>{'name': name});
+
+  Future<bool> setBool(String name, bool value) => _methodChannel
+      .invokeMethod('setBool', <String, dynamic>{'name': name, 'value': value});
 
   Future<Map> getFile() async {
     String filePath = await _methodChannel.invokeMethod('getFile');
@@ -90,7 +96,7 @@ class APIWrapper {
 
     String fileName = file['name'];
     int fileSize = file['size'];
-    MediaType mime = mimeTypes[fileName.split('.').last] ??
+    MediaType mime = mimeTypes[fileName.split('.').last.toLowerCase()] ??
         MediaType('application', 'octet-stream');
     print(mime);
     print('processing file upload');
