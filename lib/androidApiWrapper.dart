@@ -51,7 +51,8 @@ class APIWrapper {
         String fragment = Uri.decodeComponent(uri.fragment);
         print(fragment);
         if (fragment.indexOf('import:') == 0) {
-          String filesMap = uri.fragment.substring(8);
+          String filesMap = fragment.substring(7);
+          print(filesMap);
           try {
             Map parsedFiles = json.decode(filesMap);
             parsedFiles.forEach((key, value) {
