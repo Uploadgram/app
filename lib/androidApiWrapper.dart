@@ -22,7 +22,7 @@ class APIWrapper {
   bool isWebAndroid() => false;
   void downloadApp() => null;
   Future<Map> importFiles() async {
-    Map fileMap = await getFile();
+    Map fileMap = await getFile('application/json');
     File file = fileMap['realFile'];
     Uint8List fileBytes = await file.readAsBytes();
     if (String.fromCharCode(fileBytes.first) != '{' ||
@@ -40,8 +40,31 @@ class APIWrapper {
       _methodChannel.invokeMethod(
           'saveString', <String, String>{'name': name, 'content': content});
 
-  Future<Map> getFiles() async =>
-      json.decode(await getString('uploaded_files', '{}'));
+  Future<Map> getFiles() async {
+    Map files = {};
+    files = json.decode(await getString('uploaded_files', '{}'));
+    String u = await _methodChannel.invokeMethod('getLastUrl');
+    if (u != null) {
+      print(u);
+      Uri uri = Uri.parse(u);
+      if (uri.hasFragment) {
+        String fragment = Uri.decodeComponent(uri.fragment);
+        print(fragment);
+        if (fragment.indexOf('#import:') == 0) {
+          String filesMap = uri.fragment.substring(8);
+          try {
+            Map parsedFiles = json.decode(filesMap);
+            parsedFiles.forEach((key, value) {
+              if (key.length == 48 || key.length == 49) {
+                files[key] = value;
+              }
+            });
+          } catch (e) {}
+        }
+      }
+    }
+    return files;
+  }
 
   Future<String> getString(String name, String defaultValue) =>
       _methodChannel.invokeMethod(
@@ -53,8 +76,9 @@ class APIWrapper {
   Future<bool> setBool(String name, bool value) => _methodChannel
       .invokeMethod('setBool', <String, dynamic>{'name': name, 'value': value});
 
-  Future<Map> getFile() async {
-    String filePath = await _methodChannel.invokeMethod('getFile');
+  Future<Map> getFile([String type = '*/*']) async {
+    String filePath = await _methodChannel
+        .invokeMethod('getFile', <String, String>{'type': type});
     print(filePath);
     if (filePath == 'PERMISSION_NOT_GRANTED') {
       return {'error': 'PERMISSION_NOT_GRANTED'};
@@ -107,7 +131,7 @@ class APIWrapper {
     });
     onStart();
     print('uploading file');
-    Response response = await _dio.post('https://uploadgram.me/upload',
+    Response response = await _dio.post('https://api.uploadgram.me/upload',
         data: formData, onSendProgress: onProgress);
     print('end file upload');
     if (response.statusCode != 200) {
@@ -119,7 +143,8 @@ class APIWrapper {
   }
 
   Future<Map> deleteFile(String file) async {
-    Response response = await _dio.get('https://uploadgram.me/delete/$file');
+    Response response =
+        await _dio.get('https://api.uploadgram.me/delete/$file');
     if (response.statusCode != 200) {
       return {
         'ok': false,
@@ -130,7 +155,8 @@ class APIWrapper {
   }
 
   Future<Map> renameFile(String file, String newName) async {
-    Response response = await _dio.post('https://uploadgram.me/rename/$file',
+    Response response = await _dio.post(
+        'https://api.uploadgram.me/rename/$file',
         data: {'new_filename': await parseName(newName)});
     if (response.statusCode != 200) {
       return {

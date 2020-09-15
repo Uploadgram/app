@@ -18,7 +18,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Uploadgram">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/uploadgram-logo-512.png">
 
   <!-- Favicon -->
   <link href="/icons/uploadgram-logo.svg" sizes="any" rel="icon" type="image/svg+xml">
@@ -32,12 +32,37 @@
 
   <title>Upload a file — Uploadgram</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Prevent white flashing on dark theme -->
+  <style>
+    @media screen and (prefers-color-scheme: dark) {
+      html, body {
+        background-color: #000;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- This script installs service_worker.js to provide PWA functionality to
-       application. For more information, see:
-       https://developers.google.com/web/fundamentals/primers/service-workers -->
   <script>
+    // import file if in #import:
+    // note that this is a temporary solution, probably this will get replaced by GET args since flutter takes the hash part.
+    (function() {
+      var decHash = decodeURIComponent(document.location.hash);
+      if (decHash.indexOf('#import:') === 0) {
+        let file = decHash.substring(8);
+        try {
+          var decFile = JSON.parse(file);
+        } catch(e) {
+          return;
+        }
+        // merge into localstorage
+        let files = JSON.parse(localStorage.getItem('uploaded_files'));
+        for (let [key, val] of Object.entries(decFile)) files[key] = val;
+        localStorage.setItem('uploaded_files', JSON.stringify(files));
+        // reset hash
+        document.location.hash = '';
+      }
+    })();
+    // register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('flutter_service_worker.js');

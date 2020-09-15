@@ -13,7 +13,10 @@ import androidx.core.app.ActivityCompat;
 
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.PluginRegistry;
+
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,16 +28,26 @@ public class MainActivity extends FlutterActivity {
     private static final int REQUEST_CODE_OPEN = MainActivity.class.hashCode() + 30;
     private static final int REQUEST_CODE_SAVE = MainActivity.class.hashCode() + 60;
     private static final int REQUEST_CODE_PERMISSIONS = MainActivity.class.hashCode() + 120;
+    private String _lastUri;
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        handleIntent(intent);
+    }
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
         Context context = getApplicationContext();
+        handleIntent(getIntent());
         _sharedPrefs = context.getSharedPreferences("UploadgramPreferences", context.MODE_PRIVATE);
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_NAME)
                 .setMethodCallHandler((call, result) -> {
                     String name;
                     switch(call.method) {
+                        case "getLastUrl":
+                            result.success(_lastUri);
+                            break;
                         case "saveString":
                             result.success(_sharedPrefs.edit().putString(call.argument("name"), call.argument("content")).commit());
                             break;
@@ -44,12 +57,16 @@ public class MainActivity extends FlutterActivity {
                             break;
                         case "getFile":
                             _pendingResult = result;
-                            if(requestPermissionIfNeeded()) break;
-                            getFile();
+                            if(requestPermissionIfNeeded()) {
+                                break;
+                            }
+                            getFile(call.argument("type"));
                             break;
                         case "saveFile":
                             _pendingResult = result;
-                            if (requestPermissionIfNeeded()) break;
+                            if (requestPermissionIfNeeded()) {
+                                break;
+                            }
                             saveFile(call.argument("filename"), result);
                             break;
                         default:
@@ -86,7 +103,9 @@ public class MainActivity extends FlutterActivity {
             return;
         }
         Uri uri = intent.getData();
-        // TODO: handle correctly Uris from other directories than the phone's one
+        // handle correctly Uris from other directories than the phone's one
+        // should be done with FileUtils.
+        // TODO: use output/input stream to read from/write to the file instead of handling that dart-side.
         if (requestCode == REQUEST_CODE_OPEN || requestCode == REQUEST_CODE_SAVE)
             _pendingResult.success(FileUtils.getPath(getApplicationContext(), uri));
     }
@@ -99,10 +118,9 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
-    private void getFile() {
-        // TODO: ask for external storage permission if not granted
+    private void getFile(String type) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.setType("*/*");
+        intent.setType(type);
 
         startActivityForResult(intent, REQUEST_CODE_OPEN);
     }
@@ -113,5 +131,13 @@ public class MainActivity extends FlutterActivity {
         intent.putExtra(Intent.EXTRA_TITLE, filename);
 
         startActivityForResult(intent, REQUEST_CODE_SAVE);
+    }
+
+    private void handleIntent(Intent intent) {
+        String action = intent.getAction();
+        String dataString = intent.getDataString();
+        if (Intent.ACTION_VIEW.equals(action) && dataString != null){
+            _lastUri = dataString;
+        }
     }
 }

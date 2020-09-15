@@ -3,10 +3,11 @@ import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'utils.dart';
 
 class APIWrapper {
-  // maybe saveFiles in saveObject and json.encode values?
+  // importing files is handled by the javascript part.
 
   Future<bool> saveFiles(Map files) async {
     setString('uploaded_files', json.encode(files));
@@ -22,8 +23,13 @@ class APIWrapper {
     }
   }
 
-  Future<Map> getFiles() async =>
-      json.decode(await getString('uploaded_files', '{}'));
+  Future<Map> getFiles() async {
+    try {
+      return json.decode(await getString('uploaded_files', '{}'));
+    } catch (e) {
+      return {};
+    }
+  }
 
   Future<String> getString(String name, String defaultValue) async =>
       html.window.localStorage[name] ?? defaultValue;
@@ -53,9 +59,10 @@ class APIWrapper {
     return copyStatus;
   }
 
-  Future<Map> getFile() async {
+  Future<Map> getFile([String type]) async {
     html.InputElement inputFile = html.document.createElement('input');
     inputFile.type = 'file';
+    if (type != null) inputFile.accept = type;
     html.document.body.append(inputFile);
     inputFile.click();
     await inputFile.onChange.first;
@@ -116,7 +123,7 @@ class APIWrapper {
     html.FormData formData = html.FormData();
     formData.append('file_size', file['size'].toString());
     formData.appendBlob('file_upload', file['realFile']);
-    xhr.open('POST', 'https://uploadgram.me/upload');
+    xhr.open('POST', 'https://api.uploadgram.me/upload');
     xhr.upload.onProgress
         .listen((html.ProgressEvent e) => onProgress(e.loaded, e.total));
     xhr.onError.listen((e) => onError());
@@ -136,7 +143,7 @@ class APIWrapper {
 
   Future<Map> deleteFile(String file) async {
     html.HttpRequest xhr = html.HttpRequest();
-    xhr.open('GET', 'https://uploadgram.me/delete/$file');
+    xhr.open('GET', 'https://api.uploadgram.me/delete/$file');
     xhr.send();
     await xhr.onLoad.first;
     if (xhr.status == 200) return json.decode(xhr.responseText);
@@ -150,7 +157,7 @@ class APIWrapper {
   Future<Map> renameFile(String file, String newName) async {
     html.HttpRequest xhr = html.HttpRequest();
     html.window.console.log(xhr);
-    xhr.open('POST', 'https://uploadgram.me/rename/$file');
+    xhr.open('POST', 'https://api.uploadgram.me/rename/$file');
     xhr.send(json
         .encode(<String, String>{'new_filename': await parseName(newName)}));
     await xhr.onLoad.first;

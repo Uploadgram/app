@@ -9,6 +9,7 @@ import 'appSettings.dart';
 void main() => runApp(UploadgramApp());
 
 class UploadgramApp extends StatelessWidget {
+  final defaultRoute = UploadgramRoute();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -35,7 +36,10 @@ class UploadgramApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: UploadgramRoute(),
+      home: defaultRoute,
+      routes: {
+        '/settings': (BuildContext context) => SettingsRoute(),
+      },
     );
   }
 }
@@ -48,8 +52,8 @@ class UploadgramRoute extends StatefulWidget {
 }
 
 class _UploadgramRouteState extends State<UploadgramRoute> {
-  // TODO: for next version, maybe avoid using setState on the Route to have better performance
-  // TODO: and split into several StatefulWidgets.
+  // TODO: for next version, maybe avoid using setState on the main route to have better performance
+  // TODO: and split into several StatefulWidgets if needed.
   static const Map<String, IconData> fileIcons = {
     'apk': Icons.android,
     'zip': Icons.archive,
@@ -66,8 +70,31 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     'doc': Icons.description,
     'odt': Icons.description,
     'bash': Icons.description,
+    'md': Icons.font_download,
     'mp4': Icons.movie,
     'avi': Icons.movie,
+    'mkv': Icons.movie,
+    'webm': Icons.movie,
+    'mpeg': Icons.movie,
+    'ogv': Icons.movie,
+    'ts': Icons.movie,
+    'mp3': Icons.audiotrack,
+    'aac': Icons.audiotrack,
+    'mid': Icons.audiotrack,
+    'midi': Icons.audiotrack,
+    'oga': Icons.audiotrack,
+    'wav': Icons.audiotrack,
+    'weba': Icons.audiotrack,
+    'opus': Icons.audiotrack,
+    'gif': Icons.insert_photo,
+    'bmp': Icons.insert_photo,
+    'png': Icons.insert_photo,
+    'jpg': Icons.insert_photo,
+    'jpeg': Icons.insert_photo,
+    'tiff': Icons.insert_photo,
+    'tif': Icons.insert_photo,
+    'ico': Icons.insert_photo,
+    'webp': Icons.insert_photo,
     'html': Icons.code,
     'xml': Icons.code,
     'php': Icons.code,
@@ -79,10 +106,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     'json': Icons.code,
     'exe': Icons.settings_applications,
     'jar': Icons.settings_applications,
-    'png': Icons.insert_photo,
-    'jpg': Icons.insert_photo,
-    'jpeg': Icons.insert_photo,
-    'md': Icons.font_download,
     'default': Icons.insert_drive_file
   };
   static const String appTitle =
@@ -140,6 +163,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 FlatButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    // TODO: this setState can be turned into an internal setState
                     setState(() => _selected.clear());
                     _handleFileRename(delete, onDone: onDone, newName: _text);
                   },
@@ -155,6 +179,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     Map result = await AppSettings.api.renameFile(delete, newName);
     if (result['ok']) {
       onDone(result['new_filename']);
+      // TODO: set internal widget state instead of reloading the whole tree
       setState(
           () => AppSettings.files[delete]['filename'] = result['new_filename']);
       AppSettings.saveFiles();
@@ -425,6 +450,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   Future<void> _initStateAsync() async {
     await AppSettings.getFiles();
     await AppSettings.getSettings();
+    // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
   }
 
@@ -448,25 +474,30 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           icon: Icon(Icons.select_all),
           onPressed: () => setState(
               () => _selected = List<String>.from(AppSettings.files.keys)),
+          tooltip: 'Select all the files',
         ),
         IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              _handleFileDelete(List.from(_selected),
-                  onYes: () => setState(() => _selected.clear()));
-            }),
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            _handleFileDelete(List.from(_selected),
+                onYes: () => setState(() => _selected.clear()));
+          },
+          tooltip: 'Delete selected file(s)',
+        ),
         IconButton(
-            icon: Icon(Icons.get_app),
-            onPressed: () {
-              // we need to export ONLY _selected here
-              // _selected is a list of _files keys, so it should be easy to export.
-              Map _exportFiles = {};
-              _selected.forEach((e) => _exportFiles[e] = AppSettings.files[e]);
-              String _filename = 'uploadgram_files.json';
-              if (_selected.length == 1)
-                _filename = _exportFiles[_selected[0]]['filename'] + '.json';
-              AppSettings.api.saveFile(_filename, json.encode(_exportFiles));
-            })
+          icon: Icon(Icons.get_app),
+          onPressed: () {
+            // we need to export ONLY _selected here
+            // _selected is a list of _files keys, so it should be easy to export.
+            Map _exportFiles = {};
+            _selected.forEach((e) => _exportFiles[e] = AppSettings.files[e]);
+            String _filename = 'uploadgram_files.json';
+            if (_selected.length == 1)
+              _filename = _exportFiles[_selected[0]]['filename'] + '.json';
+            AppSettings.api.saveFile(_filename, json.encode(_exportFiles));
+          },
+          tooltip: 'Export selected file(s)',
+        )
       ];
       if (_selected.length == 1) {
         actions.insert(
@@ -475,6 +506,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               icon: Icon(Icons.edit),
               onPressed: () => _handleFileRename(_selected[0],
                   oldName: AppSettings.files[_selected[0]]['filename']),
+              tooltip: 'Rename this file',
             ));
       }
     } else {
@@ -484,10 +516,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           onSelected: (selected) async {
             switch (selected) {
               case 'settings':
-                await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (BuildContext context) => SettingsRoute()));
+                await Navigator.pushNamed(context, '/settings');
                 AppSettings.saveSettings();
                 setState(() => null);
                 break;
