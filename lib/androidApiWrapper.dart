@@ -50,7 +50,7 @@ class APIWrapper {
       if (uri.hasFragment) {
         String fragment = Uri.decodeComponent(uri.fragment);
         print(fragment);
-        if (fragment.indexOf('#import:') == 0) {
+        if (fragment.indexOf('import:') == 0) {
           String filesMap = uri.fragment.substring(8);
           try {
             Map parsedFiles = json.decode(filesMap);
@@ -60,6 +60,7 @@ class APIWrapper {
               }
             });
           } catch (e) {}
+          saveFiles(files);
         }
       }
     }
