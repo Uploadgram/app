@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uploadgram/appSettings.dart';
+import 'appSettings.dart';
 
 class SettingsRoute extends StatefulWidget {
   @override

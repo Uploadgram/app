@@ -26,8 +26,6 @@ class APIWrapper {
     Map file, {
     Function(int, int) onProgress,
     Function() onError,
-    Function onStart,
-    Function onEnd,
   }) =>
       throw UnsupportedError('');
 

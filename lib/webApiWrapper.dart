@@ -110,8 +110,6 @@ class APIWrapper {
     Map file, {
     Function(int, int) onProgress,
     Function() onError,
-    Function onStart,
-    Function onEnd,
   }) async {
     print(file);
     if (!(file['realFile'] is html.File &&
@@ -125,15 +123,11 @@ class APIWrapper {
     formData.appendBlob('file_upload', file['realFile']);
     xhr.open('POST', 'https://api.uploadgram.me/upload');
     xhr.upload.onProgress
-        .listen((html.ProgressEvent e) => onProgress(e.loaded, e.total));
+        .listen((html.ProgressEvent e) => onProgress.call(e.loaded, e.total));
     xhr.onError.listen((e) => onError());
-    xhr.onLoadStart.listen((e) => onStart());
     xhr.send(formData);
     await xhr.onLoadEnd.first;
-    if (xhr.status == 200) {
-      onEnd();
-      return json.decode(xhr.responseText);
-    }
+    if (xhr.status == 200) return json.decode(xhr.responseText);
     return {
       'ok': false,
       'statusCode': xhr.status,

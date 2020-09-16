@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uploadgram/main.dart';
+import 'main.dart';
 import 'utils.dart';
 import 'fileInfo.dart';
 
@@ -114,7 +114,7 @@ class _FileWidgetState extends State<FileWidget> {
                           crossFadeState: widget.selected == true
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
-                          duration: Duration(milliseconds: 150)),
+                          duration: Duration(milliseconds: 200)),
                       onTap: widget.onLongPress,
                       onLongPress: widget.onLongPress,
                     )),
@@ -162,7 +162,7 @@ class _FileWidgetState extends State<FileWidget> {
             child: Icon(widget.icon, size: 37, color: Colors.grey.shade700),
           ));
     Widget container = AnimatedContainer(
-      duration: Duration(milliseconds: 150),
+      duration: Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         border: Border.all(

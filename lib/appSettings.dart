@@ -5,8 +5,8 @@ import 'apiWrapperStub.dart'
 class AppSettings {
   static Map<String, Map> files;
   static APIWrapper api = APIWrapper();
-  static String filesTheme = 'new';
-  static String fabTheme = 'extended';
+  static String filesTheme;
+  static String fabTheme;
 
   static Future<bool> copy(
     String text,

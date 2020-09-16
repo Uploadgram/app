@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:uploadgram/fileWidget.dart';
 import 'package:intl/intl.dart';
 import 'utils.dart';
 import 'appSettings.dart';
+import 'fileWidget.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
@@ -28,17 +28,38 @@ class FileInfoRoute extends StatefulWidget {
 
 class _FileInfoRouteState extends State<FileInfoRoute> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  static const int urlLength = 24;
-  static const int idIndex = urlLength + 8;
   @override
   Widget build(BuildContext context) {
     double fontSize = 20;
-    DateTime uploadDate = new DateTime.fromMillisecondsSinceEpoch(
-            int.parse(widget.url.substring(urlLength, idIndex), radix: 16) *
-                1000)
-        .toLocal();
-    String uploadDateFormatted =
-        DateFormat("E', 'dd MMMM yyyy' at 'HH:mm:ss").format(uploadDate);
+    List<List<Widget>> tableChildren = [
+      [
+        Text('Size', style: TextStyle(fontSize: fontSize)),
+        Text(humanSize(widget.fileSize), style: TextStyle(fontSize: fontSize))
+      ],
+      [
+        Text('URL', style: TextStyle(fontSize: fontSize)),
+        SelectableText(widget.url, style: TextStyle(fontSize: fontSize))
+      ]
+    ];
+    Uri uri = Uri.tryParse(widget.url);
+    if (uri != null) {
+      int uploadDateInt =
+          int.tryParse(uri.path.split('/').last.substring(0, 8), radix: 16);
+      if (uploadDateInt != null) {
+        DateTime uploadDate =
+            new DateTime.fromMillisecondsSinceEpoch(uploadDateInt * 1000)
+                .toLocal();
+        String uploadDateFormatted =
+            DateFormat("E', 'dd MMMM yyyy' at 'HH:mm:ss").format(uploadDate);
+        tableChildren.add([
+          Text('Uploaded on', style: TextStyle(fontSize: fontSize)),
+          Text(
+            uploadDateFormatted,
+            style: TextStyle(fontSize: fontSize),
+          )
+        ]);
+      }
+    }
     return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
@@ -88,40 +109,23 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
                           size: 56, color: Colors.grey.shade700)),
                 ),
                 Row(children: [
-                  Padding(
-                      child: Text(
-                        widget.filename,
-                        style: TextStyle(
-                            fontSize: 26, fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.visible,
-                        textAlign: TextAlign.start,
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 23))
+                  Expanded(
+                      child: Padding(
+                          child: Text(
+                            widget.filename,
+                            style: TextStyle(
+                                fontSize: 26, fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.clip,
+                            textAlign: TextAlign.start,
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 23)))
                 ]),
                 Table(
                   columnWidths: {
                     0: const FlexColumnWidth(0.3),
                     2: const FlexColumnWidth(0.7),
                   },
-                  children: [
-                    [
-                      Text('Size', style: TextStyle(fontSize: fontSize)),
-                      Text(humanSize(widget.fileSize),
-                          style: TextStyle(fontSize: fontSize))
-                    ],
-                    [
-                      Text('URL', style: TextStyle(fontSize: fontSize)),
-                      SelectableText(widget.url,
-                          style: TextStyle(fontSize: fontSize))
-                    ],
-                    [
-                      Text('Uploaded on', style: TextStyle(fontSize: fontSize)),
-                      Text(
-                        uploadDateFormatted,
-                        style: TextStyle(fontSize: fontSize),
-                      )
-                    ]
-                  ]
+                  children: tableChildren
                       .map((e) => TableRow(
                           children: e
                               .map((wid) => TableCell(

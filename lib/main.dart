@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:uploadgram/settingsRoute.dart';
+import 'settingsRoute.dart';
 import 'fileWidget.dart';
 import 'appSettings.dart';
 
@@ -250,20 +250,19 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     file['locked'] = true;
     var controller = new StreamController.broadcast();
     var uploadWorker = () async {
+      // this while could be probably improved
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
       }
-      var result = await AppSettings.api.uploadFile(file,
-          onProgress: (int loaded, int total) {
-            print('loaded: $loaded, total: $total');
-            controller.add({'type': 'progress', 'value': loaded / total});
-          },
-          onError: () {
-            controller.add({'type': 'error', 'value': null});
-          },
-          onEnd: () => null,
-          onStart: () => null);
-      print(result);
+      var result = await AppSettings.api.uploadFile(
+        file,
+        onProgress: (int loaded, int total) {
+          controller.add({'type': 'progress', 'value': loaded / total});
+        },
+        onError: () {
+          controller.add({'type': 'error', 'value': null});
+        },
+      );
       if (result['ok']) {
         var fileObj = {
           'filename': file['name'],
@@ -367,35 +366,36 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 'size': file['size'],
                 'url': '',
               };
-              switch (snapshot.connectionState) {
-                case ConnectionState.active:
-                  print(snapshot.data);
-                  switch (snapshot.data['type']) {
-                    case 'progress':
-                      _progress = snapshot.data['value'];
-                      break;
-                  }
-                  break;
-                case ConnectionState.done:
-                  switch (snapshot.data['type']) {
-                    case 'end':
-                      _uploading = false;
-                      _delete = snapshot.data['value']['delete'];
-                      _file = snapshot.data['value']['file'];
-                      break;
-                    case 'errorEnd':
-                      _uploading = false;
-                      _error = 'An error occurred while obtaining the response';
-                      break;
-                    case 'error':
-                      _uploading = false;
-                      _error = 'An error occurred while uploading';
-                      break;
-                  }
-                  break;
-                default:
-                  break;
-              }
+              if (snapshot.data != null)
+                switch (snapshot.connectionState) {
+                  case ConnectionState.active:
+                    switch (snapshot.data['type']) {
+                      case 'progress':
+                        _progress = snapshot.data['value'];
+                        break;
+                    }
+                    break;
+                  case ConnectionState.done:
+                    switch (snapshot.data['type']) {
+                      case 'end':
+                        _uploading = false;
+                        _delete = snapshot.data['value']['delete'];
+                        _file = snapshot.data['value']['file'];
+                        break;
+                      case 'errorEnd':
+                        _uploading = false;
+                        _error =
+                            'An error occurred while obtaining the response';
+                        break;
+                      case 'error':
+                        _uploading = false;
+                        _error = 'An error occurred while uploading';
+                        break;
+                    }
+                    break;
+                  default:
+                    break;
+                }
               return FileWidget(
                 selected: false,
                 icon: fileIcon,
@@ -423,8 +423,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       IconData fileIcon =
           fileIcons[fileObject['filename'].split('.').last.toLowerCase()] ??
               fileIcons['default'];
+      bool isSelected = _selected.contains(delete);
       rows.add(FileWidget(
-        selected: _selected.contains(delete),
+        key: Key(delete),
+        selected: isSelected,
         selectOnPress: _selected.length > 0,
         icon: fileIcon,
         delete: delete,
@@ -516,9 +518,16 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           onSelected: (selected) async {
             switch (selected) {
               case 'settings':
+                List previousSettings = [
+                  AppSettings.fabTheme,
+                  AppSettings.filesTheme
+                ];
                 await Navigator.pushNamed(context, '/settings');
-                AppSettings.saveSettings();
-                setState(() => null);
+                if (previousSettings !=
+                    [AppSettings.fabTheme, AppSettings.filesTheme]) {
+                  AppSettings.saveSettings();
+                  setState(() => null);
+                }
                 break;
               case 'export':
                 if (AppSettings.files.isEmpty) {
@@ -647,16 +656,21 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     textAlign: TextAlign.center,
                   ),
                 )),
-      floatingActionButton: AppSettings.fabTheme == 'extended'
-          ? FloatingActionButton.extended(
-              onPressed: _uploadFile,
-              label: Text("UPLOAD"),
-              icon: const Icon(Icons.cloud_upload))
-          : FloatingActionButton(
-              onPressed: _uploadFile, child: const Icon(Icons.cloud_upload)),
-      floatingActionButtonLocation: AppSettings.fabTheme == 'extended'
-          ? FloatingActionButtonLocation.centerFloat
-          : FloatingActionButtonLocation.endFloat,
+      floatingActionButton: AppSettings.fabTheme == null
+          ? null
+          : AppSettings.fabTheme == 'extended'
+              ? FloatingActionButton.extended(
+                  onPressed: _uploadFile,
+                  label: Text("UPLOAD"),
+                  icon: const Icon(Icons.cloud_upload))
+              : FloatingActionButton(
+                  onPressed: _uploadFile,
+                  child: const Icon(Icons.cloud_upload)),
+      floatingActionButtonLocation: AppSettings.fabTheme == null
+          ? null
+          : AppSettings.fabTheme == 'extended'
+              ? FloatingActionButtonLocation.centerFloat
+              : FloatingActionButtonLocation.endFloat,
     );
   }
 }

@@ -106,8 +106,6 @@ class APIWrapper {
     Map file, {
     Function(int, int) onProgress,
     Function() onError,
-    Function() onStart,
-    Function() onEnd,
   }) async {
     //if (!await file.exists())
     //  return {
@@ -131,7 +129,6 @@ class APIWrapper {
       'file_upload': await MultipartFile.fromFile(file['realFile'].path,
           filename: file['name'], contentType: mime),
     });
-    onStart();
     print('uploading file');
     Response response = await _dio.post('https://api.uploadgram.me/upload',
         data: formData, onSendProgress: onProgress);
@@ -140,7 +137,6 @@ class APIWrapper {
       onError();
       return null;
     }
-    onEnd();
     return response.data;
   }
 
