@@ -230,9 +230,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       for (String delete in deleteList) {
         print('deleting $delete');
         Map result = await AppSettings.api.deleteFile(delete);
-        if (result['ok']) {
-          return;
-        }
         if (result['statusCode'] == 403) {
           _message = 'File not found. It was probably deleted';
         }
