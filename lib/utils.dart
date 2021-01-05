@@ -20,6 +20,7 @@ Map<String, MediaType> mimeTypes = {
   'weba': MediaType('audio', 'webm'),
   'opus': MediaType('audio', 'opus'),
   'mpeg': MediaType('video', 'mpeg'),
+  'mp4': MediaType('video', 'mp4'),
   'avi': MediaType('video', 'x-msvideo'),
   'ogv': MediaType('video', 'ogg'),
   'ts': MediaType('video', 'mp2t'),
@@ -33,8 +34,8 @@ Map<String, MediaType> mimeTypes = {
 String humanSize(double bytes) {
   List<String> sizes = ["B", "KB", "MB", "GB"];
   int i = 0;
-  while (bytes > 1024) {
-    bytes /= 1024;
+  while (bytes > 1000) {
+    bytes /= 1000;
     if (++i >= (sizes.length - 1)) break;
   }
   return bytes.toStringAsFixed(2) + ' ' + sizes[i];

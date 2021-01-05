@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'utils.dart';
@@ -22,12 +21,9 @@ class APIWrapper {
   bool isWebAndroid() => false;
   void downloadApp() => null;
   Future<Map> importFiles() async {
-    Map fileMap = await getFile('application/json');
+    Map fileMap = await askForFile();
     File file = fileMap['realFile'];
-    Uint8List fileBytes = await file.readAsBytes();
-    if (String.fromCharCode(fileBytes.first) != '{' ||
-        String.fromCharCode(fileBytes.last) != '}') return null;
-    Map files = json.decode(String.fromCharCodes(fileBytes));
+    Map files = json.decode(await file.readAsString()); // returns null if the file is not valid
     return files;
   }
 
@@ -53,14 +49,23 @@ class APIWrapper {
         if (fragment.indexOf('import:') == 0) {
           String filesMap = fragment.substring(7);
           print(filesMap);
-          try {
-            Map parsedFiles = json.decode(filesMap);
-            parsedFiles.forEach((key, value) {
-              if (key.length == 48 || key.length == 49) {
-                files[key] = value;
-              }
-            });
-          } catch (e) {}
+          if (filesMap.substring(0,1) == '{') {
+            try {
+              Map parsedFiles = json.decode(filesMap);
+              parsedFiles.forEach((key, value) {
+                if (key.length == 48 || key.length == 49) {
+                  files[key] = value;
+                }
+              });
+            } catch (e) {}
+          } else {
+            print('trying new import method...');
+            if (fragment.length == 48 || fragment.length == 49) {
+              Map file = await getFile(fragment);
+              file.remove('mime');
+              files[fragment] = file;
+            }
+          }
           saveFiles(files);
         }
       }
@@ -78,7 +83,7 @@ class APIWrapper {
   Future<bool> setBool(String name, bool value) => _methodChannel
       .invokeMethod('setBool', <String, dynamic>{'name': name, 'value': value});
 
-  Future<Map> getFile([String type = '*/*']) async {
+  Future<Map> askForFile([String type = '*/*']) async {
     String filePath = await _methodChannel
         .invokeMethod('getFile', <String, String>{'type': type});
     print(filePath);
@@ -102,10 +107,19 @@ class APIWrapper {
     return;
   }
 
+  Future<Map> getFile(String deleteID) async {
+    Response response = await _dio.get('https://api.uploadgram.me/get/$deleteID');
+    try {
+      return json.decode(response.data);
+    } catch(e) {
+      return {};
+    }
+  }
+
   Future<Map> uploadFile(
     Map file, {
     Function(int, int) onProgress,
-    Function() onError,
+    Function(int) onError,
   }) async {
     //if (!await file.exists())
     //  return {
@@ -134,8 +148,12 @@ class APIWrapper {
         data: formData, onSendProgress: onProgress);
     print('end file upload');
     if (response.statusCode != 200) {
-      onError();
-      return null;
+      onError(response.statusCode);
+      return {
+        'ok': false,
+        'statusCode': response.statusCode,
+        'message': 'Error ${response.statusCode}: ${response.statusMessage}',
+      };
     }
     return response.data;
   }

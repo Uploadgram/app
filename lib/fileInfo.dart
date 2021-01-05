@@ -27,7 +27,6 @@ class FileInfoRoute extends StatefulWidget {
 }
 
 class _FileInfoRouteState extends State<FileInfoRoute> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
     double fontSize = 20;
@@ -61,7 +60,6 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
       }
     }
     return Scaffold(
-        key: _scaffoldKey,
         appBar: AppBar(
           backgroundColor: Theme.of(context).accentColor,
           title: Text('File info'),
@@ -69,7 +67,7 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
             IconButton(
               icon: Icon(Icons.copy),
               onPressed: () async {
-                _scaffoldKey.currentState.showSnackBar(SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(await AppSettings.api.copy(
                   widget.url,
                 )

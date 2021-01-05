@@ -20,6 +20,7 @@ class FileWidget extends StatefulWidget {
   String error;
   double progress = 0;
   bool compact;
+  Widget upperWidget;
 
   FileWidget({
     Key key,
@@ -38,6 +39,7 @@ class FileWidget extends StatefulWidget {
     this.handleRename,
     this.onPressed,
     this.compact = false,
+    this.upperWidget,
   }) : super(key: key);
 
   static _FileWidgetState of(BuildContext c) =>
@@ -191,16 +193,8 @@ class _FileWidgetState extends State<FileWidget> {
               Theme.of(context).primaryColorLight),
         )
       ];
-      if (widget.progress != null)
-        columnChildren.insert(
-            0,
-            Text(
-              (widget.progress != null
-                      ? (widget.progress * 100).ceil().toString()
-                      : '0') +
-                  '%',
-              style: TextStyle(color: Colors.white),
-            ));
+      if (widget.upperWidget != null)
+        columnChildren.insert(0, widget.upperWidget);
       return Stack(children: [
         container,
         Positioned.fill(

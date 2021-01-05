@@ -25,14 +25,21 @@ class APIWrapper {
 
   Future<Map> getFiles() async {
     try {
-      return json.decode(await getString('uploaded_files', '{}'));
+      String files = await getString('uploaded_files', '{}');
+      if (files != 'e') return json.decode(files);
+      return {'error': true};
     } catch (e) {
       return {};
     }
   }
 
-  Future<String> getString(String name, String defaultValue) async =>
-      html.window.localStorage[name] ?? defaultValue;
+  Future<String> getString(String name, String defaultValue) async {
+    try {
+      return html.window.localStorage[name] ?? defaultValue;
+    } catch (e) {
+      return 'e';
+    }
+  }
 
   Future<bool> getBool(String name) async =>
       html.window.localStorage[name] ?? false;
@@ -48,8 +55,7 @@ class APIWrapper {
 
   Future<bool> copy(String text) async {
     print('called APIWrapper.copy($text)');
-    html.InputElement input = html.document.createElement('input');
-    input.type = 'text';
+    html.InputElement input = html.TextInputElement();
     input.value = text;
     input.setSelectionRange(0, 50);
     html.document.body.append(input);
@@ -59,29 +65,30 @@ class APIWrapper {
     return copyStatus;
   }
 
-  Future<Map> getFile([String type]) async {
-    html.InputElement inputFile = html.document.createElement('input');
-    inputFile.type = 'file';
+  Future<Map> askForFile([String type]) {
+    var completer = Completer<Map>();
+    html.FileUploadInputElement inputFile = html.FileUploadInputElement();
     if (type != null) inputFile.accept = type;
     html.document.body.append(inputFile);
     inputFile.click();
-    await inputFile.onChange.first;
-    if (inputFile.files.length == 0) return null;
-    html.File file = inputFile.files[0];
-    inputFile.remove();
-    inputFile = null;
-    return {'realFile': file, 'size': file.size, 'name': file.name};
+    inputFile.onChange.listen((_) {
+      if (inputFile.files.length == 0) return null;
+      html.File file = inputFile.files[0];
+      inputFile.remove();
+      inputFile = null;
+      completer
+          .complete({'realFile': file, 'size': file.size, 'name': file.name});
+    });
+    inputFile.onAbort.listen((_) => completer.complete(null));
+    return completer.future;
   }
 
-  bool isWebAndroid() {
-    print(html.window.navigator.userAgent);
-    return html.window.navigator.userAgent.contains('Android');
-  }
+  bool isWebAndroid() => html.window.navigator.userAgent.contains('Android');
 
   void downloadApp() => html.window.location
       .replace('https://github.com/Pato05/uploadgram-app/releases/latest');
   Future<Map> importFiles() async {
-    Map fileMap = await getFile();
+    Map fileMap = await askForFile();
     if (fileMap == null) return null;
     html.File file = fileMap['realFile'];
     html.FileReader reader = html.FileReader();
@@ -109,8 +116,9 @@ class APIWrapper {
   Future<Map> uploadFile(
     Map file, {
     Function(int, int) onProgress,
-    Function() onError,
-  }) async {
+    Function(int) onError,
+  }) {
+    var completer = Completer<Map>();
     print(file);
     if (!(file['realFile'] is html.File &&
         (file['size'] is int || file['size'] is double) &&
@@ -124,15 +132,25 @@ class APIWrapper {
     xhr.open('POST', 'https://api.uploadgram.me/upload');
     xhr.upload.onProgress
         .listen((html.ProgressEvent e) => onProgress.call(e.loaded, e.total));
-    xhr.onError.listen((e) => onError());
+    xhr.onError.listen((e) {
+      onError(xhr.status);
+      completer.complete({
+        'ok': false,
+        'statusCode': xhr.status,
+        'message': 'Error ${xhr.status}: ${xhr.statusText}',
+      });
+    });
+    xhr.onLoadEnd.listen((e) {
+      if (xhr.status == 200)
+        completer.complete(json.decode(xhr.responseText));
+      else completer.complete({
+        'ok': false,
+        'statusCode': xhr.status,
+        'message': 'Error ${xhr.status}: ${xhr.statusText}',
+      });
+    });
     xhr.send(formData);
-    await xhr.onLoadEnd.first;
-    if (xhr.status == 200) return json.decode(xhr.responseText);
-    return {
-      'ok': false,
-      'statusCode': xhr.status,
-      'message': 'Error ${xhr.status}: ${xhr.statusText}',
-    };
+    return completer.future;
   }
 
   Future<Map> deleteFile(String file) async {

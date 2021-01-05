@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:uploadgram/utils.dart';
+import 'appSettings.dart';
 import 'settingsRoute.dart';
 import 'fileWidget.dart';
-import 'appSettings.dart';
 
 void main() => runApp(UploadgramApp());
 
@@ -52,6 +53,7 @@ class UploadgramRoute extends StatefulWidget {
 }
 
 class _UploadgramRouteState extends State<UploadgramRoute> {
+  final int maxSize = 2 * 1000 * 1000 * 1000;
   // TODO: for next version, maybe avoid using setState on the main route to have better performance
   // TODO: and split into several StatefulWidgets if needed.
   static const Map<String, IconData> fileIcons = {
@@ -113,7 +115,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void selectWidget(String id) => setState(() {
         _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
@@ -184,7 +185,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           () => AppSettings.files[delete]['filename'] = result['new_filename']);
       AppSettings.saveFiles();
     } else
-      _scaffoldKey.currentState
+      ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(result['message'])));
   }
 
@@ -226,7 +227,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           });
     } else {
       String _message;
-      deleteList.forEach((delete) async {
+      for (String delete in deleteList) {
         print('deleting $delete');
         Map result = await AppSettings.api.deleteFile(delete);
         if (result['ok']) {
@@ -235,9 +236,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         if (result['statusCode'] == 403) {
           _message = 'File not found. It was probably deleted';
         }
-      });
+      }
       if (_message != null)
-        _scaffoldKey.currentState
+        ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_message)));
       setState(
           () => deleteList.forEach((key) => AppSettings.files.remove(key)));
@@ -248,19 +249,26 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   Stream _uploadFileStream(UniqueKey key, Map file) {
     if (file['locked'] == true) return null;
     file['locked'] = true;
-    var controller = new StreamController.broadcast();
-    var uploadWorker = () async {
+    var controller = StreamController.broadcast();
+    () async {
       // this while could be probably improved
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
       }
+      var initDate = DateTime.now();
       var result = await AppSettings.api.uploadFile(
         file,
         onProgress: (int loaded, int total) {
-          controller.add({'type': 'progress', 'value': loaded / total});
-        },
-        onError: () {
-          controller.add({'type': 'error', 'value': null});
+          controller.add({
+            'type': 'progress',
+            'value': {
+              'progress': loaded / total,
+              'bytesPerSec': loaded /
+                  (DateTime.now().millisecondsSinceEpoch -
+                      initDate.millisecondsSinceEpoch) *
+                  1000
+            }
+          });
         },
       );
       if (result['ok']) {
@@ -276,18 +284,60 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         });
         AppSettings.saveFiles();
       } else {
-        controller.add({'type': 'errorEnd', 'value': null});
+        String _error = 'An error occurred while obtaining the response';
+        if (result['statusCode'] > 500)
+          _error = 'We are having server problems. Try again later.';
+        if (result.containsKey('message')) _error = result['message'];
+        controller.add({
+          'type': 'errorEnd',
+          'value': _error,
+        });
       }
-      await controller.close();
+      controller.close();
       _uploadingQueue.removeAt(0);
-    };
-    uploadWorker();
+    }();
     return controller.stream;
   }
 
   Future<void> _uploadFile() async {
+    if (await AppSettings.api.getBool('tos_accepted') == false) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+                title: Text('Before proceeding...'),
+                content: Text(
+                    'Uploadgram uses the Telegram network to store its files, therefore you must accept Telegram\'s Terms of Service before continuing (https://telegram.org/tos).'
+                    '\nBy continuing, you accept NOT to:'
+                    '\n  - Use Uploadgram to scam users'
+                    '\n  - upload pornographic content or content that promotes violence.'),
+                actions: <Widget>[
+                  FlatButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('You must accept the TOS to upload files.'),
+                      ));
+                    },
+                    child: Text('I DISAGREE'),
+                    textColor: Theme.of(context).primaryColorLight,
+                  ),
+                  FlatButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      AppSettings.api.setBool('tos_accepted', true);
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('You can now start uploading files!'),
+                      ));
+                      _uploadFile();
+                    },
+                    child: Text('GOT IT!'),
+                    textColor: Theme.of(context).primaryColorLight,
+                  ),
+                ],
+              ));
+              return;
+    }
     print('asking for file');
-    Map file = await AppSettings.api.getFile();
+    Map file = await AppSettings.api.askForFile();
     if (file == null) return;
     if (file['error'] == 'PERMISSION_NOT_GRANTED') {
       showDialog(
@@ -330,6 +380,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               ));
     }
     print('got file ${file["name"]}');
+    if (file['size'] > maxSize) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'The file you selected is too large. The maximum allowed size is 2GB')));
+      return;
+    }
     setState(() {
       _uploadingQueue.add({
         'key': UniqueKey(),
@@ -359,6 +415,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               double _progress;
               String _error;
+              double _bytesPerSec = 0;
               bool _uploading = true;
               String _delete = object['key'].toString();
               Map _file = {
@@ -371,7 +428,8 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   case ConnectionState.active:
                     switch (snapshot.data['type']) {
                       case 'progress':
-                        _progress = snapshot.data['value'];
+                        _progress = snapshot.data['value']['progress'];
+                        _bytesPerSec = snapshot.data['value']['bytesPerSec'];
                         break;
                     }
                     break;
@@ -384,8 +442,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         break;
                       case 'errorEnd':
                         _uploading = false;
-                        _error =
-                            'An error occurred while obtaining the response';
+                        _error = snapshot.data['value'];
                         break;
                       case 'error':
                         _uploading = false;
@@ -402,6 +459,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 delete: _delete,
                 uploading: _uploading,
                 progress: _progress,
+                upperWidget: _progress == null
+                    ? null
+                    : Text(
+                        '${(_progress * 100).round().toString()}% (${humanSize(_bytesPerSec)}/s)'),
                 error: _error,
                 filename: _file['filename'],
                 fileSize: _file['size'].toDouble(),
@@ -473,12 +534,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     if (_selected.length > 0) {
       actions = [
         IconButton(
-          icon: Icon(Icons.select_all),
-          onPressed: () => setState(
-              () => _selected = List<String>.from(AppSettings.files.keys)),
-          tooltip: 'Select all the files',
-        ),
-        IconButton(
           icon: Icon(Icons.delete),
           onPressed: () {
             _handleFileDelete(List.from(_selected),
@@ -511,6 +566,15 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               tooltip: 'Rename this file',
             ));
       }
+      if (_selected.length < AppSettings.files.length)
+        actions.insert(
+            0,
+            IconButton(
+              icon: Icon(Icons.select_all),
+              onPressed: () => setState(
+                  () => _selected = List<String>.from(AppSettings.files.keys)),
+              tooltip: 'Select all the files',
+            ));
     } else {
       actions = [
         PopupMenuButton(
@@ -531,7 +595,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 break;
               case 'export':
                 if (AppSettings.files.isEmpty) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(
                         'Your files list is empty. Upload some files before exporting them.'),
                   ));
@@ -544,7 +608,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 Map _importedFiles = await AppSettings.api.importFiles();
                 print('_importedFiles = ${_importedFiles.toString()}');
                 if (_importedFiles == null) {
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('The selected file is not valid')));
                   break;
                 }
@@ -607,7 +671,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       ];
     }
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: Theme.of(context).accentColor,
         title: _selected.length > 0
@@ -627,6 +690,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             : null,
         actions: actions,
       ),
+      // replace this with a future builder of _initStateAsync
       body: AppSettings.files == null
           ? Center(
               child: SizedBox(
@@ -656,21 +720,20 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     textAlign: TextAlign.center,
                   ),
                 )),
-      floatingActionButton: AppSettings.fabTheme == null
-          ? null
-          : AppSettings.fabTheme == 'extended'
-              ? FloatingActionButton.extended(
-                  onPressed: _uploadFile,
-                  label: Text("UPLOAD"),
-                  icon: const Icon(Icons.cloud_upload))
-              : FloatingActionButton(
-                  onPressed: _uploadFile,
-                  child: const Icon(Icons.cloud_upload)),
-      floatingActionButtonLocation: AppSettings.fabTheme == null
-          ? null
-          : AppSettings.fabTheme == 'extended'
-              ? FloatingActionButtonLocation.centerFloat
-              : FloatingActionButtonLocation.endFloat,
+      floatingActionButton: AppSettings.fabTheme == 'extended'
+          ? FloatingActionButton.extended(
+              onPressed: _uploadFile,
+              label: Text("UPLOAD"),
+              icon: const Icon(Icons.cloud_upload))
+          : AppSettings.fabTheme == 'compact'
+              ? FloatingActionButton(
+                  onPressed: _uploadFile, child: const Icon(Icons.cloud_upload))
+              : null,
+      floatingActionButtonLocation: AppSettings.fabTheme == 'extended'
+          ? FloatingActionButtonLocation.centerFloat
+          : AppSettings.fabTheme == 'compact'
+              ? FloatingActionButtonLocation.endFloat
+              : null,
     );
   }
 }

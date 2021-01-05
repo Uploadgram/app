@@ -9,6 +9,10 @@ Just go to the [latest release](https://github.com/Pato05/uploadgram-app/release
 - `app-arm64-v8a-release.apk` is the ARM64 release (compatible with most new devices)
 - `app-armeabi-v7a-release.apk` is the ARM release
 
+## How can I build the app for Web?
+The first thing you wanna do is change flutter's channel to dev (currently web support is not available in the stable channel), after that, just run `flutter build web` (if the message `"build web" is not currently supported.` is shown, running `flutter config --enable-web` might be needed).
+Finally, you need to patch the service worker, otherwise the progress is not going to be shown.
+
 ## How can I build the app for Android?
 To build the app for Android, simply clone this repository and run `flutter build apk --split-per-abi`
 In the releases there are only APK files which support ARM and ARM64

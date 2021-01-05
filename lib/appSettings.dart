@@ -7,6 +7,7 @@ class AppSettings {
   static APIWrapper api = APIWrapper();
   static String filesTheme;
   static String fabTheme;
+  static bool error = false;
 
   static Future<bool> copy(
     String text,
@@ -20,7 +21,12 @@ class AppSettings {
 
   static Future<Map<String, dynamic>> getFiles() async {
     if (files == null) {
-      files = (await api.getFiles()).cast<String, Map>();
+      Map _ = await api.getFiles();
+      if (_.containsKey('error')) {
+        error = true;
+        return {};
+      }
+      files = _.cast<String, Map>();
     }
     return files;
   }
