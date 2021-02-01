@@ -62,6 +62,10 @@ public class MainActivity extends FlutterActivity {
                             }
                             getFile(call.argument("type"));
                             break;
+                        case "clearFilesCache":
+                            FileUtils.deleteCacheDir(getApplicationContext());
+                            result.success(true);
+                        break;
                         case "saveFile":
                             _pendingResult = result;
                             if (requestPermissionIfNeeded()) {

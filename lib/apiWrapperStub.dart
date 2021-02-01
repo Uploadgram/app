@@ -25,7 +25,7 @@ class APIWrapper {
 
   Future<Map> uploadFile(
     Map file, {
-    Function(int, int) onProgress,
+    Function(double, double) onProgress,
     Function(int) onError,
   }) =>
       throw UnsupportedError('');
@@ -33,4 +33,5 @@ class APIWrapper {
   Future<Map> deleteFile(String delete) => throw UnsupportedError('');
   Future<Map> renameFile(String delete, String newName) =>
       throw UnsupportedError('');
+  Future<bool> checkNetwork() => throw UnsupportedError('');
 }

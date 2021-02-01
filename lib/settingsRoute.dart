@@ -13,7 +13,6 @@ class _SettingsRouteState extends State<SettingsRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).accentColor,
         title: Text('Settings'),
       ),
       body: Container(
@@ -24,7 +23,9 @@ class _SettingsRouteState extends State<SettingsRoute> {
               title: Text('Upload button theme',
                   style: Theme.of(context).textTheme.headline5),
               subtitle: DropdownButton(
-                  dropdownColor: Colors.grey[900],
+                  dropdownColor: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[900]
+                      : null,
                   isExpanded: true,
                   value: AppSettings.fabTheme,
                   items: [
@@ -48,7 +49,9 @@ class _SettingsRouteState extends State<SettingsRoute> {
               title:
                   Text('Theme', style: Theme.of(context).textTheme.headline5),
               subtitle: DropdownButton(
-                  dropdownColor: Colors.grey[900],
+                  dropdownColor: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[900]
+                      : null,
                   isExpanded: true,
                   value: AppSettings.filesTheme,
                   items: [

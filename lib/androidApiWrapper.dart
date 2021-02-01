@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'utils.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class APIWrapper {
   Dio _dio = Dio(BaseOptions(
@@ -12,6 +14,9 @@ class APIWrapper {
   ));
   final MethodChannel _methodChannel =
       const MethodChannel('com.pato05.uploadgram');
+  final FlutterLocalNotificationsPlugin _flutterNotifications =
+      FlutterLocalNotificationsPlugin();
+  bool _didInitializeNotifications = false;
 
   Future<bool> copy(String text) async {
     Clipboard.setData(ClipboardData(text: text));
@@ -20,10 +25,12 @@ class APIWrapper {
 
   bool isWebAndroid() => false;
   void downloadApp() => null;
+
   Future<Map> importFiles() async {
     Map fileMap = await askForFile();
     File file = fileMap['realFile'];
-    Map files = json.decode(await file.readAsString()); // returns null if the file is not valid
+    Map files = json.decode(
+        await file.readAsString()); // returns null if the file is not valid
     return files;
   }
 
@@ -49,7 +56,7 @@ class APIWrapper {
         if (fragment.indexOf('import:') == 0) {
           String filesMap = fragment.substring(7);
           print(filesMap);
-          if (filesMap.substring(0,1) == '{') {
+          if (filesMap.substring(0, 1) == '{') {
             try {
               Map parsedFiles = json.decode(filesMap);
               parsedFiles.forEach((key, value) {
@@ -99,26 +106,31 @@ class APIWrapper {
     };
   }
 
+  Future<void> clearFilesCache() =>
+      _methodChannel.invokeMethod('clearFilesCache');
+
   Future<void> saveFile(String filename, String content) async {
     String filePath = await _methodChannel
         .invokeMethod('saveFile', <String, String>{'filename': filename});
     if (filePath == null) return;
+    if (filePath.startsWith('/data/data')) return;
     await File(filePath).writeAsString(content);
     return;
   }
 
   Future<Map> getFile(String deleteID) async {
-    Response response = await _dio.get('https://api.uploadgram.me/get/$deleteID');
+    Response response =
+        await _dio.get('https://api.uploadgram.me/get/$deleteID');
     try {
       return json.decode(response.data);
-    } catch(e) {
+    } catch (e) {
       return {};
     }
   }
 
   Future<Map> uploadFile(
     Map file, {
-    Function(int, int) onProgress,
+    Function(double, double) onProgress,
     Function(int) onError,
   }) async {
     //if (!await file.exists())
@@ -131,22 +143,120 @@ class APIWrapper {
         (file['size'] is int || file['size'] is double) &&
         file['name'] is String))
       throw UnsupportedError('Non-valid file map provided for the upload.');
-
     String fileName = file['name'];
     int fileSize = file['size'];
     MediaType mime = mimeTypes[fileName.split('.').last.toLowerCase()] ??
         MediaType('application', 'octet-stream');
     print(mime);
+    print('preparing notification...');
+    if (!_didInitializeNotifications) {
+      const AndroidInitializationSettings androidInitializationSettings =
+          AndroidInitializationSettings('icon_64');
+      _flutterNotifications.initialize(
+          InitializationSettings(android: androidInitializationSettings));
+      _didInitializeNotifications = true;
+    }
+    _flutterNotifications.show(
+        0,
+        fileName,
+        'Connecting...',
+        NotificationDetails(
+            android: AndroidNotificationDetails(
+          'com.pato05.uploadgram/notifications/upload',
+          'Upload progress notification',
+          'Upload status and progress notifications',
+          channelShowBadge: true,
+          importance: Importance.max,
+          priority: Priority.high,
+          onlyAlertOnce: true,
+          showProgress: true,
+          indeterminate: true,
+        )));
+
     print('processing file upload');
+    //uploader.enqueue(MultipartFormDataUpload(
+    //  url: 'https://api.uploadgram.me/upload',
+    //  files: [FileItem(path: file['realFile'].path, field: 'file_upload')],
+    //  method: UploadMethod.POST,
+    //  data: {'file_size': fileSize.toString()},
+    //));
+    //uploader.progress.listen((p) {
+    //  var notif = NotificationDetails(
+    //      android: AndroidNotificationDetails(
+    //          'com.pato05.uploadgram/notifications/upload',
+    //          'Upload progress notification',
+    //          'Upload status and progress notifications',
+    //          channelShowBadge: true,
+    //          importance: Importance.max,
+    //          priority: Priority.high,
+    //          onlyAlertOnce: true,
+    //          showProgress: true,
+    //          maxProgress: 100,
+    //          progress: p.progress));
+    //  _flutterNotifications.show(0, 'Uploading file...', '$fileName', notif);
+    //  onProgress((p.progress * fileSize ~/ 100), fileSize);
+    //});
+    //uploader.result.listen((result) {
+    //  if (result.statusCode != 200)
+    //    completer.complete({
+    //      'ok': false,
+    //      'statusCode': result.statusCode,
+    //      'message': 'Error ${result.statusCode}'
+    //    });
+    //  completer.complete(json.decode(result.response));
+    //});
+    //return await completer.future;
     FormData formData = FormData.fromMap({
       'file_size': fileSize,
       'file_upload': await MultipartFile.fromFile(file['realFile'].path,
           filename: file['name'], contentType: mime),
     });
     print('uploading file');
+    var initDate = DateTime.now();
+    var notifTitle = fileName.length > 25
+        ? '${fileName.substring(0, 17)}...${fileName.substring(fileName.length - 8)}'
+        : fileName;
     Response response = await _dio.post('https://api.uploadgram.me/upload',
-        data: formData, onSendProgress: onProgress);
+        data: formData, onSendProgress: (loaded, total) {
+      var bytesPerSec = loaded /
+          (DateTime.now().millisecondsSinceEpoch -
+              initDate.millisecondsSinceEpoch) *
+          1000;
+      var progress = loaded / total;
+      if (progress != 1.0)
+        _flutterNotifications.show(
+            0,
+            notifTitle,
+            '${humanSize(bytesPerSec)}/s - ${(progress * 100).toStringAsFixed(0)}%',
+            NotificationDetails(
+                android: AndroidNotificationDetails(
+                    'com.pato05.uploadgram/notifications/upload',
+                    'Upload progress notification',
+                    'Upload status and progress notifications',
+                    channelShowBadge: true,
+                    importance: Importance.max,
+                    priority: Priority.high,
+                    onlyAlertOnce: true,
+                    showProgress: true,
+                    maxProgress: total,
+                    progress: loaded)));
+      onProgress(progress, bytesPerSec);
+    });
     print('end file upload');
+    _flutterNotifications.show(
+        0,
+        'Upload completed!',
+        fileName,
+        NotificationDetails(
+            android: AndroidNotificationDetails(
+                'com.pato05.uploadgram/notifications/upload',
+                'Upload progress notification',
+                'Upload status and progress notifications',
+                channelShowBadge: true,
+                importance: Importance.max,
+                priority: Priority.high,
+                onlyAlertOnce: false)));
+    clearFilesCache();
     if (response.statusCode != 200) {
       onError(response.statusCode);
       return {
@@ -183,5 +293,16 @@ class APIWrapper {
       };
     }
     return response.data;
+  }
+
+  Future<bool> checkNetwork() async {
+    Response response = await _dio.get('https://api.uploadgram.me',
+        options: Options(
+            followRedirects:
+                false)); //should put a status endpoint in the future
+    if (response.statusCode >= 500) {
+      return false;
+    }
+    return true;
   }
 }

@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:uploadgram/utils.dart';
+import 'utils.dart';
 import 'appSettings.dart';
 import 'settingsRoute.dart';
 import 'fileWidget.dart';
@@ -16,12 +17,15 @@ class UploadgramApp extends StatelessWidget {
     return MaterialApp(
       title: kIsWeb ? 'Upload a file — Uploadgram' : 'Uploadgram',
       darkTheme: ThemeData(
-        primarySwatch: Colors.grey,
-        accentColor: Color(0xFF222222),
+        appBarTheme: AppBarTheme(color: Color(0xFF222222)),
+        floatingActionButtonTheme:
+            FloatingActionButtonThemeData(backgroundColor: Color(0xFF222222)),
+        primarySwatch: Colors.blue,
+        accentColor: Colors.blue,
         primaryColorDark: Colors.grey[900],
         primaryColorLight: Colors.blue,
         primaryIconTheme: IconThemeData(color: Colors.white),
-        primaryColor: Colors.black,
+        primaryColor: Colors.blue,
         primaryColorBrightness: Brightness.dark,
         brightness: Brightness.dark,
         canvasColor: Colors.black,
@@ -67,11 +71,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     'bz2': Icons.archive,
     'log': Icons.description,
     'txt': Icons.description,
-    'sh': Icons.description,
     'docx': Icons.description,
     'doc': Icons.description,
     'odt': Icons.description,
-    'bash': Icons.description,
     'md': Icons.font_download,
     'mp4': Icons.movie,
     'avi': Icons.movie,
@@ -106,12 +108,19 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     'css': Icons.code,
     'svg': Icons.code,
     'json': Icons.code,
+    'java': Icons.code,
+    'bash': Icons.code,
+    'sh': Icons.code,
     'exe': Icons.settings_applications,
     'jar': Icons.settings_applications,
     'default': Icons.insert_drive_file
   };
   static const String appTitle =
       kIsWeb ? 'Upload a file — Uploadgram' : 'Uploadgram';
+  final Connectivity _connectivity = Connectivity();
+  bool _canUpload = false;
+  int _checkSeconds = 0;
+  Timer _lastConnectivityTimer;
 
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
@@ -153,15 +162,13 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               //   decoration: InputDecoration(),
               // ),
               actions: [
-                FlatButton(
+                TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
                   child: Text('CANCEL'),
-                  textColor: Theme.of(context).primaryColorLight,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 ),
-                FlatButton(
+                TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                     // TODO: this setState can be turned into an internal setState
@@ -169,8 +176,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     _handleFileRename(delete, onDone: onDone, newName: _text);
                   },
                   child: Text('OK'),
-                  textColor: Theme.of(context).primaryColorLight,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 )
               ],
             );
@@ -207,12 +212,11 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                       : listLength.toString() + ' files') +
                   '?'),
               actions: [
-                FlatButton(
+                TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text('NO'),
-                  textColor: Theme.of(context).primaryColorLight,
                 ),
-                FlatButton(
+                TextButton(
                   onPressed: () {
                     print(deleteList);
                     _handleFileDelete(deleteList, noDialog: true);
@@ -220,7 +224,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     onYes();
                   },
                   child: Text('YES'),
-                  textColor: Theme.of(context).primaryColorLight,
                 ),
               ],
             );
@@ -252,19 +255,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
       }
-      var initDate = DateTime.now();
       var result = await AppSettings.api.uploadFile(
         file,
-        onProgress: (int loaded, int total) {
+        onProgress: (double progress, double bytesPerSec) {
           controller.add({
             'type': 'progress',
-            'value': {
-              'progress': loaded / total,
-              'bytesPerSec': loaded /
-                  (DateTime.now().millisecondsSinceEpoch -
-                      initDate.millisecondsSinceEpoch) *
-                  1000
-            }
+            'value': {'progress': progress, 'bytesPerSec': bytesPerSec}
           });
         },
       );
@@ -297,6 +293,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _uploadFile() async {
+    if (_canUpload == false) return;
     if (await AppSettings.api.getBool('tos_accepted') == false) {
       showDialog(
           context: context,
@@ -308,16 +305,16 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     '\n  - Use Uploadgram to scam users'
                     '\n  - upload pornographic content or content that promotes violence.'),
                 actions: <Widget>[
-                  FlatButton(
+                  TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('You must accept the TOS to upload files.'),
+                        content:
+                            Text('You must accept the TOS to upload files.'),
                       ));
                     },
                     child: Text('I DISAGREE'),
-                    textColor: Theme.of(context).primaryColorLight,
                   ),
-                  FlatButton(
+                  TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                       AppSettings.api.setBool('tos_accepted', true);
@@ -327,11 +324,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                       _uploadFile();
                     },
                     child: Text('GOT IT!'),
-                    textColor: Theme.of(context).primaryColorLight,
                   ),
                 ],
               ));
-              return;
+      return;
     }
     print('asking for file');
     Map file = await AppSettings.api.askForFile();
@@ -344,11 +340,16 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   content: Text(
                       'Permissions not granted. Click the button to try again, or grant them in the settings.'),
                   actions: [
-                    FlatButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('OK'),
-                        textColor: Theme.of(context).primaryColorLight),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('OK'),
+                    )
                   ]));
+      return;
+    }
+    if (file['size'] == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select a non-null file.')));
       return;
     }
     if (AppSettings.files.length >= 5 &&
@@ -363,15 +364,13 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     'Seems like you are enjoying Uploadgram! Did you know that Uploadgram has an Android app too?'
                     '\nYou can download the app by clicking the button below or by clicking on the three-dots!'),
                 actions: <Widget>[
-                  FlatButton(
+                  TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text('NO, THANKS'),
-                    textColor: Theme.of(context).primaryColorLight,
                   ),
-                  FlatButton(
+                  TextButton(
                     onPressed: AppSettings.api.downloadApp,
                     child: Text('DOWNLOAD THE APP!'),
-                    textColor: Theme.of(context).primaryColorLight,
                   ),
                 ],
               ));
@@ -512,6 +511,40 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     await AppSettings.getSettings();
     // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
+    // subscribe to connectivity event stream
+    await _connectivity.onConnectivityChanged.first;
+    _connectivity.onConnectivityChanged.listen(_checkConnection);
+  }
+
+  Future<void> _checkConnection(ConnectivityResult connectivityResult) {
+    if (connectivityResult != ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.mobile)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('WARNING: You are using Mobile Data!')));
+      return _checkUploadgramConnection();
+    }
+  }
+
+  Future<void> _checkUploadgramConnection() async {
+    if (_lastConnectivityTimer != null) _lastConnectivityTimer.cancel();
+    if (await AppSettings.api.checkNetwork()) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Uploadgram is up!')));
+      _canUpload = true;
+      setState(() => null);
+    } else {
+      _checkSeconds += 15;
+      _lastConnectivityTimer =
+          Timer(Duration(seconds: _checkSeconds), _checkUploadgramConnection);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Uploadgram is down. Checking again in $_checkSeconds seconds.'),
+          action: SnackBarAction(
+              label: 'Try now',
+              onPressed: () {
+                _checkUploadgramConnection();
+              })));
+    }
   }
 
   @override
@@ -548,7 +581,13 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             String _filename = 'uploadgram_files.json';
             if (_selected.length == 1)
               _filename = _exportFiles[_selected[0]]['filename'] + '.json';
-            AppSettings.api.saveFile(_filename, json.encode(_exportFiles));
+            if (AppSettings.api
+                    .saveFile(_filename, json.encode(_exportFiles)) ==
+                null) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Couldn\'t export files.'),
+              ));
+            }
           },
           tooltip: 'Export selected file(s)',
         )
@@ -598,8 +637,13 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   ));
                   break;
                 }
-                AppSettings.api.saveFile(
-                    'uploadgram_files.json', json.encode(AppSettings.files));
+                if (AppSettings.api.saveFile('uploadgram_files.json',
+                        json.encode(AppSettings.files)) ==
+                    null) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Couldn\'t export files.'),
+                  ));
+                }
                 break;
               case 'import':
                 Map _importedFiles = await AppSettings.api.importFiles();
@@ -609,7 +653,8 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                       content: Text('The selected file is not valid')));
                   break;
                 }
-                AppSettings.files.addAll(_importedFiles);
+                AppSettings.files.addAll(
+                    _importedFiles.cast<String, Map<dynamic, dynamic>>());
                 AppSettings.saveFiles();
                 setState(() => null);
                 break;
@@ -669,7 +714,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     }
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).accentColor,
         title: _selected.length > 0
             ? Text(
                 'Selected ' +
@@ -721,10 +765,15 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           ? FloatingActionButton.extended(
               onPressed: _uploadFile,
               label: Text("UPLOAD"),
-              icon: const Icon(Icons.cloud_upload))
+              icon: _canUpload
+                  ? const Icon(Icons.cloud_upload)
+                  : CircularProgressIndicator())
           : AppSettings.fabTheme == 'compact'
               ? FloatingActionButton(
-                  onPressed: _uploadFile, child: const Icon(Icons.cloud_upload))
+                  onPressed: _uploadFile,
+                  child: _canUpload
+                      ? const Icon(Icons.cloud_upload)
+                      : CircularProgressIndicator())
               : null,
       floatingActionButtonLocation: AppSettings.fabTheme == 'extended'
           ? FloatingActionButtonLocation.centerFloat

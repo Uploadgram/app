@@ -56,8 +56,14 @@ class APIWrapper {
   Future<bool> copy(String text) async {
     print('called APIWrapper.copy($text)');
     html.InputElement input = html.TextInputElement();
+    var range = html.Range();
     input.value = text;
-    input.setSelectionRange(0, 50);
+    input.contentEditable = 'contentEditable';
+    range.selectNodeContents(input);
+    var sel = html.window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    input.setSelectionRange(0, 100);
     html.document.body.append(input);
     input.select();
     bool copyStatus = html.document.execCommand('copy');
@@ -115,7 +121,7 @@ class APIWrapper {
 
   Future<Map> uploadFile(
     Map file, {
-    Function(int, int) onProgress,
+    Function(double, double) onProgress,
     Function(int) onError,
   }) {
     var completer = Completer<Map>();
@@ -130,8 +136,15 @@ class APIWrapper {
     formData.append('file_size', file['size'].toString());
     formData.appendBlob('file_upload', file['realFile']);
     xhr.open('POST', 'https://api.uploadgram.me/upload');
-    xhr.upload.onProgress
-        .listen((html.ProgressEvent e) => onProgress.call(e.loaded, e.total));
+    var initDate;
+    xhr.upload.onProgress.listen((html.ProgressEvent e) {
+      onProgress.call(
+          e.loaded / e.total,
+          e.loaded /
+              (DateTime.now().millisecondsSinceEpoch -
+                  initDate.millisecondsSinceEpoch) *
+              1000);
+    });
     xhr.onError.listen((e) {
       onError(xhr.status);
       completer.complete({
@@ -143,46 +156,55 @@ class APIWrapper {
     xhr.onLoadEnd.listen((e) {
       if (xhr.status == 200)
         completer.complete(json.decode(xhr.responseText));
-      else completer.complete({
-        'ok': false,
-        'statusCode': xhr.status,
-        'message': 'Error ${xhr.status}: ${xhr.statusText}',
-      });
+      else
+        completer.complete({
+          'ok': false,
+          'statusCode': xhr.status,
+          'message': 'Error ${xhr.status}: ${xhr.statusText}',
+        });
     });
+    initDate = DateTime.now();
     xhr.send(formData);
     return completer.future;
   }
 
   Future<Map> deleteFile(String file) async {
-    html.HttpRequest xhr = html.HttpRequest();
-    xhr.open('GET', 'https://api.uploadgram.me/delete/$file');
-    xhr.send();
-    await xhr.onLoad.first;
-    if (xhr.status == 200) return json.decode(xhr.responseText);
+    var req = await html.window.fetch('https://api.uploadgram.me/delete/$file');
+
+    if (req.status == 200) return await req.json();
     return {
       'ok': false,
-      'statusCode': xhr.status,
-      'message': xhr.statusText,
+      'statusCode': req.status,
+      'message': req.statusText,
     };
   }
 
   Future<Map> renameFile(String file, String newName) async {
-    html.HttpRequest xhr = html.HttpRequest();
-    html.window.console.log(xhr);
-    xhr.open('POST', 'https://api.uploadgram.me/rename/$file');
-    xhr.send(json
-        .encode(<String, String>{'new_filename': await parseName(newName)}));
-    await xhr.onLoad.first;
-    if (xhr.status == 200) return json.decode(xhr.responseText);
+    var req =
+        await html.window.fetch('https://api.uploadgram.me/rename/$file', {
+      'method': 'POST',
+      'body': json
+          .encode(<String, String>{'new_filename': await parseName(newName)})
+    });
+    if (req.status == 200) return await req.json();
+    var reqText = await req.text();
     var jsonError;
-    if (xhr.responseText.substring(0, 1) == '{')
-      jsonError = json.decode(xhr.responseText);
-    var altMessage = 'Error ${xhr.status}: ${xhr.statusText}';
+    if (reqText.substring(0, 1) == '{') jsonError = json.decode(reqText);
+    var altMessage = 'Error ${req.status}: ${req.statusText}';
     return {
       'ok': false,
-      'statusCode': xhr.status,
+      'statusCode': req.status,
       'message':
           jsonError == null ? altMessage : (jsonError['message'] ?? altMessage),
     };
+  }
+
+  Future<bool> checkNetwork() async {
+    var response = await html.window
+        .fetch('https://api.uploadgram.me/', {'redirect': 'manual'});
+    if (response.status >= 500) {
+      return false;
+    }
+    return true;
   }
 }
