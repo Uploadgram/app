@@ -8,6 +8,7 @@ class APIWrapper {
   bool isWebAndroid() => throw UnsupportedError('');
   void downloadApp() => throw UnsupportedError('');
   Future<Map?> importFiles() => throw UnsupportedError('');
+  Future<void> clearFilesCache() async => null;
 
   Future<Map?> getFile() => throw UnsupportedError('');
   Future<Map?> askForFile() => throw UnsupportedError('');

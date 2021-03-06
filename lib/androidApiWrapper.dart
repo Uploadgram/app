@@ -280,7 +280,6 @@ class APIWrapper {
                 priority: Priority.high,
                 setAsGroupSummary: true,
                 onlyAlertOnce: false)));
-    clearFilesCache();
     if (response.statusCode != 200) {
       onError?.call(response.statusCode);
       return {

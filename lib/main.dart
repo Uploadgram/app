@@ -293,6 +293,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
       }
       controller.close();
       _uploadingQueue.removeAt(0);
+      if (_uploadingQueue.length == 0) AppSettings.api.clearFilesCache();
     }();
     return controller.stream;
   }
