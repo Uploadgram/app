@@ -24,7 +24,8 @@ dependencies:
   dio: ^3.0.10
   intl: ^0.16.1
   flutter_local_notifications: ^4.0.0
-  connectivity: 2.0.0
+  connectivity: ^2.0.2
+  connectivity_for_web: ^0.3.0
   flutter:
     sdk: flutter
 

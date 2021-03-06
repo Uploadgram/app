@@ -22,3 +22,7 @@ In this case, it is harder. Indeed, you need to know either Swift or Objective-C
 
 ## Will this app support desktop?
 When the flutter support for desktop will be stable enough, sure, for now you can use the webapp, which is the almost same of the native app.
+
+## Credits
+- [Material.io icons](https://material.io/resources/icons) for the `cloud` icon used in the logo
+- [FontAwesome](https://fontawesome.com/) for the `telegram-plane` icon used in the logo

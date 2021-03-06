@@ -45,18 +45,19 @@
                 <data
                     android:scheme="https"
                     android:host="uploadgram.me"
-                    android:path="/upload" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
+                    android:pathPrefix="/upload" />
                 <data
                     android:scheme="http"
                     android:host="uploadgram.me"
-                    android:path="/upload" />
+                    android:pathPrefix="/upload" />
+                <data
+                    android:scheme="http"
+                    android:host="www.uploadgram.me"
+                    android:pathPrefix="/upload" />
+                <data
+                    android:scheme="https"
+                    android:host="www.uploadgram.me"
+                    android:pathPrefix="/upload" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

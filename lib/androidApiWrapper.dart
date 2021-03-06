@@ -17,6 +17,7 @@ class APIWrapper {
   final FlutterLocalNotificationsPlugin _flutterNotifications =
       FlutterLocalNotificationsPlugin();
   bool _didInitializeNotifications = false;
+  int _uploadNotificationId = 1;
 
   Future<bool> copy(String text) async {
     Clipboard.setData(ClipboardData(text: text));
@@ -130,7 +131,7 @@ class APIWrapper {
 
   Future<Map> uploadFile(
     Map file, {
-    Function(double, double) onProgress,
+    Function(double, double, String) onProgress,
     Function(int) onError,
   }) async {
     //if (!await file.exists())
@@ -170,6 +171,7 @@ class APIWrapper {
           priority: Priority.high,
           onlyAlertOnce: true,
           showProgress: true,
+          ongoing: true,
           indeterminate: true,
         )));
 
@@ -216,6 +218,8 @@ class APIWrapper {
     var notifTitle = fileName.length > 25
         ? '${fileName.substring(0, 17)}...${fileName.substring(fileName.length - 8)}'
         : fileName;
+
+    int _lastUploadedBytes = 0;
     Response response = await _dio.post('https://api.uploadgram.me/upload',
         data: formData, onSendProgress: (loaded, total) {
       var bytesPerSec = loaded /
@@ -223,7 +227,21 @@ class APIWrapper {
               initDate.millisecondsSinceEpoch) *
           1000;
       var progress = loaded / total;
-      if (progress != 1.0)
+      int secondsRemaining = (total - loaded) ~/ bytesPerSec;
+      String stringRemaining = (secondsRemaining >= 3600
+              ? (secondsRemaining ~/ 3600).toString() + ' hours '
+              : '') +
+          ((secondsRemaining %= 3600) >= 60
+              ? (secondsRemaining ~/ 60).toString() + ' minutes '
+              : '');
+      // just to avoid having 'remaining' as string
+      stringRemaining = stringRemaining +
+          ((secondsRemaining > 0 || stringRemaining.isEmpty)
+              ? '${secondsRemaining % 60} seconds '
+              : '') +
+          'remaining';
+      print(secondsRemaining);
+      if (loaded - _lastUploadedBytes > bytesPerSec ~/ 100)
         _flutterNotifications.show(
             0,
             notifTitle,
@@ -233,28 +251,33 @@ class APIWrapper {
                     'com.pato05.uploadgram/notifications/upload',
                     'Upload progress notification',
                     'Upload status and progress notifications',
+                    subText: stringRemaining,
                     channelShowBadge: true,
-                    importance: Importance.max,
+                    importance: Importance.defaultImportance,
                     priority: Priority.high,
                     onlyAlertOnce: true,
                     showProgress: true,
+                    playSound: false,
+                    ongoing: true,
                     maxProgress: total,
                     progress: loaded)));
-      onProgress(progress, bytesPerSec);
+      onProgress(progress, bytesPerSec, stringRemaining);
     });
     print('end file upload');
+    _flutterNotifications.cancel(0);
     _flutterNotifications.show(
-        0,
+        _uploadNotificationId++,
         'Upload completed!',
         fileName,
         NotificationDetails(
             android: AndroidNotificationDetails(
-                'com.pato05.uploadgram/notifications/upload',
-                'Upload progress notification',
-                'Upload status and progress notifications',
+                'com.pato05.uploadgram/notifications/upload_completed',
+                'Upload completed notification',
+                'File upload completed notification',
                 channelShowBadge: true,
                 importance: Importance.max,
                 priority: Priority.high,
+                setAsGroupSummary: true,
                 onlyAlertOnce: false)));
     clearFilesCache();
     if (response.statusCode != 200) {
@@ -296,11 +319,8 @@ class APIWrapper {
   }
 
   Future<bool> checkNetwork() async {
-    Response response = await _dio.get('https://api.uploadgram.me',
-        options: Options(
-            followRedirects:
-                false)); //should put a status endpoint in the future
-    if (response.statusCode >= 500) {
+    Response response = await _dio.head('https://api.uploadgram.me/status');
+    if (response.statusCode != 200) {
       return false;
     }
     return true;

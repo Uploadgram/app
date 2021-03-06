@@ -1,0 +1,7 @@
+Uploadgram is a file sharing service that uses the Telegram network as file storage.
+Brought to you by Pato05 (https://github.com/pato05), Daniil Gentili (https://daniil.it) and ShiSHcat (https://shish.cat)
+
+The app was created using the Flutter engine by Pato05, its source is available at https://github.com/pato05/uploadgram-app.
+
+The logo uses the 'cloud' icon from https://material.io/resources/icons and the 'telegram-plane' icon from https://fontawesome.com/
+The banner uses the Poppins font from https://fonts.google.com/specimen/Poppins

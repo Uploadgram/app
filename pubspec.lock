@@ -49,9 +49,9 @@ packages:
       name: connectivity
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.0"
+    version: "2.0.2"
   connectivity_for_web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: connectivity_for_web
       url: "https://pub.dartlang.org"

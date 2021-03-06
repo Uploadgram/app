@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'utils.dart';
 import 'appSettings.dart';
 import 'settingsRoute.dart';
@@ -15,6 +16,7 @@ class UploadgramApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: kIsWeb ? 'Upload a file — Uploadgram' : 'Uploadgram',
       darkTheme: ThemeData(
         appBarTheme: AppBarTheme(color: Color(0xFF222222)),
@@ -31,6 +33,7 @@ class UploadgramApp extends StatelessWidget {
         canvasColor: Colors.black,
       ),
       theme: ThemeData(
+        appBarTheme: AppBarTheme(brightness: Brightness.dark),
         primarySwatch: Colors.blue,
         primaryColorDark: Colors.grey[300],
         accentColor: Colors.blue,
@@ -56,7 +59,8 @@ class UploadgramRoute extends StatefulWidget {
   _UploadgramRouteState createState() => _UploadgramRouteState();
 }
 
-class _UploadgramRouteState extends State<UploadgramRoute> {
+class _UploadgramRouteState extends State<UploadgramRoute>
+    with SingleTickerProviderStateMixin {
   final int maxSize = 2 * 1000 * 1000 * 1000;
   // TODO: for next version, maybe avoid using setState on the main route to have better performance
   // TODO: and split into several StatefulWidgets if needed.
@@ -121,6 +125,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   bool _canUpload = false;
   int _checkSeconds = 0;
   Timer _lastConnectivityTimer;
+  StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
@@ -251,13 +256,13 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     file['locked'] = true;
     var controller = StreamController.broadcast();
     () async {
-      // this while could be probably improved
+      // this while loop could be probably improved or removed
       while (_uploadingQueue[0]['key'] != key) {
         await Future.delayed(Duration(milliseconds: 500));
       }
       var result = await AppSettings.api.uploadFile(
         file,
-        onProgress: (double progress, double bytesPerSec) {
+        onProgress: (double progress, double bytesPerSec, String remaining) {
           controller.add({
             'type': 'progress',
             'value': {'progress': progress, 'bytesPerSec': bytesPerSec}
@@ -511,12 +516,33 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     await AppSettings.getSettings();
     // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
+    if (kIsWeb) {
+      ConnectivityResult _lastConnectivityResult;
+      _connectivity
+          .checkConnectivity()
+          .then((ConnectivityResult connecitityResult) {
+        _lastConnectivityResult = connecitityResult;
+        _checkConnection(connecitityResult);
+      });
+      Timer.periodic(Duration(seconds: 10), (timer) {
+        _connectivity
+            .checkConnectivity()
+            .then((ConnectivityResult connectivityResult) {
+          if (_lastConnectivityResult !=
+              connectivityResult) // only call if connectivity changed
+            _checkConnection(connectivityResult);
+        });
+      });
+    }
     // subscribe to connectivity event stream
-    await _connectivity.onConnectivityChanged.first;
-    _connectivity.onConnectivityChanged.listen(_checkConnection);
+    else
+      _connectivitySubscription =
+          _connectivity.onConnectivityChanged.listen(_checkConnection);
   }
 
-  Future<void> _checkConnection(ConnectivityResult connectivityResult) {
+  Future<void> _checkConnection(ConnectivityResult connectivityResult) async {
+    setState(() => _canUpload = false);
+    print('Check connection called.');
     if (connectivityResult != ConnectivityResult.none) {
       if (connectivityResult == ConnectivityResult.mobile)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -528,12 +554,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   Future<void> _checkUploadgramConnection() async {
     if (_lastConnectivityTimer != null) _lastConnectivityTimer.cancel();
     if (await AppSettings.api.checkNetwork()) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Uploadgram is up!')));
-      _canUpload = true;
-      setState(() => null);
+      setState(() => _canUpload = true);
     } else {
-      _checkSeconds += 15;
+      if (_checkSeconds < 90) _checkSeconds += 15;
       _lastConnectivityTimer =
           Timer(Duration(seconds: _checkSeconds), _checkUploadgramConnection);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -541,6 +564,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               'Uploadgram is down. Checking again in $_checkSeconds seconds.'),
           action: SnackBarAction(
               label: 'Try now',
+              textColor: Theme.of(context).accentColor,
               onPressed: () {
                 _checkUploadgramConnection();
               })));
@@ -551,6 +575,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   void dispose() {
     AppSettings.saveFiles();
     AppSettings.saveSettings();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -716,10 +741,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       appBar: AppBar(
         title: _selected.length > 0
             ? Text(
-                'Selected ' +
-                    _selected.length.toString() +
+                _selected.length.toString() +
                     ' file' +
-                    (_selected.length > 1 ? 's' : ''),
+                    (_selected.length > 1 ? 's' : '') +
+                    ' selected',
               )
             : Text(appTitle),
         leading: _selected.length > 0
@@ -732,35 +757,36 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         actions: actions,
       ),
       // replace this with a future builder of _initStateAsync
-      body: AppSettings.files == null
-          ? Center(
-              child: SizedBox(
-              child: CircularProgressIndicator(),
-              width: 100,
-              height: 100,
-            ))
-          : ((AppSettings.files.length > 0 || _uploadingQueue.length > 0)
-              ? GridView(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      childAspectRatio: aspectRatio,
-                      mainAxisSpacing: 5,
-                      crossAxisSpacing: 5,
-                      crossAxisCount: gridSize > 0 ? gridSize : 1),
-                  children: _filesWidgets(),
-                  padding: EdgeInsets.only(
-                      left: 15,
-                      right: 15,
-                      top: 15,
-                      bottom: 78)) // bottom: 78, normal padding + fab
-              : Container(
-                  alignment: Alignment.center,
-                  margin: EdgeInsets.all(15),
-                  child: Text(
-                    'Your uploaded files will appear here!',
-                    style: Theme.of(context).textTheme.headline5,
-                    textAlign: TextAlign.center,
-                  ),
-                )),
+      body: Column(children: [
+        Expanded(
+            child: AppSettings.files == null
+                ? Center(
+                    child: SizedBox(
+                    child: CircularProgressIndicator(),
+                    width: 100,
+                    height: 100,
+                  ))
+                : ((AppSettings.files.length > 0 || _uploadingQueue.length > 0)
+                    ? GridView(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            childAspectRatio: aspectRatio,
+                            mainAxisSpacing: 5,
+                            crossAxisSpacing: 5,
+                            crossAxisCount: gridSize > 0 ? gridSize : 1),
+                        children: _filesWidgets(),
+                        padding: EdgeInsets.only(
+                            left: 15, right: 15, top: 15, bottom: 78))
+                    // bottom: 78, normal padding + fab
+                    : Container(
+                        alignment: Alignment.center,
+                        margin: EdgeInsets.all(15),
+                        child: Text(
+                          'Your uploaded files will appear here!',
+                          style: Theme.of(context).textTheme.headline5,
+                          textAlign: TextAlign.center,
+                        ),
+                      )))
+      ]),
       floatingActionButton: AppSettings.fabTheme == 'extended'
           ? FloatingActionButton.extended(
               onPressed: _uploadFile,

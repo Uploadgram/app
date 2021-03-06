@@ -25,7 +25,7 @@ class APIWrapper {
 
   Future<Map> uploadFile(
     Map file, {
-    Function(double, double) onProgress,
+    Function(double, double, String) onProgress,
     Function(int) onError,
   }) =>
       throw UnsupportedError('');

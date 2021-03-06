@@ -121,7 +121,7 @@ class APIWrapper {
 
   Future<Map> uploadFile(
     Map file, {
-    Function(double, double) onProgress,
+    Function(double, double, String) onProgress,
     Function(int) onError,
   }) {
     var completer = Completer<Map>();
@@ -138,12 +138,25 @@ class APIWrapper {
     xhr.open('POST', 'https://api.uploadgram.me/upload');
     var initDate;
     xhr.upload.onProgress.listen((html.ProgressEvent e) {
-      onProgress.call(
-          e.loaded / e.total,
-          e.loaded /
-              (DateTime.now().millisecondsSinceEpoch -
-                  initDate.millisecondsSinceEpoch) *
-              1000);
+      double bytesPerSec = e.loaded /
+          (DateTime.now().millisecondsSinceEpoch -
+              initDate.millisecondsSinceEpoch) *
+          1000;
+      int secondsRemaining = (e.total - e.loaded) ~/ bytesPerSec;
+      String stringRemaining = (secondsRemaining >= 3600
+              ? (secondsRemaining ~/= 3600).toString() + ' hours '
+              : '') +
+          (secondsRemaining >= 60
+              ? (secondsRemaining = secondsRemaining % 3600 ~/ 60).toString() +
+                  ' minutes '
+              : '');
+      // just to avoid having 'remaining' as string
+      stringRemaining = stringRemaining +
+          ((secondsRemaining > 0 || stringRemaining.isEmpty)
+              ? '${secondsRemaining % 60} seconds '
+              : '') +
+          'remaining';
+      onProgress.call(e.loaded / e.total, bytesPerSec, stringRemaining);
     });
     xhr.onError.listen((e) {
       onError(xhr.status);
@@ -169,42 +182,70 @@ class APIWrapper {
   }
 
   Future<Map> deleteFile(String file) async {
-    var req = await html.window.fetch('https://api.uploadgram.me/delete/$file');
-
-    if (req.status == 200) return await req.json();
-    return {
-      'ok': false,
-      'statusCode': req.status,
-      'message': req.statusText,
-    };
+    var completer = Completer();
+    html.HttpRequest xhr = html.HttpRequest();
+    xhr.open('GET', 'https://api.uploadgram.me/delete/$file');
+    xhr.send();
+    xhr.onLoad.listen((_) {
+      if (xhr.status == 200)
+        completer.complete(json.decode(xhr.responseText));
+      else
+        completer.complete({
+          'ok': false,
+          'statusCode': xhr.status,
+          'message': xhr.statusText,
+        });
+    });
+    xhr.onError.listen((_) => completer.complete({
+          'ok': false,
+          'statusCode': xhr.status,
+          'message': xhr.statusText,
+        }));
+    return await completer.future;
   }
 
   Future<Map> renameFile(String file, String newName) async {
-    var req =
-        await html.window.fetch('https://api.uploadgram.me/rename/$file', {
-      'method': 'POST',
-      'body': json
-          .encode(<String, String>{'new_filename': await parseName(newName)})
-    });
-    if (req.status == 200) return await req.json();
-    var reqText = await req.text();
-    var jsonError;
-    if (reqText.substring(0, 1) == '{') jsonError = json.decode(reqText);
-    var altMessage = 'Error ${req.status}: ${req.statusText}';
-    return {
-      'ok': false,
-      'statusCode': req.status,
-      'message':
-          jsonError == null ? altMessage : (jsonError['message'] ?? altMessage),
+    var completer = Completer();
+    html.HttpRequest xhr = html.HttpRequest();
+    xhr.open('POST', 'https://api.uploadgram.me/rename/$file');
+    xhr.send(json
+        .encode(<String, String>{'new_filename': await parseName(newName)}));
+    var handleError = () {
+      var jsonError;
+      if (xhr.responseText.substring(0, 1) == '{')
+        jsonError = json.decode(xhr.responseText);
+      var altMessage = 'Error ${xhr.status}: ${xhr.statusText}';
+      return {
+        'ok': false,
+        'statusCode': xhr.status,
+        'message': jsonError == null
+            ? altMessage
+            : (jsonError['message'] ?? altMessage),
+      };
     };
+    xhr.onLoad.listen((_) {
+      if (xhr.status == 200)
+        completer.complete(json.decode(xhr.responseText));
+      else
+        handleError.call();
+    });
+    xhr.onError.listen((_) => handleError.call());
+    return await completer.future;
   }
 
   Future<bool> checkNetwork() async {
-    var response = await html.window
-        .fetch('https://api.uploadgram.me/', {'redirect': 'manual'});
-    if (response.status >= 500) {
-      return false;
-    }
-    return true;
+    print('[web] checkNetwork() called');
+    var completer = Completer();
+    html.HttpRequest xhr = html.HttpRequest()
+      ..open('HEAD', 'https://api.uploadgram.me/status');
+    xhr.onLoad.listen((_) {
+      if (xhr.status == 200)
+        completer.complete(true);
+      else
+        completer.complete(false);
+    });
+    xhr.onError.listen((_) => completer.complete(false));
+    xhr.send();
+    return await completer.future;
   }
 }
