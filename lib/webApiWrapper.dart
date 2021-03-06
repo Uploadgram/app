@@ -41,8 +41,10 @@ class APIWrapper {
     }
   }
 
-  Future<bool> getBool(String name) async =>
-      html.window.localStorage[name] ?? false;
+  Future<bool> getBool(String name) async {
+    if (html.window.localStorage[name] == null) return false;
+    return json.decode(html.window.localStorage[name]!) ?? false;
+  }
 
   Future<bool> setBool(String name, bool value) async {
     try {
@@ -55,33 +57,32 @@ class APIWrapper {
 
   Future<bool> copy(String text) async {
     print('called APIWrapper.copy($text)');
-    html.InputElement input = html.TextInputElement();
+    html.TextInputElement input = html.TextInputElement();
     var range = html.Range();
     input.value = text;
     input.contentEditable = 'contentEditable';
     range.selectNodeContents(input);
-    var sel = html.window.getSelection();
+    var sel = html.window.getSelection()!;
     sel.removeAllRanges();
     sel.addRange(range);
     input.setSelectionRange(0, 100);
-    html.document.body.append(input);
+    html.document.body!.append(input);
     input.select();
     bool copyStatus = html.document.execCommand('copy');
     input.remove();
     return copyStatus;
   }
 
-  Future<Map> askForFile([String type]) {
+  Future<Map?> askForFile([String? type]) {
     var completer = Completer<Map>();
     html.FileUploadInputElement inputFile = html.FileUploadInputElement();
     if (type != null) inputFile.accept = type;
-    html.document.body.append(inputFile);
+    html.document.body!.append(inputFile);
     inputFile.click();
     inputFile.onChange.listen((_) {
-      if (inputFile.files.length == 0) return null;
-      html.File file = inputFile.files[0];
+      if (inputFile.files!.length == 0) return null;
+      html.File? file = inputFile.files![0];
       inputFile.remove();
-      inputFile = null;
       completer
           .complete({'realFile': file, 'size': file.size, 'name': file.name});
     });
@@ -93,36 +94,36 @@ class APIWrapper {
 
   void downloadApp() => html.window.location
       .replace('https://github.com/Pato05/uploadgram-app/releases/latest');
-  Future<Map> importFiles() async {
-    Map fileMap = await askForFile();
+  Future<Map?> importFiles() async {
+    Map? fileMap = await askForFile();
     if (fileMap == null) return null;
     html.File file = fileMap['realFile'];
     html.FileReader reader = html.FileReader();
     reader.readAsArrayBuffer(file);
     await reader.onLoad.first;
-    Uint8List bytes = Uint8List.view(reader.result);
+    Uint8List bytes = Uint8List.view(reader.result as ByteBuffer);
     if (String.fromCharCode(bytes.first) != '{' ||
         String.fromCharCode(bytes.last) != '}') return null;
-    Map files = json.decode(String.fromCharCodes(bytes));
+    Map? files = json.decode(String.fromCharCodes(bytes));
     return files;
   }
 
-  Future<void> saveFile(String filename, String content) async {
+  Future<bool?> saveFile(String filename, String content) async {
     html.Blob blob = new html.Blob([content]);
-    html.LinkElement a = html.document.createElement('a');
+    html.LinkElement a = html.LinkElement();
     String url = a.href = html.Url.createObjectUrlFromBlob(blob);
     a.setAttribute('download', filename);
-    html.document.body.append(a);
+    html.document.body!.append(a);
     a.click();
     a.remove();
     html.Url.revokeObjectUrl(url);
-    return;
+    return true;
   }
 
   Future<Map> uploadFile(
     Map file, {
-    Function(double, double, String) onProgress,
-    Function(int) onError,
+    Function(double, double, String)? onProgress,
+    Function(int?)? onError,
   }) {
     var completer = Completer<Map>();
     print(file);
@@ -136,13 +137,13 @@ class APIWrapper {
     formData.append('file_size', file['size'].toString());
     formData.appendBlob('file_upload', file['realFile']);
     xhr.open('POST', 'https://api.uploadgram.me/upload');
-    var initDate;
+    late var initDate;
     xhr.upload.onProgress.listen((html.ProgressEvent e) {
-      double bytesPerSec = e.loaded /
+      double bytesPerSec = e.loaded! /
           (DateTime.now().millisecondsSinceEpoch -
               initDate.millisecondsSinceEpoch) *
           1000;
-      int secondsRemaining = (e.total - e.loaded) ~/ bytesPerSec;
+      int secondsRemaining = (e.total! - e.loaded!) ~/ bytesPerSec;
       String stringRemaining = (secondsRemaining >= 3600
               ? (secondsRemaining ~/= 3600).toString() + ' hours '
               : '') +
@@ -156,10 +157,10 @@ class APIWrapper {
               ? '${secondsRemaining % 60} seconds '
               : '') +
           'remaining';
-      onProgress.call(e.loaded / e.total, bytesPerSec, stringRemaining);
+      onProgress!.call(e.loaded! / e.total!, bytesPerSec, stringRemaining);
     });
     xhr.onError.listen((e) {
-      onError(xhr.status);
+      onError!(xhr.status);
       completer.complete({
         'ok': false,
         'statusCode': xhr.status,
@@ -168,7 +169,7 @@ class APIWrapper {
     });
     xhr.onLoadEnd.listen((e) {
       if (xhr.status == 200)
-        completer.complete(json.decode(xhr.responseText));
+        completer.complete(json.decode(xhr.responseText!));
       else
         completer.complete({
           'ok': false,
@@ -188,7 +189,7 @@ class APIWrapper {
     xhr.send();
     xhr.onLoad.listen((_) {
       if (xhr.status == 200)
-        completer.complete(json.decode(xhr.responseText));
+        completer.complete(json.decode(xhr.responseText!));
       else
         completer.complete({
           'ok': false,
@@ -201,7 +202,7 @@ class APIWrapper {
           'statusCode': xhr.status,
           'message': xhr.statusText,
         }));
-    return await completer.future;
+    return await (completer.future as Future<Map<dynamic, dynamic>>);
   }
 
   Future<Map> renameFile(String file, String newName) async {
@@ -212,8 +213,8 @@ class APIWrapper {
         .encode(<String, String>{'new_filename': await parseName(newName)}));
     var handleError = () {
       var jsonError;
-      if (xhr.responseText.substring(0, 1) == '{')
-        jsonError = json.decode(xhr.responseText);
+      if (xhr.responseText!.substring(0, 1) == '{')
+        jsonError = json.decode(xhr.responseText!);
       var altMessage = 'Error ${xhr.status}: ${xhr.statusText}';
       return {
         'ok': false,
@@ -225,12 +226,12 @@ class APIWrapper {
     };
     xhr.onLoad.listen((_) {
       if (xhr.status == 200)
-        completer.complete(json.decode(xhr.responseText));
+        completer.complete(json.decode(xhr.responseText!));
       else
         handleError.call();
     });
     xhr.onError.listen((_) => handleError.call());
-    return await completer.future;
+    return await (completer.future as Future<Map<dynamic, dynamic>>);
   }
 
   Future<bool> checkNetwork() async {
@@ -246,6 +247,6 @@ class APIWrapper {
     });
     xhr.onError.listen((_) => completer.complete(false));
     xhr.send();
-    return await completer.future;
+    return await (completer.future as Future<bool>);
   }
 }

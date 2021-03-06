@@ -39,11 +39,11 @@ class _SettingsRouteState extends State<SettingsRoute> {
                     }
                   ]
                       .map((e) => DropdownMenuItem(
-                            child: Text(e['text']),
+                            child: Text(e['text']!),
                             value: e['value'],
                           ))
                       .toList(),
-                  onChanged: (a) => setState(() => AppSettings.fabTheme = a)),
+                  onChanged: (dynamic a) => setState(() => AppSettings.fabTheme = a)),
             ),
             ListTile(
               title:
@@ -62,11 +62,11 @@ class _SettingsRouteState extends State<SettingsRoute> {
                     {'value': 'new_compact', 'text': 'New theme but compact'}
                   ]
                       .map((e) => DropdownMenuItem(
-                            child: Text(e['text']),
+                            child: Text(e['text']!),
                             value: e['value'],
                           ))
                       .toList(),
-                  onChanged: (a) {
+                  onChanged: (dynamic a) {
                     setState(() => AppSettings.filesTheme = a);
                   }),
             ),

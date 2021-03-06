@@ -53,7 +53,7 @@ class UploadgramApp extends StatelessWidget {
 }
 
 class UploadgramRoute extends StatefulWidget {
-  static _UploadgramRouteState of(BuildContext context) =>
+  static _UploadgramRouteState? of(BuildContext context) =>
       context.findAncestorStateOfType<_UploadgramRouteState>();
   @override
   _UploadgramRouteState createState() => _UploadgramRouteState();
@@ -124,8 +124,8 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   final Connectivity _connectivity = Connectivity();
   bool _canUpload = false;
   int _checkSeconds = 0;
-  Timer _lastConnectivityTimer;
-  StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  Timer? _lastConnectivityTimer;
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
@@ -135,7 +135,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
       });
 
   Future<void> _handleFileRename(String delete,
-      {Function(String) onDone, String newName, String oldName = ''}) async {
+      {Function(String)? onDone, String? newName, String? oldName = ''}) async {
     if (onDone == null) onDone = (_) => null;
     if (newName == null) {
       showDialog(
@@ -191,8 +191,8 @@ class _UploadgramRouteState extends State<UploadgramRoute>
     if (result['ok']) {
       onDone(result['new_filename']);
       // TODO: set internal widget state instead of reloading the whole tree
-      setState(
-          () => AppSettings.files[delete]['filename'] = result['new_filename']);
+      setState(() =>
+          AppSettings.files![delete]!['filename'] = result['new_filename']);
       AppSettings.saveFiles();
     } else
       ScaffoldMessenger.of(context)
@@ -200,7 +200,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   }
 
   Future<void> _handleFileDelete(List<String> deleteList,
-      {noDialog = false, Function onYes}) async {
+      {noDialog = false, Function? onYes}) async {
     if (deleteList.length == 0) return;
     if (onYes == null) onYes = () => null;
     int listLength = deleteList.length;
@@ -226,7 +226,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                     print(deleteList);
                     _handleFileDelete(deleteList, noDialog: true);
                     Navigator.pop(context);
-                    onYes();
+                    onYes!();
                   },
                   child: Text('YES'),
                 ),
@@ -234,7 +234,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
             );
           });
     } else {
-      String _message;
+      String? _message;
       for (String delete in deleteList) {
         print('deleting $delete');
         Map result = await AppSettings.api.deleteFile(delete);
@@ -246,12 +246,12 @@ class _UploadgramRouteState extends State<UploadgramRoute>
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_message)));
       setState(
-          () => deleteList.forEach((key) => AppSettings.files.remove(key)));
+          () => deleteList.forEach((key) => AppSettings.files!.remove(key)));
       AppSettings.saveFiles();
     }
   }
 
-  Stream _uploadFileStream(UniqueKey key, Map file) {
+  Stream? _uploadFileStream(UniqueKey? key, Map file) {
     if (file['locked'] == true) return null;
     file['locked'] = true;
     var controller = StreamController.broadcast();
@@ -275,14 +275,14 @@ class _UploadgramRouteState extends State<UploadgramRoute>
           'size': file['size'],
           'url': result['url'],
         };
-        AppSettings.files[result['delete']] = fileObj;
+        AppSettings.files![result['delete']] = fileObj;
         controller.add({
           'type': 'end',
           'value': {'file': fileObj, 'delete': result['delete']},
         });
         AppSettings.saveFiles();
       } else {
-        String _error = 'An error occurred while obtaining the response';
+        String? _error = 'An error occurred while obtaining the response';
         if (result['statusCode'] > 500)
           _error = 'We are having server problems. Try again later.';
         if (result.containsKey('message')) _error = result['message'];
@@ -335,7 +335,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
       return;
     }
     print('asking for file');
-    Map file = await AppSettings.api.askForFile();
+    Map? file = await AppSettings.api.askForFile();
     if (file == null) return;
     if (file['error'] == 'PERMISSION_NOT_GRANTED') {
       showDialog(
@@ -357,7 +357,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
           SnackBar(content: Text('Please select a non-null file.')));
       return;
     }
-    if (AppSettings.files.length >= 5 &&
+    if (AppSettings.files!.length >= 5 &&
         AppSettings.api.isWebAndroid() &&
         await AppSettings.api.getBool('has_asked_app') == false) {
       AppSettings.api.setBool('has_asked_app', true);
@@ -387,15 +387,12 @@ class _UploadgramRouteState extends State<UploadgramRoute>
               'The file you selected is too large. The maximum allowed size is 2GB')));
       return;
     }
-    setState(() {
-      _uploadingQueue.add({
-        'key': UniqueKey(),
-        'fileObject': file,
-        'locked': false,
-        'stream': null
-      });
-      return true;
-    });
+    setState(() => _uploadingQueue.add({
+          'key': UniqueKey(),
+          'fileObject': file,
+          'locked': false,
+          'stream': null
+        }));
   }
 
   List<Widget> _filesWidgets() {
@@ -406,20 +403,20 @@ class _UploadgramRouteState extends State<UploadgramRoute>
         var object = _uploadingQueue[key];
         print(object);
         Map file = object['fileObject'];
-        IconData fileIcon =
+        IconData? fileIcon =
             fileIcons[file['name'].split('.').last.toLowerCase()] ??
                 fileIcons['default'];
-        Stream _uploadStream = object['stream'] ??
+        Stream? _uploadStream = object['stream'] ??
             (object['stream'] = _uploadFileStream(object['key'], file));
         rows.add(StreamBuilder(
             stream: _uploadStream,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
-              double _progress;
-              String _error;
+              double? _progress;
+              String? _error;
               double _bytesPerSec = 0;
               bool _uploading = true;
               String _delete = object['key'].toString();
-              Map _file = {
+              Map? _file = {
                 'filename': file['name'],
                 'size': file['size'],
                 'url': '',
@@ -465,12 +462,12 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                     : Text(
                         '${(_progress * 100).round().toString()}% (${humanSize(_bytesPerSec)}/s)'),
                 error: _error,
-                filename: _file['filename'],
+                filename: _file!['filename'],
                 fileSize: _file['size'].toDouble(),
                 url: _file['url'],
                 handleDelete: _uploading
                     ? null
-                    : (String delete, {Function onYes}) =>
+                    : (String delete, {Function? onYes}) =>
                         _handleFileDelete([delete], onYes: onYes),
                 handleRename: _uploading ? null : _handleFileRename,
                 onPressed: _uploading ? () => null : null,
@@ -479,10 +476,10 @@ class _UploadgramRouteState extends State<UploadgramRoute>
               );
             }));
       }
-    AppSettings.files.entries.toList().reversed.forEach((MapEntry entry) {
+    AppSettings.files!.entries.toList().reversed.forEach((MapEntry entry) {
       String delete = entry.key;
       Map fileObject = entry.value;
-      IconData fileIcon =
+      IconData? fileIcon =
           fileIcons[fileObject['filename'].split('.').last.toLowerCase()] ??
               fileIcons['default'];
       bool isSelected = _selected.contains(delete);
@@ -496,7 +493,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
         filename: fileObject['filename'],
         fileSize: fileObject['size'].toDouble(),
         url: fileObject['url'],
-        handleDelete: (String delete, {Function onYes}) =>
+        handleDelete: (String delete, {Function? onYes}) =>
             _handleFileDelete([delete], onYes: onYes),
         handleRename: _handleFileRename,
         compact: AppSettings.filesTheme == 'new_compact',
@@ -517,14 +514,14 @@ class _UploadgramRouteState extends State<UploadgramRoute>
     // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
     if (kIsWeb) {
-      ConnectivityResult _lastConnectivityResult;
+      ConnectivityResult? _lastConnectivityResult;
       _connectivity
           .checkConnectivity()
           .then((ConnectivityResult connecitityResult) {
         _lastConnectivityResult = connecitityResult;
         _checkConnection(connecitityResult);
       });
-      Timer.periodic(Duration(seconds: 10), (timer) {
+      Timer.periodic(Duration(seconds: 30), (timer) {
         _connectivity
             .checkConnectivity()
             .then((ConnectivityResult connectivityResult) {
@@ -552,7 +549,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   }
 
   Future<void> _checkUploadgramConnection() async {
-    if (_lastConnectivityTimer != null) _lastConnectivityTimer.cancel();
+    if (_lastConnectivityTimer != null) _lastConnectivityTimer!.cancel();
     if (await AppSettings.api.checkNetwork()) {
       setState(() => _canUpload = true);
     } else {
@@ -598,17 +595,17 @@ class _UploadgramRouteState extends State<UploadgramRoute>
         ),
         IconButton(
           icon: Icon(Icons.get_app),
-          onPressed: () {
+          onPressed: () async {
             // we need to export ONLY _selected here
             // _selected is a list of _files keys, so it should be easy to export.
             Map _exportFiles = {};
-            _selected.forEach((e) => _exportFiles[e] = AppSettings.files[e]);
+            _selected.forEach((e) => _exportFiles[e] = AppSettings.files![e]);
             String _filename = 'uploadgram_files.json';
             if (_selected.length == 1)
               _filename = _exportFiles[_selected[0]]['filename'] + '.json';
-            if (AppSettings.api
-                    .saveFile(_filename, json.encode(_exportFiles)) ==
-                null) {
+            if (await AppSettings.api
+                    .saveFile(_filename, json.encode(_exportFiles)) !=
+                true) {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('Couldn\'t export files.'),
               ));
@@ -623,24 +620,24 @@ class _UploadgramRouteState extends State<UploadgramRoute>
             IconButton(
               icon: Icon(Icons.edit),
               onPressed: () => _handleFileRename(_selected[0],
-                  oldName: AppSettings.files[_selected[0]]['filename']),
+                  oldName: AppSettings.files![_selected[0]]!['filename']),
               tooltip: 'Rename this file',
             ));
       }
-      if (_selected.length < AppSettings.files.length)
+      if (_selected.length < AppSettings.files!.length)
         actions.insert(
             0,
             IconButton(
               icon: Icon(Icons.select_all),
               onPressed: () => setState(
-                  () => _selected = List<String>.from(AppSettings.files.keys)),
+                  () => _selected = List<String>.from(AppSettings.files!.keys)),
               tooltip: 'Select all the files',
             ));
     } else {
       actions = [
         PopupMenuButton(
           icon: Icon(Icons.more_vert),
-          onSelected: (selected) async {
+          onSelected: (dynamic selected) async {
             switch (selected) {
               case 'settings':
                 List previousSettings = [
@@ -655,30 +652,30 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                 }
                 break;
               case 'export':
-                if (AppSettings.files.isEmpty) {
+                if (AppSettings.files!.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(
                         'Your files list is empty. Upload some files before exporting them.'),
                   ));
                   break;
                 }
-                if (AppSettings.api.saveFile('uploadgram_files.json',
-                        json.encode(AppSettings.files)) ==
-                    null) {
+                if (await AppSettings.api.saveFile('uploadgram_files.json',
+                        json.encode(AppSettings.files)) !=
+                    true) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Couldn\'t export files.'),
                   ));
                 }
                 break;
               case 'import':
-                Map _importedFiles = await AppSettings.api.importFiles();
+                Map? _importedFiles = await AppSettings.api.importFiles();
                 print('_importedFiles = ${_importedFiles.toString()}');
                 if (_importedFiles == null) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('The selected file is not valid')));
                   break;
                 }
-                AppSettings.files.addAll(
+                AppSettings.files!.addAll(
                     _importedFiles.cast<String, Map<dynamic, dynamic>>());
                 AppSettings.saveFiles();
                 setState(() => null);
@@ -766,7 +763,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                     width: 100,
                     height: 100,
                   ))
-                : ((AppSettings.files.length > 0 || _uploadingQueue.length > 0)
+                : ((AppSettings.files!.length > 0 || _uploadingQueue.length > 0)
                     ? GridView(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             childAspectRatio: aspectRatio,

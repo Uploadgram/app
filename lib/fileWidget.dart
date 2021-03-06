@@ -5,33 +5,33 @@ import 'fileInfo.dart';
 
 // ignore: must_be_immutable
 class FileWidget extends StatefulWidget {
-  String filename;
-  double fileSize;
-  String url;
-  String delete;
+  String? filename;
+  double? fileSize;
+  String url = '';
+  String delete = '';
   bool selected;
   bool uploading;
   bool selectOnPress;
-  IconData icon;
-  Function onPressed;
-  Function onLongPress;
-  Function(String, {Function onYes}) handleDelete;
-  Function(String, {Function(String) onDone, String oldName}) handleRename;
-  String error;
-  double progress = 0;
+  IconData? icon;
+  void Function()? onPressed;
+  void Function()? onLongPress;
+  Function(String, {Function? onYes})? handleDelete;
+  Function(String, {Function(String)? onDone, String? oldName})? handleRename;
+  String? error;
+  double? progress = 0;
   bool compact;
-  Widget upperWidget;
+  Widget? upperWidget;
 
   FileWidget({
-    Key key,
+    Key? key,
     this.selected = false,
     this.uploading = false,
     this.selectOnPress = false,
-    @required this.delete,
-    @required this.filename,
-    @required this.fileSize,
-    @required this.url,
-    @required this.icon,
+    required this.delete,
+    required this.filename,
+    required this.fileSize,
+    required this.url,
+    required this.icon,
     this.progress = 0,
     this.error,
     this.onLongPress,
@@ -42,7 +42,7 @@ class FileWidget extends StatefulWidget {
     this.upperWidget,
   }) : super(key: key);
 
-  static _FileWidgetState of(BuildContext c) =>
+  static _FileWidgetState? of(BuildContext c) =>
       c.findAncestorStateOfType<_FileWidgetState>();
 
   @override
@@ -50,7 +50,7 @@ class FileWidget extends StatefulWidget {
 }
 
 class _FileWidgetState extends State<FileWidget> {
-  void setProperty({bool waiting, String filename}) => setState(() {
+  void setProperty({bool? waiting, String? filename}) => setState(() {
         if (waiting != null) {
           widget.uploading = waiting;
           if (waiting) widget.progress = null;
@@ -68,7 +68,7 @@ class _FileWidgetState extends State<FileWidget> {
     if (!widget.uploading) {
       if (widget.onPressed == null) {
         widget.onPressed = widget.selectOnPress
-            ? () => UploadgramRoute.of(context).selectWidget(widget.delete)
+            ? () => UploadgramRoute.of(context)!.selectWidget(widget.delete)
             : () {
                 Navigator.push(
                     context,
@@ -86,7 +86,7 @@ class _FileWidgetState extends State<FileWidget> {
       }
       if (widget.onLongPress == null) {
         widget.onLongPress =
-            () => UploadgramRoute.of(context).selectWidget(widget.delete);
+            () => UploadgramRoute.of(context)!.selectWidget(widget.delete);
       }
     } else {
       widget.onPressed = widget.onLongPress = () => null;
@@ -134,7 +134,7 @@ class _FileWidgetState extends State<FileWidget> {
                             children: [
                               Expanded(
                                   child: Text(
-                                widget.filename,
+                                widget.filename!,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
@@ -146,7 +146,7 @@ class _FileWidgetState extends State<FileWidget> {
                             children: [
                               Expanded(
                                   child: Text(
-                                humanSize(widget.fileSize),
+                                humanSize(widget.fileSize!),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
@@ -194,7 +194,7 @@ class _FileWidgetState extends State<FileWidget> {
         )
       ];
       if (widget.upperWidget != null)
-        columnChildren.insert(0, widget.upperWidget);
+        columnChildren.insert(0, widget.upperWidget!);
       return Stack(children: [
         container,
         Positioned.fill(
@@ -223,7 +223,7 @@ class _FileWidgetState extends State<FileWidget> {
         Positioned.fill(
           child: Center(
               child: Text(
-            widget.error,
+            widget.error!,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.red[400],

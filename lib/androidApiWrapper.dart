@@ -27,10 +27,10 @@ class APIWrapper {
   bool isWebAndroid() => false;
   void downloadApp() => null;
 
-  Future<Map> importFiles() async {
-    Map fileMap = await askForFile();
+  Future<Map?> importFiles() async {
+    Map fileMap = await (askForFile() as FutureOr<Map<dynamic, dynamic>>);
     File file = fileMap['realFile'];
-    Map files = json.decode(
+    Map? files = json.decode(
         await file.readAsString()); // returns null if the file is not valid
     return files;
   }
@@ -40,16 +40,16 @@ class APIWrapper {
     return setString('uploaded_files', json.encode(files));
   }
 
-  Future<bool> setString(String name, String content) =>
-      _methodChannel.invokeMethod(
-          'saveString', <String, String>{'name': name, 'content': content});
+  Future<bool> setString(String name, String content) async =>
+      (await _methodChannel.invokeMethod(
+              'saveString', <String, String>{'name': name, 'content': content}))
+          as bool;
 
   Future<Map> getFiles() async {
     Map files = {};
     files = json.decode(await getString('uploaded_files', '{}'));
-    String u = await _methodChannel.invokeMethod('getLastUrl');
+    String? u = await _methodChannel.invokeMethod('getLastUrl');
     if (u != null) {
-      print(u);
       Uri uri = Uri.parse(u);
       if (uri.hasFragment) {
         String fragment = Uri.decodeComponent(uri.fragment);
@@ -81,18 +81,19 @@ class APIWrapper {
     return files;
   }
 
-  Future<String> getString(String name, String defaultValue) =>
-      _methodChannel.invokeMethod(
-          'getString', <String, String>{'name': name, 'default': defaultValue});
+  Future<String> getString(String name, String defaultValue) async =>
+      (await _methodChannel.invokeMethod('getString',
+          <String, String>{'name': name, 'default': defaultValue})) as String;
 
-  Future<bool> getBool(String name) =>
-      _methodChannel.invokeMethod('getBool', <String, String>{'name': name});
+  Future<bool> getBool(String name) async => (await _methodChannel
+      .invokeMethod('getBool', <String, String>{'name': name})) as bool;
 
-  Future<bool> setBool(String name, bool value) => _methodChannel
-      .invokeMethod('setBool', <String, dynamic>{'name': name, 'value': value});
+  Future<bool> setBool(String name, bool value) async =>
+      (await _methodChannel.invokeMethod(
+          'setBool', <String, dynamic>{'name': name, 'value': value})) as bool;
 
-  Future<Map> askForFile([String type = '*/*']) async {
-    String filePath = await _methodChannel
+  Future<Map?> askForFile([String type = '*/*']) async {
+    String? filePath = await _methodChannel
         .invokeMethod('getFile', <String, String>{'type': type});
     print(filePath);
     if (filePath == 'PERMISSION_NOT_GRANTED') {
@@ -110,13 +111,13 @@ class APIWrapper {
   Future<void> clearFilesCache() =>
       _methodChannel.invokeMethod('clearFilesCache');
 
-  Future<void> saveFile(String filename, String content) async {
-    String filePath = await _methodChannel
+  Future<bool?> saveFile(String filename, String content) async {
+    String? filePath = await _methodChannel
         .invokeMethod('saveFile', <String, String>{'filename': filename});
-    if (filePath == null) return;
-    if (filePath.startsWith('/data/data')) return;
+    if (filePath == null) return null;
+    if (filePath.startsWith('/data/data')) return null;
     await File(filePath).writeAsString(content);
-    return;
+    return true;
   }
 
   Future<Map> getFile(String deleteID) async {
@@ -131,8 +132,8 @@ class APIWrapper {
 
   Future<Map> uploadFile(
     Map file, {
-    Function(double, double, String) onProgress,
-    Function(int) onError,
+    Function(double, double, String)? onProgress,
+    Function? onError,
   }) async {
     //if (!await file.exists())
     //  return {
@@ -261,7 +262,7 @@ class APIWrapper {
                     ongoing: true,
                     maxProgress: total,
                     progress: loaded)));
-      onProgress(progress, bytesPerSec, stringRemaining);
+      onProgress?.call(progress, bytesPerSec, stringRemaining);
     });
     print('end file upload');
     _flutterNotifications.cancel(0);
@@ -281,7 +282,7 @@ class APIWrapper {
                 onlyAlertOnce: false)));
     clearFilesCache();
     if (response.statusCode != 200) {
-      onError(response.statusCode);
+      onError?.call(response.statusCode);
       return {
         'ok': false,
         'statusCode': response.statusCode,

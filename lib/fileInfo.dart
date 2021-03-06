@@ -6,22 +6,22 @@ import 'fileWidget.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
-  String filename;
-  double fileSize;
+  String? filename;
+  double? fileSize;
   String url;
-  IconData fileIcon;
-  Function(String, {Function onYes}) handleDelete;
-  Function(String, {Function(String) onDone, String oldName}) handleRename;
-  String delete;
+  IconData? fileIcon;
+  Function(String, {Function? onYes})? handleDelete;
+  Function(String, {Function(String)? onDone, String? oldName})? handleRename;
+  String delete = '';
 
   FileInfoRoute({
-    @required this.filename,
-    @required this.fileSize,
-    @required this.fileIcon,
-    @required this.delete,
-    @required this.handleDelete,
-    @required this.handleRename,
-    @required this.url,
+    required this.filename,
+    required this.fileSize,
+    required this.fileIcon,
+    required this.delete,
+    required this.handleDelete,
+    required this.handleRename,
+    required this.url,
   });
   _FileInfoRouteState createState() => _FileInfoRouteState();
 }
@@ -33,16 +33,16 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
     List<List<Widget>> tableChildren = [
       [
         Text('Size', style: TextStyle(fontSize: fontSize)),
-        Text(humanSize(widget.fileSize), style: TextStyle(fontSize: fontSize))
+        Text(humanSize(widget.fileSize!), style: TextStyle(fontSize: fontSize))
       ],
       [
         Text('URL', style: TextStyle(fontSize: fontSize)),
         SelectableText(widget.url, style: TextStyle(fontSize: fontSize))
       ]
     ];
-    Uri uri = Uri.tryParse(widget.url);
+    Uri? uri = Uri.tryParse(widget.url);
     if (uri != null) {
-      int uploadDateInt =
+      int? uploadDateInt =
           int.tryParse(uri.path.split('/').last.substring(0, 8), radix: 16);
       if (uploadDateInt != null) {
         DateTime uploadDate =
@@ -77,15 +77,15 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
             ),
             IconButton(
               icon: Icon(Icons.delete),
-              onPressed: () => widget.handleDelete(widget.delete,
-                  onYes: () => Navigator.pop(context)),
+              onPressed: () => widget.handleDelete
+                  ?.call(widget.delete, onYes: () => Navigator.pop(context)),
               tooltip: 'Delete this file',
             ),
             IconButton(
               icon: Icon(Icons.edit),
               onPressed: () {
-                widget.handleRename(widget.delete, oldName: widget.filename,
-                    onDone: (String newName) {
+                widget.handleRename?.call(widget.delete,
+                    oldName: widget.filename, onDone: (String newName) {
                   FileWidget.of(context)
                       ?.setProperty(waiting: false, filename: newName);
                   setState(() => widget.filename = newName);
@@ -109,7 +109,7 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
                   Expanded(
                       child: Padding(
                           child: Text(
-                            widget.filename,
+                            widget.filename!,
                             style: TextStyle(
                                 fontSize: 26, fontWeight: FontWeight.w500),
                             overflow: TextOverflow.clip,
