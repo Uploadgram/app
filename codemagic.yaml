@@ -31,13 +31,13 @@ workflows:
       # Build binaries
       - cd "$FCI_BUILD_DIR" && flutter packages pub get
       - cd "$FCI_BUILD_DIR" && flutter build apk --release --split-per-abi
-      - cd "$FCI_BUILD_DIR" && flutter build apk --release
+      - cd "$FCI_BUILD_DIR" && flutter build apk --release --target-platform=android-arm64,android-arm
 
-      - name: generate sha256sum per-file
+      - name: Generate sha256sum per-file
         script: |
           mkdir sha256_sums
           for file in app-{,arm64-v8a-,armeabi-v7a-,x86_64-}release.apk; do
-            sha256sum build/app/outputs/flutter-apk/$file | awk '{ print $1 }' > sha256_sums/sha256-$file.txt
+            openssl dgst -sha256 "build/app/outputs/flutter-apk/${file}"| sed -E 's/.+ ([0-9a-f]+)/\1/' > sha256_sums/sha256-${file}.txt
           done
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
@@ -55,3 +55,5 @@ workflows:
       email:
         recipients:
           - admin@pato05mc.tk
+      scripts:
+        - rm -rf "$FCI_BUILD_DIR/sha256_sums/"

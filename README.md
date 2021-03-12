@@ -1,8 +1,21 @@
-# Uploadgram-app
+[![license](https://img.shields.io/github/license/pato05/uploadgram-app)](https://github.com/Pato05/uploadgram-app/blob/master/LICENSE)
+[![repo lines](https://img.shields.io/tokei/lines/github/pato05/uploadgram-app)](https://github.com/Pato05/uploadgram-app)
+[![framework: flutter](https://img.shields.io/badge/framework-flutter-blue)](https://flutter.io)
+[![Codemagic build status](https://api.codemagic.io/apps/604564acbe2f9fb72766d730/604564acbe2f9fb72766d72f/status_badge.svg)](https://codemagic.io/apps/604564acbe2f9fb72766d730/604564acbe2f9fb72766d72f/latest_build)
+[![uploadgram backend status](https://img.shields.io/website?down_color=red&down_message=down&label=backend&up_color=green&up_message=up&url=https%3A%2F%2Fapi.uploadgram.me%2F)](https://uploadgram.me)
+
+
+[![fdroid release](https://img.shields.io/f-droid/v/com.pato05.uploadgram)](https://f-droid.org/packages/com.pato05.uploadgram)
+[![github release](https://img.shields.io/github/v/release/pato05/uploadgram-app)](https://github.com/pato05/uploadgram-app/releases/latest)
+
+[![downloads](https://img.shields.io/github/downloads/pato05/uploadgram-app/total)](https://github.com/pato05/uploadgram-app/releases)
+[![downloads@latest](https://img.shields.io/github/downloads/pato05/uploadgram-app/latest/total)](https://github.com/pato05/uploadgram-app/releases/latest)
+# Uploadgram App
 Uploadgram frontend for Android (and web)
 
 ## Where can I download the app?
-Just go to the [latest release](https://github.com/Pato05/uploadgram-app/releases/latest) and click one of the packages.
+Just go to the [latest release](https://github.com/Pato05/uploadgram-app/releases/latest) and click one of the packages or you can download it on F-Droid, by clicking the button below.
+[![Get it on F-Droid](https://fdroid.gitlab.io/artwork/badge/get-it-on.png)](https://f-droid.org/packages/com.pato05.uploadgram)
 
 ## Files descriptions
 - `app-release.apk` is compatible with both ARM and ARM64 (if you are unsure if your device is ARM or ARM64)
