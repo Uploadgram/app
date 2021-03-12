@@ -2,8 +2,8 @@
 # Note that this configuration is not an exact match to UI settings. Review and adjust as necessary.
 
 workflows:
-  default-workflow:
-    name: Default Workflow
+  android-workflow:
+    name: Android Build Workflow
     max_build_duration: 60
     environment:
       flutter: v2.0.1
@@ -15,6 +15,13 @@ workflows:
         FCI_KEYSTORE_PASSWORD: Encrypted(Z0FBQUFBQmdTOF9lVEphV1BIc294SXYzZGhzMmNoQ01aX0Jlb1duMnlka3AwM3dydnluMldPM2xNTXpEZDlDc19rbTgtU1lDMW16aWtLVFNVRkZnTnUzSndhMHU1a1FqTWc9PQ==)
         FCI_KEY_PASSWORD: Encrypted(Z0FBQUFBQmdTOF9lVEphV1BIc294SXYzZGhzMmNoQ01aX0Jlb1duMnlka3AwM3dydnluMldPM2xNTXpEZDlDc19rbTgtU1lDMW16aWtLVFNVRkZnTnUzSndhMHU1a1FqTWc9PQ==)
         FCI_KEY_ALIAS: Encrypted(Z0FBQUFBQmdTOF8xdmltNGVPdWF3WGotUmxqNjJfMU1EdTY0eWJVT0tXUjdVajNHVlZjMmlvRHc1NFYzSmJUTF9OZEJ2aVhobVAycE8zR1UtUEFUSXNmM3lMcTZ4Wm1iTnc9PQ==)
+    triggering:
+      events:
+        - tag
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
     scripts:
       - name: Set up key.properties
         script: |
@@ -37,7 +44,7 @@ workflows:
         script: |
           mkdir sha256_sums
           for file in app-{,arm64-v8a-,armeabi-v7a-,x86_64-}release.apk; do
-            openssl dgst -sha256 "build/app/outputs/flutter-apk/${file}"| sed -E 's/.+ ([0-9a-f]+)/\1/' > sha256_sums/sha256-${file}.txt
+            openssl dgst -sha256 "${FCI_BUILD_DIR}/build/app/outputs/flutter-apk/${file}"| sed -E 's/.+ ([0-9a-f]+)/\1/' > "${FCI_BUILD_DIR}/sha256_sums/sha256-${file}.txt"
           done
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
@@ -48,12 +55,9 @@ workflows:
       - sha256_sums/sha256-app-arm64-v8a-release.apk.txt
       - sha256_sums/sha256-app-armeabi-v7a-release.apk.txt
       - sha256_sums/sha256-app-x86_64-release.apk.txt
-      # - build/**/outputs/**/*.aab
-      # - build/**/outputs/**/mapping.txt
-      # - flutter_drive.log
     publishing:
-      email:
-        recipients:
-          - admin@pato05mc.tk
+      github_releases:
+        prerelease: false
+        artifact_patterns: []
       scripts:
         - rm -rf "$FCI_BUILD_DIR/sha256_sums/"
