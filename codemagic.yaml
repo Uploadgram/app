@@ -35,8 +35,10 @@ workflows:
 
       - name: generate sha256sum per-file
         script: |
-        mkdir sha256_sums
-        for file in app-{,arm64-v8a-,armeabi-v7a-,x86_64-}release.apk; do sha256sum build/app/outputs/flutter-apk/$file | awk '{ print $1 }' > sha256_sums/sha256-$file.txt; done
+          mkdir sha256_sums
+          for file in app-{,arm64-v8a-,armeabi-v7a-,x86_64-}release.apk; do
+            sha256sum build/app/outputs/flutter-apk/$file | awk '{ print $1 }' > sha256_sums/sha256-$file.txt
+          done
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
       - build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
