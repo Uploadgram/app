@@ -18,8 +18,8 @@ workflows:
     scripts:
       - name: Set up key.properties
         script: |
-          echo $FCI_KEYSTORE | base64 --decode > $FCI_KEYSTORE_PATH
-          cat >> "$FCI_BUILD_DIR/project_directory/android/key.properties" <<EOF
+          echo $FCI_KEYSTORE | base64 --decode > "$FCI_KEYSTORE_PATH"
+          cat > "$FCI_BUILD_DIR/android/key.properties" <<EOF
           storePassword=$FCI_KEYSTORE_PASSWORD
           keyPassword=$FCI_KEY_PASSWORD
           keyAlias=$FCI_KEY_ALIAS
@@ -29,9 +29,9 @@ workflows:
         script: echo "flutter.sdk=$HOME/programs/flutter" > "$FCI_BUILD_DIR/android/local.properties"
 
       # Build binaries
-      - cd . && flutter packages pub get
-      - cd . && flutter build apk --release --split-per-abi
-      - cd . && flutter build apk --release
+      - cd "$FCI_BUILD_DIR" && flutter packages pub get
+      - cd "$FCI_BUILD_DIR" && flutter build apk --release --split-per-abi
+      - cd "$FCI_BUILD_DIR" && flutter build apk --release
 
       - name: generate sha256sum per-file
         script: |
