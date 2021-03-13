@@ -15,6 +15,7 @@ Uploadgram frontend for Android (and web)
 
 ## Where can I download the app?
 Just go to the [latest release](https://github.com/Pato05/uploadgram-app/releases/latest) and click one of the packages or you can download it on F-Droid, by clicking the button below.
+
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/com.pato05.uploadgram)
 
 ## Files descriptions
