@@ -108,6 +108,8 @@ class APIWrapper {
     return files;
   }
 
+  Future<void> clearFilesCache() async => null;
+
   Future<bool?> saveFile(String filename, String content) async {
     html.Blob blob = new html.Blob([content]);
     html.LinkElement a = html.LinkElement();
@@ -137,7 +139,7 @@ class APIWrapper {
     formData.append('file_size', file['size'].toString());
     formData.appendBlob('file_upload', file['realFile']);
     xhr.open('POST', 'https://api.uploadgram.me/upload');
-    late var initDate;
+    late DateTime initDate;
     xhr.upload.onProgress.listen((html.ProgressEvent e) {
       double bytesPerSec = e.loaded! /
           (DateTime.now().millisecondsSinceEpoch -
@@ -157,10 +159,10 @@ class APIWrapper {
               ? '${secondsRemaining % 60} seconds '
               : '') +
           'remaining';
-      onProgress!.call(e.loaded! / e.total!, bytesPerSec, stringRemaining);
+      onProgress?.call(e.loaded! / e.total!, bytesPerSec, stringRemaining);
     });
     xhr.onError.listen((e) {
-      onError!(xhr.status);
+      onError?.call(xhr.status);
       completer.complete({
         'ok': false,
         'statusCode': xhr.status,
@@ -236,7 +238,7 @@ class APIWrapper {
 
   Future<bool> checkNetwork() async {
     print('[web] checkNetwork() called');
-    var completer = Completer();
+    Completer<bool> completer = Completer<bool>();
     html.HttpRequest xhr = html.HttpRequest()
       ..open('HEAD', 'https://api.uploadgram.me/status');
     xhr.onLoad.listen((_) {
@@ -247,6 +249,6 @@ class APIWrapper {
     });
     xhr.onError.listen((_) => completer.complete(false));
     xhr.send();
-    return await (completer.future as Future<bool>);
+    return await completer.future;
   }
 }

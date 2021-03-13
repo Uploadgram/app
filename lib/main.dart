@@ -125,7 +125,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   bool _canUpload = false;
   int _checkSeconds = 0;
   Timer? _lastConnectivityTimer;
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
 
   List<String> _selected = [];
   List<Map> _uploadingQueue = [];
@@ -515,22 +515,16 @@ class _UploadgramRouteState extends State<UploadgramRoute>
     // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
     if (kIsWeb) {
-      ConnectivityResult? _lastConnectivityResult;
+      // need to find a better solution
+      // ConnectivityResult? _lastConnectivityResult;
       _connectivity
           .checkConnectivity()
           .then((ConnectivityResult connecitityResult) {
-        _lastConnectivityResult = connecitityResult;
+        // _lastConnectivityResult = connecitityResult;
         _checkConnection(connecitityResult);
       });
-      Timer.periodic(Duration(seconds: 30), (timer) {
-        _connectivity
-            .checkConnectivity()
-            .then((ConnectivityResult connectivityResult) {
-          if (_lastConnectivityResult !=
-              connectivityResult) // only call if connectivity changed
-            _checkConnection(connectivityResult);
-        });
-      });
+      // Timer.periodic(Duration(seconds: 30),
+      //     (timer) => _connectivity.checkConnectivity().then(_checkConnection));
     }
     // subscribe to connectivity event stream
     else
@@ -550,7 +544,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   }
 
   Future<void> _checkUploadgramConnection() async {
-    if (_lastConnectivityTimer != null) _lastConnectivityTimer!.cancel();
+    _lastConnectivityTimer?.cancel();
     if (await AppSettings.api.checkNetwork()) {
       setState(() => _canUpload = true);
     } else {
@@ -573,7 +567,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   void dispose() {
     AppSettings.saveFiles();
     AppSettings.saveSettings();
-    _connectivitySubscription.cancel();
+    _connectivitySubscription?.cancel();
     super.dispose();
   }
 

@@ -40,7 +40,10 @@ class FileWidget extends StatefulWidget {
     this.onPressed,
     this.compact = false,
     this.upperWidget,
-  }) : super(key: key);
+  })  : assert((uploading == false && onPressed != null ||
+                (handleDelete != null && handleRename != null)) ||
+            uploading),
+        super(key: key);
 
   static _FileWidgetState? of(BuildContext c) =>
       c.findAncestorStateOfType<_FileWidgetState>();
@@ -62,9 +65,6 @@ class _FileWidgetState extends State<FileWidget> {
 
   @override
   Widget build(BuildContext context) {
-    assert((widget.uploading == false && widget.onPressed != null ||
-            (widget.handleDelete != null && widget.handleRename != null)) ||
-        widget.uploading);
     if (!widget.uploading) {
       if (widget.onPressed == null) {
         widget.onPressed = widget.selectOnPress
