@@ -58,7 +58,7 @@ class InternalAPIWrapper {
     html.TextInputElement input = html.TextInputElement();
     var range = html.Range();
     input.value = text;
-    input.contentEditable = 'contentEditable';
+    input.contentEditable = 'true';
     range.selectNodeContents(input);
     var sel = html.window.getSelection()!;
     sel.removeAllRanges();
