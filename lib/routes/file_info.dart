@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'utils.dart';
-import 'appSettings.dart';
-import 'fileWidget.dart';
+
+import '../app_logic.dart';
+import '../widgets/file_widget_grid.dart';
+import '../utils.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
-  String? filename;
-  double? fileSize;
-  String url;
-  IconData? fileIcon;
-  Function(String, {Function? onYes})? handleDelete;
-  Function(String, {Function(String)? onDone, String? oldName})? handleRename;
-  String delete = '';
+  String filename;
+  final double fileSize;
+  final String url;
+  final IconData fileIcon;
+  final Function(String, {Function? onYes}) handleDelete;
+  final Function(String, {Function(String)? onDone, String? oldName})
+      handleRename;
+  String delete;
 
   FileInfoRoute({
     required this.filename,
@@ -33,7 +35,7 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
     List<List<Widget>> tableChildren = [
       [
         Text('Size', style: TextStyle(fontSize: fontSize)),
-        Text(humanSize(widget.fileSize!), style: TextStyle(fontSize: fontSize))
+        Text(humanSize(widget.fileSize), style: TextStyle(fontSize: fontSize))
       ],
       [
         Text('URL', style: TextStyle(fontSize: fontSize)),
@@ -67,7 +69,7 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
               icon: Icon(Icons.copy),
               onPressed: () async {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(await AppSettings.api.copy(
+                    content: Text(await AppLogic.platformApi.copy(
                   widget.url,
                 )
                         ? 'Link copied to clipboard successfully!'
@@ -78,15 +80,15 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
             IconButton(
               icon: Icon(Icons.delete),
               onPressed: () => widget.handleDelete
-                  ?.call(widget.delete, onYes: () => Navigator.pop(context)),
+                  .call(widget.delete, onYes: () => Navigator.pop(context)),
               tooltip: 'Delete this file',
             ),
             IconButton(
               icon: Icon(Icons.edit),
               onPressed: () {
-                widget.handleRename?.call(widget.delete,
+                widget.handleRename.call(widget.delete,
                     oldName: widget.filename, onDone: (String newName) {
-                  FileWidget.of(context)
+                  FileWidgetGrid.of(context)
                       ?.setProperty(waiting: false, filename: newName);
                   setState(() => widget.filename = newName);
                 });
@@ -109,7 +111,7 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
                   Expanded(
                       child: Padding(
                           child: Text(
-                            widget.filename!,
+                            widget.filename,
                             style: TextStyle(
                                 fontSize: 26, fontWeight: FontWeight.w500),
                             overflow: TextOverflow.clip,

@@ -1,128 +1,26 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
-import 'utils.dart';
 import 'package:http_parser/http_parser.dart';
+import '../utils.dart';
+import '../mime_types.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-class APIWrapper {
+class WebAPIWrapper {
   Dio _dio = Dio(BaseOptions(
     followRedirects: true,
     validateStatus: (status) => true,
   ));
-  final MethodChannel _methodChannel =
-      const MethodChannel('com.pato05.uploadgram');
   final FlutterLocalNotificationsPlugin _flutterNotifications =
       FlutterLocalNotificationsPlugin();
   bool _didInitializeNotifications = false;
   int _uploadNotificationId = 1;
 
-  Future<bool> copy(String text) async {
-    Clipboard.setData(ClipboardData(text: text));
-    return true;
-  }
-
-  bool isWebAndroid() => false;
   void downloadApp() => null;
 
-  Future<Map?> importFiles() async {
-    Map fileMap = await (askForFile() as FutureOr<Map<dynamic, dynamic>>);
-    File file = fileMap['realFile'];
-    Map? files = json.decode(
-        await file.readAsString()); // returns null if the file is not valid
-    return files;
-  }
-
-  Future<bool> saveFiles(Map files) {
-    print('called api.saveFiles($files)');
-    return setString('uploaded_files', json.encode(files));
-  }
-
-  Future<bool> setString(String name, String content) async =>
-      (await _methodChannel.invokeMethod(
-              'saveString', <String, String>{'name': name, 'content': content}))
-          as bool;
-
-  Future<Map> getFiles() async {
-    Map files = {};
-    files = json.decode(await getString('uploaded_files', '{}'));
-    String? u = await _methodChannel.invokeMethod('getLastUrl');
-    if (u != null) {
-      Uri uri = Uri.parse(u);
-      if (uri.hasFragment) {
-        String fragment = Uri.decodeComponent(uri.fragment);
-        print(fragment);
-        if (fragment.indexOf('import:') == 0) {
-          String filesMap = fragment.substring(7);
-          print(filesMap);
-          if (filesMap.substring(0, 1) == '{') {
-            try {
-              Map parsedFiles = json.decode(filesMap);
-              parsedFiles.forEach((key, value) {
-                if (key.length == 48 || key.length == 49) {
-                  files[key] = value;
-                }
-              });
-            } catch (e) {}
-          } else {
-            print('trying new import method...');
-            if (fragment.length == 48 || fragment.length == 49) {
-              Map file = await getFile(fragment);
-              file.remove('mime');
-              files[fragment] = file;
-            }
-          }
-          saveFiles(files);
-        }
-      }
-    }
-    return files;
-  }
-
-  Future<String> getString(String name, String defaultValue) async =>
-      (await _methodChannel.invokeMethod('getString',
-          <String, String>{'name': name, 'default': defaultValue})) as String;
-
-  Future<bool> getBool(String name) async => (await _methodChannel
-      .invokeMethod('getBool', <String, String>{'name': name})) as bool;
-
-  Future<bool> setBool(String name, bool value) async =>
-      (await _methodChannel.invokeMethod(
-          'setBool', <String, dynamic>{'name': name, 'value': value})) as bool;
-
-  Future<Map?> askForFile([String type = '*/*']) async {
-    String? filePath = await _methodChannel
-        .invokeMethod('getFile', <String, String>{'type': type});
-    print(filePath);
-    if (filePath == 'PERMISSION_NOT_GRANTED') {
-      return {'error': 'PERMISSION_NOT_GRANTED'};
-    }
-    if (filePath == null) return null;
-    File file = File(filePath);
-    return {
-      'realFile': file,
-      'size': await file.length(),
-      'name': file.path.split('/').last,
-    };
-  }
-
-  Future<void> clearFilesCache() =>
-      _methodChannel.invokeMethod('clearFilesCache');
-
-  Future<bool?> saveFile(String filename, String content) async {
-    String? filePath = await _methodChannel
-        .invokeMethod('saveFile', <String, String>{'filename': filename});
-    if (filePath == null) return null;
-    if (filePath.startsWith('/data/data')) return null;
-    await File(filePath).writeAsString(content);
-    return true;
-  }
-
-  Future<Map> getFile(String deleteID) async {
+  Future<Map> getFile(String deleteId) async {
     Response response =
-        await _dio.get('https://api.uploadgram.me/get/$deleteID');
+        await _dio.get('https://api.uploadgram.me/get/$deleteId');
     try {
       return json.decode(response.data);
     } catch (e) {
@@ -135,12 +33,6 @@ class APIWrapper {
     Function(double, double, String)? onProgress,
     Function? onError,
   }) async {
-    //if (!await file.exists())
-    //  return {
-    //    'ok': 'false',
-    //    'statusCode': 400,
-    //    'message': 'The file does not exist.'
-    //  };
     if (!(file['realFile'] is File &&
         (file['size'] is int || file['size'] is double) &&
         file['name'] is String))
@@ -158,57 +50,26 @@ class APIWrapper {
           InitializationSettings(android: androidInitializationSettings));
       _didInitializeNotifications = true;
     }
-    _flutterNotifications.show(
-        0,
-        fileName,
-        'Connecting...',
-        NotificationDetails(
-            android: AndroidNotificationDetails(
-          'com.pato05.uploadgram/notifications/upload',
-          'Upload progress notification',
-          'Upload status and progress notifications',
-          channelShowBadge: true,
-          importance: Importance.max,
-          priority: Priority.high,
-          onlyAlertOnce: true,
-          showProgress: true,
-          ongoing: true,
-          indeterminate: true,
-        )));
+    if (file['size'] > 500000)
+      _flutterNotifications.show(
+          0,
+          fileName,
+          'Connecting...',
+          NotificationDetails(
+              android: AndroidNotificationDetails(
+            'com.pato05.uploadgram/notifications/upload',
+            'Upload progress notification',
+            'Upload status and progress notifications',
+            channelShowBadge: true,
+            importance: Importance.max,
+            priority: Priority.high,
+            onlyAlertOnce: true,
+            showProgress: true,
+            ongoing: true,
+            indeterminate: true,
+          )));
 
     print('processing file upload');
-    //uploader.enqueue(MultipartFormDataUpload(
-    //  url: 'https://api.uploadgram.me/upload',
-    //  files: [FileItem(path: file['realFile'].path, field: 'file_upload')],
-    //  method: UploadMethod.POST,
-    //  data: {'file_size': fileSize.toString()},
-    //));
-    //uploader.progress.listen((p) {
-    //  var notif = NotificationDetails(
-    //      android: AndroidNotificationDetails(
-    //          'com.pato05.uploadgram/notifications/upload',
-    //          'Upload progress notification',
-    //          'Upload status and progress notifications',
-    //          channelShowBadge: true,
-    //          importance: Importance.max,
-    //          priority: Priority.high,
-    //          onlyAlertOnce: true,
-    //          showProgress: true,
-    //          maxProgress: 100,
-    //          progress: p.progress));
-    //  _flutterNotifications.show(0, 'Uploading file...', '$fileName', notif);
-    //  onProgress((p.progress * fileSize ~/ 100), fileSize);
-    //});
-    //uploader.result.listen((result) {
-    //  if (result.statusCode != 200)
-    //    completer.complete({
-    //      'ok': false,
-    //      'statusCode': result.statusCode,
-    //      'message': 'Error ${result.statusCode}'
-    //    });
-    //  completer.complete(json.decode(result.response));
-    //});
-    //return await completer.future;
     FormData formData = FormData.fromMap({
       'file_size': fileSize,
       'file_upload': await MultipartFile.fromFile(file['realFile'].path,
@@ -242,7 +103,8 @@ class APIWrapper {
               : '') +
           'remaining';
       print(secondsRemaining);
-      if (loaded - _lastUploadedBytes > bytesPerSec ~/ 100)
+      if (loaded - _lastUploadedBytes > bytesPerSec ~/ 100 &&
+          file['size'] > 500000)
         _flutterNotifications.show(
             0,
             notifTitle,

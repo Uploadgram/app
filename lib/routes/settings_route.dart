@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'appSettings.dart';
+
+import '../app_settings.dart';
 
 class SettingsRoute extends StatefulWidget {
   @override
@@ -43,7 +44,8 @@ class _SettingsRouteState extends State<SettingsRoute> {
                             value: e['value'],
                           ))
                       .toList(),
-                  onChanged: (dynamic a) => setState(() => AppSettings.fabTheme = a)),
+                  onChanged: (dynamic a) =>
+                      setState(() => AppSettings.fabTheme = a)),
             ),
             ListTile(
               title:

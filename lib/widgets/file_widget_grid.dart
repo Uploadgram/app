@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
-import 'utils.dart';
-import 'fileInfo.dart';
+
+import '../routes/uploadgram_route.dart';
+import '../routes/file_info.dart';
+import '../utils.dart';
 
 // ignore: must_be_immutable
-class FileWidget extends StatefulWidget {
-  String? filename;
-  double? fileSize;
+class FileWidgetGrid extends StatefulWidget {
+  String filename;
+  double fileSize;
   String url = '';
   String delete = '';
   bool selected;
   bool uploading;
   bool selectOnPress;
-  IconData? icon;
+  IconData icon;
   void Function()? onPressed;
   void Function()? onLongPress;
   Function(String, {Function? onYes})? handleDelete;
@@ -22,7 +23,7 @@ class FileWidget extends StatefulWidget {
   bool compact;
   Widget? upperWidget;
 
-  FileWidget({
+  FileWidgetGrid({
     Key? key,
     this.selected = false,
     this.uploading = false,
@@ -40,19 +41,19 @@ class FileWidget extends StatefulWidget {
     this.onPressed,
     this.compact = false,
     this.upperWidget,
-  })  : assert((uploading == false && onPressed != null ||
+  })  : assert((onPressed != null ||
                 (handleDelete != null && handleRename != null)) ||
             uploading),
         super(key: key);
 
-  static _FileWidgetState? of(BuildContext c) =>
-      c.findAncestorStateOfType<_FileWidgetState>();
+  static _FileWidgetGridState? of(BuildContext c) =>
+      c.findAncestorStateOfType<_FileWidgetGridState>();
 
   @override
-  _FileWidgetState createState() => _FileWidgetState();
+  _FileWidgetGridState createState() => _FileWidgetGridState();
 }
 
-class _FileWidgetState extends State<FileWidget> {
+class _FileWidgetGridState extends State<FileWidgetGrid> {
   void setProperty({bool? waiting, String? filename}) => setState(() {
         if (waiting != null) {
           widget.uploading = waiting;
@@ -78,8 +79,8 @@ class _FileWidgetState extends State<FileWidget> {
                               fileSize: widget.fileSize,
                               fileIcon: widget.icon,
                               delete: widget.delete,
-                              handleDelete: widget.handleDelete,
-                              handleRename: widget.handleRename,
+                              handleDelete: widget.handleDelete!,
+                              handleRename: widget.handleRename!,
                               url: widget.url,
                             )));
               };
@@ -134,7 +135,7 @@ class _FileWidgetState extends State<FileWidget> {
                             children: [
                               Expanded(
                                   child: Text(
-                                widget.filename!,
+                                widget.filename,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
@@ -146,7 +147,7 @@ class _FileWidgetState extends State<FileWidget> {
                             children: [
                               Expanded(
                                   child: Text(
-                                humanSize(widget.fileSize!),
+                                humanSize(widget.fileSize),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
