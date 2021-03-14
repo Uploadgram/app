@@ -35,7 +35,8 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
     List<List<Widget>> tableChildren = [
       [
         Text('Size', style: TextStyle(fontSize: fontSize)),
-        Text(humanSize(widget.fileSize), style: TextStyle(fontSize: fontSize))
+        Text(Utils.humanSize(widget.fileSize),
+            style: TextStyle(fontSize: fontSize))
       ],
       [
         Text('URL', style: TextStyle(fontSize: fontSize)),

@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
-import '../app_logic.dart';
+import '../utils.dart';
 
 class InternalAPIWrapper {
   final MethodChannel _methodChannel =
@@ -36,38 +36,15 @@ class InternalAPIWrapper {
           as bool;
 
   Future<Map> getFiles() async {
-    Map files = {};
-    files = json.decode(await getString('uploaded_files', '{}'));
-    String? u = await _methodChannel.invokeMethod('getLastUrl');
-    if (u != null) {
-      Uri uri = Uri.parse(u);
+    Map files = json.decode(await getString('uploaded_files', '{}'));
+    String? lastUri = await _methodChannel.invokeMethod('getLastUrl');
+    if (lastUri != null) {
+      Uri uri = Uri.parse(lastUri);
       if (uri.hasFragment) {
-        String fragment = Uri.decodeComponent(uri.fragment);
-        print(fragment);
-        if (fragment.indexOf('import:') == 0) {
-          String filesMap = fragment.substring(7);
-          print(filesMap);
-          if (filesMap.substring(0, 1) == '{') {
-            try {
-              Map parsedFiles = json.decode(filesMap);
-              parsedFiles.forEach((key, value) {
-                if (key.length == 48 || key.length == 49) {
-                  files[key] = value;
-                }
-              });
-            } catch (e) {}
-          } else {
-            print('trying new import method...');
-            if (fragment.length == 48 || fragment.length == 49) {
-              Map file = await AppLogic.webApi.getFile(fragment);
-              if (file != {}) {
-                file.remove('mime');
-                files[fragment] = file;
-              }
-            }
-          }
-          saveFiles(files);
-        }
+        Map? importedFiles =
+            await Utils.parseFragment(Uri.decodeComponent(uri.fragment));
+        if (importedFiles != null) files.addAll(importedFiles);
+        saveFiles(files);
       }
     }
     return files;

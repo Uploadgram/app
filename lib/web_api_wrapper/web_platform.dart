@@ -95,8 +95,8 @@ class WebAPIWrapper {
     var completer = Completer<Map>();
     html.HttpRequest xhr = html.HttpRequest();
     xhr.open('POST', 'https://api.uploadgram.me/rename/$file');
-    xhr.send(json
-        .encode(<String, String>{'new_filename': await parseName(newName)}));
+    xhr.send(json.encode(
+        <String, String>{'new_filename': await Utils.parseName(newName)}));
     var handleError = () {
       var jsonError;
       if (xhr.responseText!.substring(0, 1) == '{')
@@ -132,6 +132,21 @@ class WebAPIWrapper {
         completer.complete(false);
     });
     xhr.onError.listen((_) => completer.complete(false));
+    xhr.send();
+    return await completer.future;
+  }
+
+  Future<Map> getFile(String deleteId) async {
+    Completer<Map> completer = Completer<Map>();
+    html.HttpRequest xhr = html.HttpRequest()
+      ..open('GET', 'https://api.uploadgram.me/get/$deleteId');
+    xhr.onLoad.listen((_) {
+      if (xhr.status == 200)
+        completer.complete(json.decode(xhr.responseText!));
+      else
+        completer.complete({});
+    });
+    xhr.onError.listen((_) => completer.complete({}));
     xhr.send();
     return await completer.future;
   }

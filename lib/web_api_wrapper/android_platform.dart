@@ -108,7 +108,7 @@ class WebAPIWrapper {
         _flutterNotifications.show(
             0,
             notifTitle,
-            '${humanSize(bytesPerSec)}/s - ${(progress * 100).toStringAsFixed(0)}%',
+            '${Utils.humanSize(bytesPerSec)}/s - ${(progress * 100).toStringAsFixed(0)}%',
             NotificationDetails(
                 android: AndroidNotificationDetails(
                     'com.pato05.uploadgram/notifications/upload',
@@ -168,7 +168,7 @@ class WebAPIWrapper {
   Future<Map> renameFile(String file, String newName) async {
     Response response = await _dio.post(
         'https://api.uploadgram.me/rename/$file',
-        data: {'new_filename': await parseName(newName)});
+        data: {'new_filename': await Utils.parseName(newName)});
     if (response.statusCode != 200) {
       return {
         'ok': false,

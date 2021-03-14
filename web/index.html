@@ -43,25 +43,6 @@
 </head>
 <body>
   <script>
-    // import file if in #import:
-    // note that this is a temporary solution, probably this will get replaced by GET args since flutter takes the hash part.
-    (function() {
-      var decHash = decodeURIComponent(document.location.hash);
-      if (decHash.indexOf('#import:') === 0) {
-        let file = decHash.substring(8);
-        try {
-          var decFile = JSON.parse(file);
-        } catch(e) {
-          return;
-        }
-        // merge into localstorage
-        let files = JSON.parse(localStorage.getItem('uploaded_files'));
-        for (let [key, val] of Object.entries(decFile)) files[key] = val;
-        localStorage.setItem('uploaded_files', JSON.stringify(files));
-        // reset hash
-        document.location.hash = '';
-      }
-    })();
     // register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {

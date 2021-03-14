@@ -78,7 +78,7 @@ class _FilesGridState extends State<FilesGrid> {
                 upperWidget: _progress == null
                     ? null
                     : Text(
-                        '${(_progress * 100).round().toString()}% (${humanSize(_bytesPerSec)}/s)'),
+                        '${(_progress * 100).round().toString()}% (${Utils.humanSize(_bytesPerSec)}/s)'),
                 error: _error,
                 filename: _file!['filename'],
                 fileSize: _file['size'].toDouble(),

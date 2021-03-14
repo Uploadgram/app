@@ -4,8 +4,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../utils.dart';
+
 class InternalAPIWrapper {
-  // importing files is handled by the javascript part.
+  static String? lastUri;
 
   Future<bool> saveFiles(Map files) async {
     setString('uploaded_files', json.encode(files));
@@ -22,21 +24,20 @@ class InternalAPIWrapper {
   }
 
   Future<Map> getFiles() async {
-    try {
-      String files = await getString('uploaded_files', '{}');
-      if (files != 'e') return json.decode(files);
-      return {'error': true};
-    } catch (e) {
-      return {};
+    Map files = json.decode(await getString('uploaded_files', '{}'));
+    if (lastUri != null) {
+      Map? importedFiles =
+          await Utils.parseFragment(Uri.decodeComponent(lastUri!));
+      if (importedFiles != null) {
+        files.addAll(importedFiles);
+        saveFiles(files);
+      }
     }
+    return files;
   }
 
   Future<String> getString(String name, String defaultValue) async {
-    try {
-      return html.window.localStorage[name] ?? defaultValue;
-    } catch (e) {
-      return 'e';
-    }
+    return html.window.localStorage[name] ?? defaultValue;
   }
 
   Future<bool> getBool(String name) async {
@@ -54,18 +55,18 @@ class InternalAPIWrapper {
   }
 
   Future<bool> copy(String text) async {
-    print('called APIWrapper.copy($text)');
+    if (!html.document.queryCommandSupported("copy")) return false;
     html.TextInputElement input = html.TextInputElement();
-    var range = html.Range();
+    html.Range range = html.Range();
     input.value = text;
     input.contentEditable = 'true';
     range.selectNodeContents(input);
-    var sel = html.window.getSelection()!;
-    sel.removeAllRanges();
-    sel.addRange(range);
+    html.Selection? sel = html.window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    input.select();
     input.setSelectionRange(0, 100);
     html.document.body!.append(input);
-    input.select();
     bool copyStatus = html.document.execCommand('copy');
     input.remove();
     return copyStatus;

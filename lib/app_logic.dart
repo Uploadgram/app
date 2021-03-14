@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'internal_api_wrapper/platform_instance.dart';
 import 'web_api_wrapper/platform_instance.dart';
-import 'app_settings.dart';
 
 class AppLogic {
   static Map<String, Map>? files;
@@ -14,12 +13,9 @@ class AppLogic {
   static List<String> selected = [];
   static List<Map> uploadingQueue = [];
 
-  static Future<Map<String?, dynamic>?> getFiles() async {
+  static Future<Map<String, dynamic>?> getFiles() async {
     if (files == null) {
       Map _ = await platformApi.getFiles();
-      if (_.containsKey('error')) {
-        return {};
-      }
       files = _.cast<String, Map>();
     }
     return files;

@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
-
 class InternalAPIWrapper {
+  static String? lastUri; // Exclusive to web
   Future<bool> copy(String? text, {Function? onSuccess, Function? onError}) =>
       throw UnsupportedError('copy() has not been implemented.');
 
@@ -10,8 +9,6 @@ class InternalAPIWrapper {
       throw UnsupportedError('importFiles() has not been implemented.');
   Future<void> clearFilesCache() =>
       throw UnsupportedError('clearFilesCache() has not been implemented.');
-  Route<dynamic>? handleFragmentChange(RouteSettings routeSettings) =>
-      throw UnsupportedError('importFiles() has not been implemented.');
 
   Future<Map?> askForFile() =>
       throw UnsupportedError('askForFile() has not been implemented.');
@@ -23,7 +20,7 @@ class InternalAPIWrapper {
       throw UnsupportedError('getFiles() has not been implemented.');
   Future<bool> setString(String name, String? content) =>
       throw UnsupportedError('setString() has not been implemented.');
-  Future<String> getString(String name, String defaultValue) =>
+  Future<String?> getString(String name, String defaultValue) =>
       throw UnsupportedError('getString() has not been implemented.');
 
   Future<bool> getBool(String name) =>

@@ -147,7 +147,7 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
                             children: [
                               Expanded(
                                   child: Text(
-                                humanSize(widget.fileSize),
+                                Utils.humanSize(widget.fileSize),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
