@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'api_definitions.dart';
+
 import '../utils.dart';
 import '../mime_types.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class WebAPIWrapper {
   Dio _dio = Dio(BaseOptions(

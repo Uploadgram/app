@@ -2,7 +2,7 @@ export ''
     if (dart.library.io) 'android_platform.dart'
     if (dart.library.html) 'web_platform.dart';
 
-import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
+import 'api_definitions.dart';
 
 class WebAPIWrapper {
   Future<UploadApiResponse> uploadFile(

@@ -3,8 +3,7 @@ import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
-
+import 'api_definitions.dart';
 import '../utils.dart';
 
 class WebAPIWrapper {

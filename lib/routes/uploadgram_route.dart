@@ -5,8 +5,8 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
 
+import '../web_api_wrapper/api_definitions.dart';
 import '../widgets/files_grid.dart';
 import '../app_settings.dart';
 import '../app_logic.dart';
@@ -404,51 +404,41 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 break;
             }
           },
-          itemBuilder: (context) {
-            List<PopupMenuEntry<String>> items = [
+          itemBuilder: (BuildContext context) {
+            return [
               PopupMenuItem(
                   value: 'import',
                   child: Row(children: [
-                    Icon(Icons.publish,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
+                    Icon(Icons.publish),
                     SizedBox(width: 15),
                     Text('Import files list'),
                   ])),
               PopupMenuItem(
                   value: 'export',
                   child: Row(children: [
-                    Icon(Icons.get_app,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
+                    Icon(Icons.get_app),
                     Container(width: 15),
                     Text('Export files list'),
                   ])),
               PopupMenuItem(
                   value: 'settings',
                   child: Row(children: [
-                    Icon(Icons.settings,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
+                    Icon(Icons.settings),
                     Container(width: 15),
                     Text('Settings'),
                   ])),
+              if (AppLogic.platformApi.isWebAndroid() == true)
+                PopupMenuItem(
+                    value: 'dlapp',
+                    child: Row(children: [
+                      Icon(Icons.android,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black),
+                      Container(width: 15),
+                      Text('Download the app!'),
+                    ]))
             ];
-            if (AppLogic.platformApi.isWebAndroid() == true)
-              items.add(PopupMenuItem(
-                  value: 'dlapp',
-                  child: Row(children: [
-                    Icon(Icons.android,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
-                    Container(width: 5),
-                    Text('Download the app!'),
-                  ])));
-            return items;
           },
         ),
       ];

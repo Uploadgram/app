@@ -113,7 +113,7 @@ class InternalAPIWrapper {
   Future<bool?> saveFile(String filename, String content) async {
     print('[web] saveFile called');
     html.Blob blob = new html.Blob([content]);
-    html.LinkElement a = html.LinkElement();
+    html.AnchorElement a = html.AnchorElement();
     String url = a.href = html.Url.createObjectUrlFromBlob(blob);
     a.setAttribute('download', filename);
     html.document.body!.append(a);

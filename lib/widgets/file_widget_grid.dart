@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -187,40 +189,35 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
             showMenu(
                 context: context,
                 position: RelativeRect.fromSize(
-                    event.position & Size(0, 0), overlay.size),
+                    event.position & Size.zero, overlay.size),
                 items: [
                   PopupMenuItem(
                       value: 'delete',
                       child: Row(children: [
-                        Icon(Icons.delete,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black),
+                        Icon(Icons.delete),
                         SizedBox(width: 15),
                         Text('Delete'),
                       ])),
                   PopupMenuItem(
                       value: 'rename',
                       child: Row(children: [
-                        Icon(Icons.edit,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black),
+                        Icon(Icons.edit),
                         SizedBox(width: 15),
                         Text('Rename'),
                       ])),
                   PopupMenuItem(
                       value: 'copy',
                       child: Row(children: [
-                        Icon(Icons.copy,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black),
+                        Icon(Icons.copy),
                         SizedBox(width: 15),
-                        Text('Copy file link'),
+                        Text('Copy link'),
+                      ])),
+                  PopupMenuItem(
+                      value: 'export',
+                      child: Row(children: [
+                        Icon(Icons.get_app),
+                        SizedBox(width: 15),
+                        Text('Export'),
                       ])),
                 ]).then((value) {
               switch (value) {
@@ -239,6 +236,17 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
                           content: Text(didCopy
                               ? 'Link copied to clipboard successfully!'
                               : 'Unable to copy file link. Please copy it manually.'))));
+                  break;
+                case 'export':
+                  AppLogic.platformApi.saveFile(
+                      widget.filename + '.json',
+                      json.encode({
+                        widget.delete: {
+                          'filename': widget.filename,
+                          'size': widget.fileSize,
+                          'url': widget.url
+                        }
+                      }));
                   break;
               }
             });
