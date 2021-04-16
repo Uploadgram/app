@@ -14,6 +14,7 @@ class FilesGrid extends StatefulWidget {
 
 class _FilesGridState extends State<FilesGrid> {
   List<Widget> _filesWidgets() {
+    // turn this into a on-demand builder (GridView.builder)
     List<Widget> rows = [];
     var len = AppLogic.uploadingQueue.length;
     if (len > 0)
@@ -134,15 +135,16 @@ class _FilesGridState extends State<FilesGrid> {
       Expanded(
           child: ((AppLogic.files!.length > 0 ||
                   AppLogic.uploadingQueue.length > 0)
-              ? GridView(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      childAspectRatio: aspectRatio,
-                      mainAxisSpacing: 5,
-                      crossAxisSpacing: 5,
-                      crossAxisCount: gridSize > 0 ? gridSize : 1),
-                  children: _filesWidgets(),
-                  padding:
-                      EdgeInsets.only(left: 15, right: 15, top: 15, bottom: 78))
+              ? Scrollbar(
+                  child: GridView(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          childAspectRatio: aspectRatio,
+                          mainAxisSpacing: 5,
+                          crossAxisSpacing: 5,
+                          crossAxisCount: gridSize > 0 ? gridSize : 1),
+                      children: _filesWidgets(),
+                      padding: EdgeInsets.only(
+                          left: 15, right: 15, top: 15, bottom: 78)))
               // bottom: 78, normal padding + fab
               : Container(
                   alignment: Alignment.center,

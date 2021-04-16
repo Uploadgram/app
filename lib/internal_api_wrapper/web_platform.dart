@@ -9,6 +9,11 @@ import '../utils.dart';
 class InternalAPIWrapper {
   static String? lastUri;
 
+  InternalAPIWrapper() {
+    html.document.onContextMenu.listen((event) =>
+        event.preventDefault()); // disable normal browser right click
+  }
+
   Future<bool> saveFiles(Map files) async {
     setString('uploaded_files', json.encode(files));
     return true;
@@ -57,16 +62,16 @@ class InternalAPIWrapper {
   Future<bool> copy(String text) async {
     if (!html.document.queryCommandSupported("copy")) return false;
     html.TextInputElement input = html.TextInputElement();
-    html.Range range = html.Range();
+    html.Range range = html.document.createRange();
     input.value = text;
     input.contentEditable = 'true';
+    html.document.body!.append(input);
     range.selectNodeContents(input);
     html.Selection? sel = html.window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
     input.select();
-    input.setSelectionRange(0, 100);
-    html.document.body!.append(input);
+    input.setSelectionRange(0, text.length);
     bool copyStatus = html.document.execCommand('copy');
     input.remove();
     return copyStatus;
@@ -99,15 +104,14 @@ class InternalAPIWrapper {
     reader.readAsArrayBuffer(file);
     await reader.onLoad.first;
     Uint8List bytes = Uint8List.view(reader.result as ByteBuffer);
-    if (String.fromCharCode(bytes.first) != '{' ||
-        String.fromCharCode(bytes.last) != '}') return null;
     Map? files = json.decode(String.fromCharCodes(bytes));
-    return files;
+    return files is Map ? files : null;
   }
 
   Future<void> clearFilesCache() async => null;
 
   Future<bool?> saveFile(String filename, String content) async {
+    print('[web] saveFile called');
     html.Blob blob = new html.Blob([content]);
     html.LinkElement a = html.LinkElement();
     String url = a.href = html.Url.createObjectUrlFromBlob(blob);

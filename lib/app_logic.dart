@@ -44,23 +44,23 @@ class AppLogic {
           });
         },
       );
-      if (result['ok']) {
+      if (result.ok) {
         var fileObj = {
           'filename': file['name'],
           'size': file['size'],
-          'url': result['url'],
+          'url': result.url,
         };
-        files![result['delete']] = fileObj;
+        files![result.delete!] = fileObj;
         controller.add({
           'type': 'end',
-          'value': {'file': fileObj, 'delete': result['delete']},
+          'value': {'file': fileObj, 'delete': result.delete!},
         });
         saveFiles();
       } else {
         String? _error = 'An error occurred while obtaining the response';
-        if (result['statusCode'] > 500)
+        if (result.statusCode > 500)
           _error = 'We are having server problems. Try again later.';
-        if (result.containsKey('message')) _error = result['message'];
+        if (result.errorMessage != null) _error = result.errorMessage;
         controller.add({
           'type': 'errorEnd',
           'value': _error,

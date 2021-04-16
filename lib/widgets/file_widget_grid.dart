@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../app_logic.dart';
 import '../routes/uploadgram_route.dart';
 import '../routes/file_info.dart';
 import '../utils.dart';
@@ -177,14 +179,78 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
             width: 2.0),
         borderRadius: BorderRadius.circular(2),
       ),
-      child: InkWell(
-          onTap: widget.onPressed,
-          onLongPress: widget.onLongPress,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: columnChildren,
-          )),
+      child: Listener(
+          onPointerDown: (PointerDownEvent event) {
+            if (event.buttons != kSecondaryMouseButton) return;
+            final overlay =
+                Overlay?.of(context)?.context.findRenderObject() as RenderBox;
+            showMenu(
+                context: context,
+                position: RelativeRect.fromSize(
+                    event.position & Size(0, 0), overlay.size),
+                items: [
+                  PopupMenuItem(
+                      value: 'delete',
+                      child: Row(children: [
+                        Icon(Icons.delete,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black),
+                        SizedBox(width: 15),
+                        Text('Delete'),
+                      ])),
+                  PopupMenuItem(
+                      value: 'rename',
+                      child: Row(children: [
+                        Icon(Icons.edit,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black),
+                        SizedBox(width: 15),
+                        Text('Rename'),
+                      ])),
+                  PopupMenuItem(
+                      value: 'copy',
+                      child: Row(children: [
+                        Icon(Icons.copy,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black),
+                        SizedBox(width: 15),
+                        Text('Copy file link'),
+                      ])),
+                ]).then((value) {
+              switch (value) {
+                case 'delete':
+                  widget.handleDelete?.call(widget.delete);
+                  break;
+                case 'rename':
+                  widget.handleRename?.call(widget.delete,
+                      oldName: widget.filename,
+                      onDone: (String newName) =>
+                          setProperty(waiting: false, filename: newName));
+                  break;
+                case 'copy':
+                  AppLogic.platformApi.copy(widget.url).then((didCopy) =>
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(didCopy
+                              ? 'Link copied to clipboard successfully!'
+                              : 'Unable to copy file link. Please copy it manually.'))));
+                  break;
+              }
+            });
+          },
+          child: InkWell(
+              onTap: widget.onPressed,
+              onLongPress: widget.onLongPress,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: columnChildren,
+              ))),
     );
     if (widget.uploading == true) {
       List<Widget> columnChildren = [

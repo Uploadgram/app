@@ -3,15 +3,17 @@ import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
+
 import '../utils.dart';
 
 class WebAPIWrapper {
-  Future<Map> uploadFile(
+  Future<UploadApiResponse> uploadFile(
     Map file, {
     Function(double, double, String)? onProgress,
     Function(int?)? onError,
   }) {
-    var completer = Completer<Map>();
+    var completer = Completer<UploadApiResponse>();
     print(file);
     if (!(file['realFile'] is html.File &&
         (file['size'] is int || file['size'] is double) &&
@@ -47,21 +49,21 @@ class WebAPIWrapper {
     });
     xhr.onError.listen((e) {
       onError?.call(xhr.status);
-      completer.complete({
-        'ok': false,
-        'statusCode': xhr.status,
-        'message': 'Error ${xhr.status}: ${xhr.statusText}',
-      });
+
+      completer.complete(UploadApiResponse(
+          ok: false,
+          statusCode: xhr.status!,
+          errorMessage: 'Error ${xhr.status}: ${xhr.statusText}'));
     });
     xhr.onLoadEnd.listen((e) {
       if (xhr.status == 200)
-        completer.complete(json.decode(xhr.responseText!));
+        completer.complete(
+            UploadApiResponse.fromJson(json.decode(xhr.responseText!)));
       else
-        completer.complete({
-          'ok': false,
-          'statusCode': xhr.status,
-          'message': 'Error ${xhr.status}: ${xhr.statusText}',
-        });
+        completer.complete(UploadApiResponse(
+            ok: false,
+            statusCode: xhr.status!,
+            errorMessage: 'Error ${xhr.status}: ${xhr.statusText}'));
     });
     initDate = DateTime.now();
     xhr.send(formData);
@@ -91,8 +93,8 @@ class WebAPIWrapper {
     return await completer.future;
   }
 
-  Future<Map> renameFile(String file, String newName) async {
-    var completer = Completer<Map>();
+  Future<RenameApiResponse> renameFile(String file, String newName) async {
+    var completer = Completer<RenameApiResponse>();
     html.HttpRequest xhr = html.HttpRequest();
     xhr.open('POST', 'https://api.uploadgram.me/rename/$file');
     xhr.send(json.encode(
@@ -102,13 +104,12 @@ class WebAPIWrapper {
       if (xhr.responseText!.substring(0, 1) == '{')
         jsonError = json.decode(xhr.responseText!);
       var altMessage = 'Error ${xhr.status}: ${xhr.statusText}';
-      return {
-        'ok': false,
-        'statusCode': xhr.status,
-        'message': jsonError == null
-            ? altMessage
-            : (jsonError['message'] ?? altMessage),
-      };
+      return RenameApiResponse(
+          ok: false,
+          statusCode: xhr.status!,
+          errorMessage: jsonError == null
+              ? altMessage
+              : (jsonError['message'] ?? altMessage));
     };
     xhr.onLoad.listen((_) {
       if (xhr.status == 200)

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
 import '../utils.dart';
 import '../mime_types.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -28,7 +29,7 @@ class WebAPIWrapper {
     }
   }
 
-  Future<Map> uploadFile(
+  Future<UploadApiResponse> uploadFile(
     Map file, {
     Function(double, double, String)? onProgress,
     Function? onError,
@@ -144,13 +145,13 @@ class WebAPIWrapper {
                 onlyAlertOnce: false)));
     if (response.statusCode != 200) {
       onError?.call(response.statusCode);
-      return {
-        'ok': false,
-        'statusCode': response.statusCode,
-        'message': 'Error ${response.statusCode}: ${response.statusMessage}',
-      };
+      return UploadApiResponse(
+          ok: false,
+          statusCode: response.statusCode!,
+          errorMessage:
+              'Error ${response.statusCode}: ${response.statusMessage}');
     }
-    return response.data;
+    return UploadApiResponse.fromJson(response.data);
   }
 
   Future<Map> deleteFile(String file) async {
@@ -165,19 +166,18 @@ class WebAPIWrapper {
     return response.data;
   }
 
-  Future<Map> renameFile(String file, String newName) async {
+  Future<RenameApiResponse> renameFile(String file, String newName) async {
     Response response = await _dio.post(
         'https://api.uploadgram.me/rename/$file',
         data: {'new_filename': await Utils.parseName(newName)});
     if (response.statusCode != 200) {
-      return {
-        'ok': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ??
-            'Error ${response.statusCode}: ${response.statusMessage}'
-      };
+      return RenameApiResponse(
+          ok: false,
+          statusCode: response.statusCode!,
+          errorMessage: response.data['message'] ??
+              'Error ${response.statusCode}: ${response.statusMessage}');
     }
-    return response.data;
+    return RenameApiResponse.fromJson(response.data);
   }
 
   Future<bool> checkNetwork() async {

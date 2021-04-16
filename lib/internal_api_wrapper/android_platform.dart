@@ -18,11 +18,12 @@ class InternalAPIWrapper {
   bool isWebAndroid() => false;
 
   Future<Map?> importFiles() async {
-    Map fileMap = await (askForFile() as FutureOr<Map<dynamic, dynamic>>);
+    Map? fileMap = await askForFile();
+    if (fileMap == null) return null;
     File file = fileMap['realFile'];
     Map? files = json.decode(
         await file.readAsString()); // returns null if the file is not valid
-    return files;
+    return files is Map ? files : null;
   }
 
   Future<bool> saveFiles(Map files) {

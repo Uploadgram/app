@@ -5,6 +5,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uploadgram/web_api_wrapper/api_definitions.dart';
 
 import '../widgets/files_grid.dart';
 import '../app_settings.dart';
@@ -77,13 +78,15 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           });
       return;
     }
-    Map result = await AppLogic.webApi.renameFile(delete, newName);
-    if (result['ok']) {
-      onDone(result['new_filename']);
+    RenameApiResponse result =
+        await AppLogic.webApi.renameFile(delete, newName);
+    if (result.ok) {
+      onDone(result.newName!);
+      AppLogic.files![delete]!['filename'] = result.newName!;
       AppLogic.saveFiles();
     } else
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result['message'])));
+          .showSnackBar(SnackBar(content: Text(result.errorMessage!)));
   }
 
   Future<void> handleFileDelete(List<String> deleteList,
@@ -149,6 +152,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
+                // fetch tos instead of having them hardcoded
                 title: Text('Before proceeding...'),
                 content: Text(
                     'Uploadgram uses the Telegram network to store its files, therefore you must accept Telegram\'s Terms of Service before continuing (https://telegram.org/tos).'
@@ -401,7 +405,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
             }
           },
           itemBuilder: (context) {
-            List<PopupMenuEntry<dynamic>> items = [
+            List<PopupMenuEntry<String>> items = [
               PopupMenuItem(
                   value: 'import',
                   child: Row(children: [
@@ -409,7 +413,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black),
-                    SizedBox(width: 5),
+                    SizedBox(width: 15),
                     Text('Import files list'),
                   ])),
               PopupMenuItem(
@@ -419,7 +423,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black),
-                    Container(width: 5),
+                    Container(width: 15),
                     Text('Export files list'),
                   ])),
               PopupMenuItem(
@@ -429,7 +433,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black),
-                    Container(width: 5),
+                    Container(width: 15),
                     Text('Settings'),
                   ])),
             ];
