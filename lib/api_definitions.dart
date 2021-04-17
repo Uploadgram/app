@@ -5,14 +5,35 @@ class RenameApiResponse {
   final int statusCode;
   final String? errorMessage;
 
-  RenameApiResponse(
-      {required this.ok,
-      this.newName,
-      this.statusCode = 200,
-      this.errorMessage});
+  RenameApiResponse({
+    required this.ok,
+    required this.statusCode,
+    this.newName,
+    this.errorMessage,
+  });
 
   factory RenameApiResponse.fromJson(Map json) => RenameApiResponse(
-      ok: json['ok'], newName: json['ok'] ? json['new_filename'] : null);
+      ok: json['ok'],
+      newName: json['ok'] ? json['new_filename'] : null,
+      statusCode: 200);
+
+  @override
+  String toString() {
+    return '${this.runtimeType.toString()}(ok: $ok, statusCode: $statusCode)';
+  }
+}
+
+class DeleteApiResponse {
+  final bool ok;
+  final int statusCode;
+
+  DeleteApiResponse({
+    required this.ok,
+    required this.statusCode,
+  });
+
+  factory DeleteApiResponse.fromJson(Map json) =>
+      DeleteApiResponse(ok: json['ok'], statusCode: 200);
 }
 
 class UploadApiResponse {

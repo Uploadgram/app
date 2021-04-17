@@ -49,8 +49,8 @@ class Utils {
       } else {
         if (fragment.length == 48 || fragment.length == 49) {
           print('trying new import method...');
-          Map file = await AppLogic.webApi.getFile(fragment);
-          if (file != {}) {
+          Map? file = await AppLogic.webApi.getFile(fragment);
+          if (file != null) {
             file.remove('mime');
             files[fragment] = file;
           }

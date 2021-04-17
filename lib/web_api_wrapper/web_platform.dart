@@ -69,26 +69,21 @@ class WebAPIWrapper {
     return completer.future;
   }
 
-  Future<Map> deleteFile(String file) async {
-    var completer = Completer<Map>();
+  Future<DeleteApiResponse> deleteFile(String file) async {
+    var completer = Completer<DeleteApiResponse>();
     html.HttpRequest xhr = html.HttpRequest();
     xhr.open('GET', 'https://api.uploadgram.me/delete/$file');
     xhr.send();
     xhr.onLoad.listen((_) {
       if (xhr.status == 200)
-        completer.complete(json.decode(xhr.responseText!));
-      else
-        completer.complete({
-          'ok': false,
-          'statusCode': xhr.status,
-          'message': xhr.statusText,
-        });
+        completer.complete(
+            DeleteApiResponse.fromJson(json.decode(xhr.responseText!)));
+      else if (!completer.isCompleted)
+        completer
+            .complete(DeleteApiResponse(ok: false, statusCode: xhr.status!));
     });
-    xhr.onError.listen((_) => completer.complete({
-          'ok': false,
-          'statusCode': xhr.status,
-          'message': xhr.statusText,
-        }));
+    xhr.onError.listen((_) => completer
+        .complete(DeleteApiResponse(ok: false, statusCode: xhr.status!)));
     return await completer.future;
   }
 
@@ -99,7 +94,7 @@ class WebAPIWrapper {
     xhr.send(json.encode(
         <String, String>{'new_filename': await Utils.parseName(newName)}));
     var handleError = () {
-      var jsonError;
+      Map? jsonError;
       if (xhr.responseText!.substring(0, 1) == '{')
         jsonError = json.decode(xhr.responseText!);
       var altMessage = 'Error ${xhr.status}: ${xhr.statusText}';
@@ -111,8 +106,9 @@ class WebAPIWrapper {
               : (jsonError['message'] ?? altMessage));
     };
     xhr.onLoad.listen((_) {
-      if (xhr.status == 200)
-        completer.complete(json.decode(xhr.responseText!));
+      if (xhr.status! == 200)
+        completer.complete(
+            RenameApiResponse.fromJson(json.decode(xhr.responseText!)));
       else
         handleError.call();
     });
@@ -136,8 +132,8 @@ class WebAPIWrapper {
     return await completer.future;
   }
 
-  Future<Map> getFile(String deleteId) async {
-    Completer<Map> completer = Completer<Map>();
+  Future<Map?> getFile(String deleteId) async {
+    Completer<Map?> completer = Completer<Map?>();
     html.HttpRequest xhr = html.HttpRequest()
       ..open('GET', 'https://api.uploadgram.me/get/$deleteId');
     xhr.onLoad.listen((_) {
@@ -146,7 +142,7 @@ class WebAPIWrapper {
       else
         completer.complete({});
     });
-    xhr.onError.listen((_) => completer.complete({}));
+    xhr.onError.listen((_) => completer.complete(null));
     xhr.send();
     return await completer.future;
   }

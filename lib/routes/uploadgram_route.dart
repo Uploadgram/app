@@ -81,10 +81,18 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     }
     RenameApiResponse result =
         await AppLogic.webApi.renameFile(delete, newName);
+    print(result);
     if (result.ok) {
       onDone(result.newName!);
       AppLogic.files![delete]!['filename'] = result.newName!;
       AppLogic.saveFiles();
+    } else if (result.statusCode == 403) {
+      setState(() {
+        AppLogic.files!.remove(delete);
+        AppLogic.saveFiles();
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('File not found.')));
     } else
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(result.errorMessage!)));
@@ -129,12 +137,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       List<String> deletedFiles = [];
       for (String delete in deleteList) {
         print('deleting $delete');
-        Map result = await AppLogic.webApi.deleteFile(delete);
-        if (result['statusCode'] == 403) {
+        DeleteApiResponse result = await AppLogic.webApi.deleteFile(delete);
+        if (result.statusCode == 403) {
           _message = 'File not found. It was probably deleted';
-        } else if (!result['ok']) {
+        } else if (!result.ok) {
           _message =
-              'Some files have not been deleted (code: ${result['statusCode']}).';
+              'Some files have not been deleted (code: ${result.statusCode}).';
           continue;
         }
         deletedFiles.add(delete);

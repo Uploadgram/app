@@ -14,6 +14,7 @@ class WebAPIWrapper {
   Dio _dio = Dio(BaseOptions(
     followRedirects: true,
     validateStatus: (status) => true,
+    responseType: ResponseType.json,
   ));
   final FlutterLocalNotificationsPlugin _flutterNotifications =
       FlutterLocalNotificationsPlugin();
@@ -22,13 +23,13 @@ class WebAPIWrapper {
 
   void downloadApp() => null;
 
-  Future<Map> getFile(String deleteId) async {
+  Future<Map?> getFile(String deleteId) async {
     Response response =
         await _dio.get('https://api.uploadgram.me/get/$deleteId');
     try {
       return json.decode(response.data);
     } catch (e) {
-      return {};
+      return null;
     }
   }
 
@@ -158,16 +159,13 @@ class WebAPIWrapper {
     return UploadApiResponse.fromJson(response.data);
   }
 
-  Future<Map> deleteFile(String file) async {
+  Future<DeleteApiResponse> deleteFile(String file) async {
     Response response =
         await _dio.get('https://api.uploadgram.me/delete/$file');
-    if (response.statusCode != 200) {
-      return {
-        'ok': false,
-        'statusCode': response.statusCode,
-      };
+    if (response.statusCode != 200 && response.data is Map) {
+      return DeleteApiResponse(ok: false, statusCode: response.statusCode!);
     }
-    return response.data;
+    return DeleteApiResponse.fromJson(response.data);
   }
 
   Future<RenameApiResponse> renameFile(String file, String newName) async {
@@ -175,11 +173,14 @@ class WebAPIWrapper {
         'https://api.uploadgram.me/rename/$file',
         data: {'new_filename': await Utils.parseName(newName)});
     if (response.statusCode != 200) {
+      final altMessage =
+          'Error ${response.statusCode}: ${response.statusMessage}';
       return RenameApiResponse(
           ok: false,
           statusCode: response.statusCode!,
-          errorMessage: response.data['message'] ??
-              'Error ${response.statusCode}: ${response.statusMessage}');
+          errorMessage: response.data is Map
+              ? (response.data?['message'] ?? altMessage)
+              : altMessage);
     }
     return RenameApiResponse.fromJson(response.data);
   }
