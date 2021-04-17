@@ -26,6 +26,7 @@ dependencies:
   flutter_local_notifications: ^5.0.0-nullsafety.1
   connectivity: ^3.0.2
   connectivity_for_web: ^0.4.0
+  url_launcher: ^6.0.3
   flutter:
     sdk: flutter
 
@@ -45,7 +46,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/icon-256.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

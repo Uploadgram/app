@@ -3,26 +3,24 @@ import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
 
-import 'api_definitions.dart';
-import '../utils.dart';
+import 'package:uploadgram/api_definitions.dart';
+import 'package:uploadgram/utils.dart';
 
 class WebAPIWrapper {
   Future<UploadApiResponse> uploadFile(
-    Map file, {
+    UploadgramFile file, {
     Function(double, double, String)? onProgress,
     Function(int?)? onError,
   }) {
     var completer = Completer<UploadApiResponse>();
     print(file);
-    if (!(file['realFile'] is html.File &&
-        (file['size'] is int || file['size'] is double) &&
-        file['name'] is String))
+    if (!(file.realFile is html.File && file.size > 0))
       throw UnsupportedError('Non-valid file map provided for the upload.');
 
     html.HttpRequest xhr = html.HttpRequest();
     html.FormData formData = html.FormData();
-    formData.append('file_size', file['size'].toString());
-    formData.appendBlob('file_upload', file['realFile']);
+    formData.append('file_size', file.size.toString());
+    formData.appendBlob('file_upload', file.realFile);
     xhr.open('POST', 'https://api.uploadgram.me/upload');
     late DateTime initDate;
     xhr.upload.onProgress.listen((html.ProgressEvent e) {
@@ -58,11 +56,13 @@ class WebAPIWrapper {
       if (xhr.status == 200)
         completer.complete(
             UploadApiResponse.fromJson(json.decode(xhr.responseText!)));
-      else
-        completer.complete(UploadApiResponse(
-            ok: false,
-            statusCode: xhr.status!,
-            errorMessage: 'Error ${xhr.status}: ${xhr.statusText}'));
+      else {
+        if (!completer.isCompleted)
+          completer.complete(UploadApiResponse(
+              ok: false,
+              statusCode: xhr.status!,
+              errorMessage: 'Error ${xhr.status}: ${xhr.statusText}'));
+      }
     });
     initDate = DateTime.now();
     xhr.send(formData);

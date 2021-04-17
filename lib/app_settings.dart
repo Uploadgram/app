@@ -1,4 +1,4 @@
-import 'app_logic.dart';
+import 'package:uploadgram/app_logic.dart';
 
 class AppSettings {
   static String? filesTheme;

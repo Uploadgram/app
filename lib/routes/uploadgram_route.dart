@@ -5,11 +5,12 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 
-import '../web_api_wrapper/api_definitions.dart';
-import '../widgets/files_grid.dart';
-import '../app_settings.dart';
-import '../app_logic.dart';
+import 'package:uploadgram/api_definitions.dart';
+import 'package:uploadgram/app_settings.dart';
+import 'package:uploadgram/app_logic.dart';
+import 'package:uploadgram/widgets/files_grid.dart';
 
 class UploadgramRoute extends StatefulWidget {
   static _UploadgramRouteState? of(BuildContext context) =>
@@ -185,9 +186,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       return;
     }
     print('asking for file');
-    Map? file = await AppLogic.platformApi.askForFile();
-    if (file == null) return;
-    if (file['error'] == 'PERMISSION_NOT_GRANTED') {
+    UploadgramFile file = await AppLogic.platformApi.askForFile();
+    if (file.error == UploadgramFileError.abortedByUser) return;
+    if (file.error == UploadgramFileError.permissionNotGranted) {
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
@@ -202,7 +203,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   ]));
       return;
     }
-    if (file['size'] == 0) {
+    return await uploadFile(file);
+  }
+
+  Future<void> uploadFile(UploadgramFile file) async {
+    if (_canUpload == false) return;
+    if (file.size == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Please select a non-empty file.')));
       return;
@@ -230,19 +236,15 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 ],
               ));
     }
-    print('got file ${file["name"]}');
-    if (file['size'] > maxSize) {
+    print('got file ${file.name}');
+    if (file.size > maxSize) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
               'The file you selected is too large. The maximum allowed size is 2GB')));
       return;
     }
-    setState(() => AppLogic.uploadingQueue.add({
-          'key': UniqueKey(),
-          'fileObject': file,
-          'locked': false,
-          'stream': null
-        }));
+    setState(() => AppLogic.uploadingQueue
+        .add(UploadingFile(uploadgramFile: file, fileKey: UniqueKey())));
   }
 
   @override
@@ -258,6 +260,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     setState(() => null);
     if (kIsWeb) {
       _connectivity.checkConnectivity().then(_checkConnection);
+      InternalAPIWrapper.listenDropzone(context, uploadFile);
     }
     _connectivitySubscription =
         _connectivity.onConnectivityChanged.listen(_checkConnection);
@@ -402,6 +405,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               case 'dlapp':
                 AppLogic.webApi.downloadApp();
                 break;
+              case 'about':
+                Navigator.of(context).pushNamed('/about');
+                break;
             }
           },
           itemBuilder: (BuildContext context) {
@@ -409,21 +415,30 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               PopupMenuItem(
                   value: 'import',
                   child: Row(children: [
-                    Icon(Icons.publish),
+                    Icon(Icons.publish,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
                     SizedBox(width: 15),
                     Text('Import files list'),
                   ])),
               PopupMenuItem(
                   value: 'export',
                   child: Row(children: [
-                    Icon(Icons.get_app),
+                    Icon(Icons.get_app,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
                     Container(width: 15),
                     Text('Export files list'),
                   ])),
               PopupMenuItem(
                   value: 'settings',
                   child: Row(children: [
-                    Icon(Icons.settings),
+                    Icon(Icons.settings,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
                     Container(width: 15),
                     Text('Settings'),
                   ])),
@@ -437,7 +452,17 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                               : Colors.black),
                       Container(width: 15),
                       Text('Download the app!'),
-                    ]))
+                    ])),
+              PopupMenuItem(
+                  value: 'about',
+                  child: Row(children: [
+                    Icon(Icons.info,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
+                    Container(width: 15),
+                    Text('About'),
+                  ])),
             ];
           },
         ),

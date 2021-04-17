@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'app_logic.dart';
+import 'package:uploadgram/app_logic.dart';
 
 class Utils {
   static String humanSize(double bytes) {

@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import 'api_definitions.dart';
-
-import '../utils.dart';
-import '../mime_types.dart';
+import 'package:uploadgram/api_definitions.dart';
+import 'package:uploadgram/utils.dart';
+import 'package:uploadgram/mime_types.dart';
 
 class WebAPIWrapper {
   Dio _dio = Dio(BaseOptions(
@@ -33,17 +33,13 @@ class WebAPIWrapper {
   }
 
   Future<UploadApiResponse> uploadFile(
-    Map file, {
+    UploadgramFile file, {
     Function(double, double, String)? onProgress,
     Function? onError,
   }) async {
-    if (!(file['realFile'] is File &&
-        (file['size'] is int || file['size'] is double) &&
-        file['name'] is String))
+    if (!(file.realFile is File && file.size > 0))
       throw UnsupportedError('Non-valid file map provided for the upload.');
-    String fileName = file['name'];
-    int fileSize = file['size'];
-    MediaType mime = mimeTypes[fileName.split('.').last.toLowerCase()] ??
+    MediaType mime = mimeTypes[file.name.split('.').last.toLowerCase()] ??
         MediaType('application', 'octet-stream');
     print(mime);
     print('preparing notification...');
@@ -54,10 +50,10 @@ class WebAPIWrapper {
           InitializationSettings(android: androidInitializationSettings));
       _didInitializeNotifications = true;
     }
-    if (file['size'] > 500000)
+    if (file.size > 500000)
       _flutterNotifications.show(
           0,
-          fileName,
+          file.name,
           'Connecting...',
           NotificationDetails(
               android: AndroidNotificationDetails(
@@ -71,19 +67,20 @@ class WebAPIWrapper {
             showProgress: true,
             ongoing: true,
             indeterminate: true,
+            color: Colors.blue,
           )));
 
     print('processing file upload');
     FormData formData = FormData.fromMap({
-      'file_size': fileSize,
-      'file_upload': await MultipartFile.fromFile(file['realFile'].path,
-          filename: file['name'], contentType: mime),
+      'file_size': file.size,
+      'file_upload': await MultipartFile.fromFile(file.realFile.path,
+          filename: file.name, contentType: mime),
     });
     print('uploading file');
     var initDate = DateTime.now();
-    var notifTitle = fileName.length > 25
-        ? '${fileName.substring(0, 17)}...${fileName.substring(fileName.length - 8)}'
-        : fileName;
+    var notifTitle = file.name.length > 25
+        ? '${file.name.substring(0, 17)}...${file.name.substring(file.name.length - 8)}'
+        : file.name;
 
     int _lastUploadedBytes = 0;
     Response response = await _dio.post('https://api.uploadgram.me/upload',
@@ -108,26 +105,28 @@ class WebAPIWrapper {
           'remaining';
       print(secondsRemaining);
       if (loaded - _lastUploadedBytes > bytesPerSec ~/ 100 &&
-          file['size'] > 500000)
+          file.size > 500000)
         _flutterNotifications.show(
             0,
             notifTitle,
             '${Utils.humanSize(bytesPerSec)}/s - ${(progress * 100).toStringAsFixed(0)}%',
             NotificationDetails(
                 android: AndroidNotificationDetails(
-                    'com.pato05.uploadgram/notifications/upload',
-                    'Upload progress notification',
-                    'Upload status and progress notifications',
-                    subText: stringRemaining,
-                    channelShowBadge: true,
-                    importance: Importance.defaultImportance,
-                    priority: Priority.high,
-                    onlyAlertOnce: true,
-                    showProgress: true,
-                    playSound: false,
-                    ongoing: true,
-                    maxProgress: total,
-                    progress: loaded)));
+              'com.pato05.uploadgram/notifications/upload',
+              'Upload progress notification',
+              'Upload status and progress notifications',
+              subText: stringRemaining,
+              channelShowBadge: true,
+              importance: Importance.defaultImportance,
+              priority: Priority.high,
+              onlyAlertOnce: true,
+              showProgress: true,
+              playSound: false,
+              ongoing: true,
+              maxProgress: total,
+              progress: loaded,
+              color: Colors.blue,
+            )));
       onProgress?.call(progress, bytesPerSec, stringRemaining);
     });
     print('end file upload');
@@ -135,17 +134,19 @@ class WebAPIWrapper {
     _flutterNotifications.show(
         _uploadNotificationId++,
         'Upload completed!',
-        fileName,
+        file.name,
         NotificationDetails(
             android: AndroidNotificationDetails(
-                'com.pato05.uploadgram/notifications/upload_completed',
-                'Upload completed notification',
-                'File upload completed notification',
-                channelShowBadge: true,
-                importance: Importance.max,
-                priority: Priority.high,
-                setAsGroupSummary: true,
-                onlyAlertOnce: false)));
+          'com.pato05.uploadgram/notifications/upload_completed',
+          'Upload completed notification',
+          'File upload completed notification',
+          channelShowBadge: true,
+          importance: Importance.max,
+          priority: Priority.high,
+          setAsGroupSummary: true,
+          onlyAlertOnce: false,
+          color: Colors.blue,
+        )));
     if (response.statusCode != 200) {
       onError?.call(response.statusCode);
       return UploadApiResponse(

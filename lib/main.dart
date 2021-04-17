@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'internal_api_wrapper/platform_instance.dart';
 
-import 'routes/settings_route.dart';
-import 'routes/uploadgram_route.dart';
+import 'package:uploadgram/routes/about_route.dart';
+import 'package:uploadgram/routes/settings_route.dart';
+import 'package:uploadgram/routes/uploadgram_route.dart';
+import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 
 void main() => runApp(UploadgramApp());
 
@@ -13,7 +14,7 @@ class UploadgramApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: kIsWeb ? 'Upload a file — Uploadgram' : 'Uploadgram',
+        title: 'Uploadgram',
         darkTheme: ThemeData(
           appBarTheme: AppBarTheme(color: Color(0xFF222222)),
           floatingActionButtonTheme:
@@ -44,6 +45,7 @@ class UploadgramApp extends StatelessWidget {
         routes: {
           '/': (BuildContext context) => UploadgramRoute(),
           '/settings': (BuildContext context) => SettingsRoute(),
+          '/about': (BuildContext context) => AboutRoute(),
         },
         onGenerateRoute: kIsWeb
             ? (RouteSettings settings) {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../app_logic.dart';
-import '../widgets/file_widget_grid.dart';
-import '../utils.dart';
+import 'package:uploadgram/utils.dart';
+import 'package:uploadgram/app_logic.dart';
+import 'package:uploadgram/widgets/file_widget_grid.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
@@ -70,7 +70,7 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
               icon: Icon(Icons.copy),
               onPressed: () async {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(await AppLogic.platformApi.copy(
+                    content: Text(await AppLogic.copy(
                   widget.url,
                 )
                         ? 'Link copied to clipboard successfully!'

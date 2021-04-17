@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-
-import 'internal_api_wrapper/platform_instance.dart';
-import 'web_api_wrapper/platform_instance.dart';
+import 'package:flutter/services.dart';
+import 'package:uploadgram/api_definitions.dart';
+import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
+import 'package:uploadgram/web_api_wrapper/platform_instance.dart';
 
 class AppLogic {
   static Map<String, Map>? files;
@@ -11,7 +11,7 @@ class AppLogic {
   static WebAPIWrapper webApi = WebAPIWrapper();
 
   static List<String> selected = [];
-  static List<Map> uploadingQueue = [];
+  static List<UploadingFile> uploadingQueue = [];
 
   static Future<Map<String, dynamic>?> getFiles() async {
     if (files == null) {
@@ -26,45 +26,41 @@ class AppLogic {
     return await platformApi.saveFiles(files!);
   }
 
-  static Stream? uploadFileStream(UniqueKey? key, Map file) {
-    if (file['locked'] == true) return null;
-    file['locked'] = true;
-    var controller = StreamController.broadcast();
+  static Future<bool> copy(String text) =>
+      Clipboard.setData(ClipboardData(text: text)).then((value) => true);
+
+  static Stream<UploadingEvent>? uploadFileStream(UploadingFile file) {
+    if (file.locked == true) return null;
+    file.locked = true;
+    var controller = StreamController<UploadingEvent>.broadcast();
     () async {
       // this while loop could be probably improved or removed
-      while (uploadingQueue[0]['key'] != key) {
+      while (uploadingQueue[0].fileKey != file.fileKey) {
         await Future.delayed(Duration(milliseconds: 500));
       }
       var result = await webApi.uploadFile(
-        file,
+        file.uploadgramFile,
         onProgress: (double progress, double bytesPerSec, String remaining) {
-          controller.add({
-            'type': 'progress',
-            'value': {'progress': progress, 'bytesPerSec': bytesPerSec}
-          });
+          controller.add(UploadingEventProgress(
+              progress: progress, bytesPerSec: bytesPerSec));
         },
       );
       if (result.ok) {
         var fileObj = {
-          'filename': file['name'],
-          'size': file['size'],
+          'filename': file.uploadgramFile.name,
+          'size': file.uploadgramFile.size,
           'url': result.url,
         };
         files![result.delete!] = fileObj;
-        controller.add({
-          'type': 'end',
-          'value': {'file': fileObj, 'delete': result.delete!},
-        });
+        controller
+            .add(UploadingEventEnd(delete: result.delete!, file: fileObj));
         saveFiles();
       } else {
         String? _error = 'An error occurred while obtaining the response';
         if (result.statusCode > 500)
           _error = 'We are having server problems. Try again later.';
         if (result.errorMessage != null) _error = result.errorMessage;
-        controller.add({
-          'type': 'errorEnd',
-          'value': _error,
-        });
+        controller.addError({'message': _error});
       }
       controller.close();
       uploadingQueue.removeAt(0);

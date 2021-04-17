@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../app_logic.dart';
-import '../routes/uploadgram_route.dart';
-import '../routes/file_info.dart';
-import '../utils.dart';
+import 'package:uploadgram/app_logic.dart';
+import 'package:uploadgram/utils.dart';
+import 'package:uploadgram/routes/uploadgram_route.dart';
+import 'package:uploadgram/routes/file_info.dart';
 
 // ignore: must_be_immutable
 class FileWidgetGrid extends StatefulWidget {
@@ -231,7 +231,7 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
                           setProperty(waiting: false, filename: newName));
                   break;
                 case 'copy':
-                  AppLogic.platformApi.copy(widget.url).then((didCopy) =>
+                  AppLogic.copy(widget.url).then((didCopy) =>
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text(didCopy
                               ? 'Link copied to clipboard successfully!'

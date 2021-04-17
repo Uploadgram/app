@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:uploadgram/api_definitions.dart';
 
-import '../routes/uploadgram_route.dart';
-import '../app_settings.dart';
-import '../file_icons.dart';
-import '../utils.dart';
-import '../app_logic.dart';
-import 'file_widget_grid.dart';
+import 'package:uploadgram/routes/uploadgram_route.dart';
+import 'package:uploadgram/app_settings.dart';
+import 'package:uploadgram/file_icons.dart';
+import 'package:uploadgram/utils.dart';
+import 'package:uploadgram/app_logic.dart';
+import 'package:uploadgram/widgets/file_widget_grid.dart';
 
 class FilesGrid extends StatefulWidget {
   @override
@@ -21,55 +22,51 @@ class _FilesGridState extends State<FilesGrid> {
       for (int key = len - 1; key >= 0; key--) {
         var object = AppLogic.uploadingQueue[key];
         print(object);
-        Map file = object['fileObject'];
+        UploadgramFile file = object.uploadgramFile;
         IconData fileIcon =
-            fileIcons[file['name']?.split('.')?.last?.toLowerCase()] ??
+            fileIcons[file.name.split('.').last.toLowerCase()] ??
                 fileIcons['default']!;
-        Stream? _uploadStream = object['stream'] ??
-            (object['stream'] = AppLogic.uploadFileStream(object['key'], file));
+        Stream<UploadingEvent>? _uploadStream = object.stream ??
+            (object.stream = AppLogic.uploadFileStream(object));
         rows.add(StreamBuilder(
             stream: _uploadStream,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
+            builder:
+                (BuildContext context, AsyncSnapshot<UploadingEvent> snapshot) {
               double? _progress;
               String? _error;
               double _bytesPerSec = 0;
               bool _uploading = true;
-              String _delete = object['key'].toString();
+              String _delete = object.fileKey.toString();
               Map? _file = {
-                'filename': file['name'],
-                'size': file['size'],
+                'filename': file.name,
+                'size': file.size,
                 'url': '',
               };
-              if (snapshot.data != null)
+              if (snapshot.hasData)
                 switch (snapshot.connectionState) {
                   case ConnectionState.active:
-                    switch (snapshot.data['type']) {
-                      case 'progress':
-                        _progress = snapshot.data['value']['progress'];
-                        _bytesPerSec = snapshot.data['value']['bytesPerSec'];
-                        break;
+                    if (snapshot.data is UploadingEventProgress) {
+                      _progress =
+                          (snapshot.data as UploadingEventProgress).progress;
+                      _bytesPerSec =
+                          (snapshot.data as UploadingEventProgress).bytesPerSec;
                     }
                     break;
                   case ConnectionState.done:
-                    switch (snapshot.data['type']) {
-                      case 'end':
-                        _uploading = false;
-                        _delete = snapshot.data['value']['delete'];
-                        _file = snapshot.data['value']['file'];
-                        break;
-                      case 'errorEnd':
-                        _uploading = false;
-                        _error = snapshot.data['value'];
-                        break;
-                      case 'error':
-                        _uploading = false;
-                        _error = 'An error occurred while uploading';
-                        break;
+                    if (snapshot.data is UploadingEventEnd) {
+                      _uploading = false;
+                      _delete = (snapshot.data as UploadingEventEnd).delete;
+                      _file = (snapshot.data as UploadingEventEnd).file;
+                      break;
                     }
                     break;
                   default:
                     break;
                 }
+              else if (snapshot.hasError) {
+                _uploading = false;
+                _error = snapshot.error!.toString();
+              }
               return FileWidgetGrid(
                 selected: false,
                 icon: fileIcon,
@@ -81,7 +78,7 @@ class _FilesGridState extends State<FilesGrid> {
                     : Text(
                         '${(_progress * 100).round().toString()}% (${Utils.humanSize(_bytesPerSec)}/s)'),
                 error: _error,
-                filename: _file!['filename'],
+                filename: _file['filename'],
                 fileSize: _file['size'].toDouble(),
                 url: _file['url'],
                 handleDelete: _uploading
@@ -136,6 +133,7 @@ class _FilesGridState extends State<FilesGrid> {
           child: ((AppLogic.files!.length > 0 ||
                   AppLogic.uploadingQueue.length > 0)
               ? Scrollbar(
+                  isAlwaysShown: MediaQuery.of(context).size.width > 950,
                   child: GridView(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           childAspectRatio: aspectRatio,

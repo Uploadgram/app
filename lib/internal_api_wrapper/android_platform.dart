@@ -2,11 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../utils.dart';
+import 'package:uploadgram/api_definitions.dart';
+import 'package:uploadgram/utils.dart';
 
 class InternalAPIWrapper {
+  static String? lastUri; // just needed for web
+
   final MethodChannel _methodChannel =
       const MethodChannel('com.pato05.uploadgram');
 
@@ -18,9 +22,9 @@ class InternalAPIWrapper {
   bool isWebAndroid() => false;
 
   Future<Map?> importFiles() async {
-    Map? fileMap = await askForFile();
-    if (fileMap == null) return null;
-    File file = fileMap['realFile'];
+    UploadgramFile uploadgramFile = await askForFile();
+    if (uploadgramFile.hasError()) return null;
+    File file = uploadgramFile.realFile!;
     Map? files = json.decode(
         await file.readAsString()); // returns null if the file is not valid
     return files is Map ? files : null;
@@ -62,20 +66,20 @@ class InternalAPIWrapper {
       (await _methodChannel.invokeMethod(
           'setBool', <String, dynamic>{'name': name, 'value': value})) as bool;
 
-  Future<Map?> askForFile([String type = '*/*']) async {
+  Future<UploadgramFile> askForFile([String type = '*/*']) async {
     String? filePath = await _methodChannel
         .invokeMethod('getFile', <String, String>{'type': type});
-    print(filePath);
     if (filePath == 'PERMISSION_NOT_GRANTED') {
-      return {'error': 'PERMISSION_NOT_GRANTED'};
+      return UploadgramFile(error: UploadgramFileError.permissionNotGranted);
     }
-    if (filePath == null) return null;
+    if (filePath == null)
+      return UploadgramFile(error: UploadgramFileError.abortedByUser);
     File file = File(filePath);
-    return {
-      'realFile': file,
-      'size': await file.length(),
-      'name': file.path.split('/').last,
-    };
+    return UploadgramFile(
+      realFile: file,
+      size: await file.length(),
+      name: file.path.split('/').last,
+    );
   }
 
   Future<void> clearFilesCache() =>
@@ -89,4 +93,8 @@ class InternalAPIWrapper {
     await File(filePath).writeAsString(content);
     return true;
   }
+
+  static void listenDropzone(
+          BuildContext context, Function(UploadgramFile) uploadFile) =>
+      throw UnsupportedError('listenDropzone() has not been implemented.');
 }

@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:uploadgram/api_definitions.dart';
+
 class InternalAPIWrapper {
   static String? lastUri; // Exclusive to web
-  Future<bool> copy(String? text, {Function? onSuccess, Function? onError}) =>
-      throw UnsupportedError('copy() has not been implemented.');
+  //Future<bool> copy(String? text, {Function? onSuccess, Function? onError}) =>
+  //    throw UnsupportedError('copy() has not been implemented.');
 
   bool isWebAndroid() =>
       throw UnsupportedError('isWebAndroid() has not been implemented.');
@@ -10,7 +13,7 @@ class InternalAPIWrapper {
   Future<void> clearFilesCache() =>
       throw UnsupportedError('clearFilesCache() has not been implemented.');
 
-  Future<Map?> askForFile() =>
+  Future<UploadgramFile> askForFile() =>
       throw UnsupportedError('askForFile() has not been implemented.');
   Future<bool?> saveFile(String? filename, String content) =>
       throw UnsupportedError('saveFile() has not been implemented.');
@@ -27,4 +30,8 @@ class InternalAPIWrapper {
       throw UnsupportedError('getBool() has not been implemented.');
   Future<bool> setBool(String name, bool content) =>
       throw UnsupportedError('setBool() has not been implemented.');
+
+  static void listenDropzone(
+          BuildContext context, Function(UploadgramFile) uploadFile) =>
+      throw UnsupportedError('listenDropzone() has not been implemented.');
 }
