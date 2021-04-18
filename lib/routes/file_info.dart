@@ -1,20 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:uploadgram/utils.dart';
 import 'package:uploadgram/app_logic.dart';
-import 'package:uploadgram/widgets/file_widget_grid.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
-  String filename;
   final double fileSize;
   final String url;
   final IconData fileIcon;
   final Function(String, {Function? onYes}) handleDelete;
   final Function(String, {Function(String)? onDone, String? oldName})
       handleRename;
-  String delete;
+  final ValueNotifier<String> filename;
+  final String delete;
 
   FileInfoRoute({
     required this.filename,
@@ -88,10 +88,8 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
               icon: Icon(Icons.edit),
               onPressed: () {
                 widget.handleRename.call(widget.delete,
-                    oldName: widget.filename, onDone: (String newName) {
-                  FileWidgetGrid.of(context)
-                      ?.setProperty(waiting: false, filename: newName);
-                  setState(() => widget.filename = newName);
+                    oldName: widget.filename.value, onDone: (String newName) {
+                  widget.filename.value = newName;
                 });
               },
               tooltip: 'Rename this file',
@@ -111,12 +109,16 @@ class _FileInfoRouteState extends State<FileInfoRoute> {
                 Row(children: [
                   Expanded(
                       child: Padding(
-                          child: Text(
-                            widget.filename,
-                            style: TextStyle(
-                                fontSize: 26, fontWeight: FontWeight.w500),
-                            overflow: TextOverflow.clip,
-                            textAlign: TextAlign.start,
+                          child: ValueListenableBuilder<String>(
+                            valueListenable: widget.filename,
+                            builder: (BuildContext context, String name, _) =>
+                                Text(
+                              name,
+                              style: TextStyle(
+                                  fontSize: 26, fontWeight: FontWeight.w500),
+                              overflow: TextOverflow.clip,
+                              textAlign: TextAlign.start,
+                            ),
                           ),
                           padding: EdgeInsets.symmetric(vertical: 23)))
                 ]),

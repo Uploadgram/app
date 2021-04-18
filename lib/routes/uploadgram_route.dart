@@ -5,11 +5,12 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 
+import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 import 'package:uploadgram/api_definitions.dart';
 import 'package:uploadgram/app_settings.dart';
 import 'package:uploadgram/app_logic.dart';
+import 'package:uploadgram/selected_files_notifier.dart';
 import 'package:uploadgram/widgets/files_grid.dart';
 
 class UploadgramRoute extends StatefulWidget {
@@ -22,16 +23,17 @@ class UploadgramRoute extends StatefulWidget {
 class _UploadgramRouteState extends State<UploadgramRoute> {
   static const int maxSize = 2 * 1000 * 1000 * 1000;
   final Connectivity _connectivity = Connectivity();
-  bool _canUpload = false;
   int _checkSeconds = 0;
   Timer? _lastConnectivityTimer;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  final SelectedFilesNotifier selectedFiles = SelectedFilesNotifier();
+  final ValueNotifier<bool> _canUploadNotifier = ValueNotifier<bool>(false);
 
-  void selectWidget(String id) => setState(() {
-        AppLogic.selected.contains(id)
-            ? AppLogic.selected.remove(id)
-            : AppLogic.selected.add(id);
-      });
+  void selectWidget(String id) {
+    selectedFiles.contains(id)
+        ? selectedFiles.remove(id)
+        : selectedFiles.add(id);
+  }
 
   Future<void> handleFileRename(String delete,
       {Function(String)? onDone, String? newName, String? oldName = ''}) async {
@@ -69,7 +71,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    setState(() => AppLogic.selected.clear());
+                    selectedFiles.clear();
                     handleFileRename(delete, onDone: onDone, newName: _text);
                   },
                   child: Text('OK'),
@@ -156,7 +158,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _uploadFile() async {
-    if (_canUpload == false) return;
+    if (_canUploadNotifier.value == false) return;
     if (await AppLogic.platformApi.getBool('tos_accepted') == false) {
       showDialog(
           context: context,
@@ -215,7 +217,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> uploadFile(UploadgramFile file) async {
-    if (_canUpload == false) return;
+    if (_canUploadNotifier.value == false) return;
     if (file.size == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Please select a non-empty file.')));
@@ -275,7 +277,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _checkConnection(ConnectivityResult connectivityResult) async {
-    setState(() => _canUpload = false);
+    _canUploadNotifier.value = false;
     print('Check connection called.');
     if (connectivityResult != ConnectivityResult.none) {
       if (connectivityResult == ConnectivityResult.mobile)
@@ -288,7 +290,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   Future<void> _checkUploadgramConnection() async {
     _lastConnectivityTimer?.cancel();
     if (await AppLogic.webApi.checkNetwork()) {
-      setState(() => _canUpload = true);
+      _canUploadNotifier.value = true;
     } else {
       if (_checkSeconds < 90) _checkSeconds += 15;
       _lastConnectivityTimer =
@@ -313,45 +315,41 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  List<Widget> _buildAppBarActions() {
     List<Widget> actions = [];
-    if (AppLogic.selected.length > 0) {
+    if (selectedFiles.length > 0) {
       actions = [
-        if (AppLogic.selected.length < AppLogic.files!.length)
+        if (selectedFiles.length < AppLogic.files!.length)
           IconButton(
             icon: Icon(Icons.select_all),
             onPressed: () => setState(() =>
-                AppLogic.selected = List<String>.from(AppLogic.files!.keys)),
+                selectedFiles.value = List<String>.from(AppLogic.files!.keys)),
             tooltip: 'Select all the files',
           ),
-        if (AppLogic.selected.length == 1)
+        if (selectedFiles.length == 1)
           IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () => handleFileRename(AppLogic.selected[0],
-                oldName: AppLogic.files![AppLogic.selected[0]]!['filename']),
+            onPressed: () => handleFileRename(selectedFiles[0],
+                oldName: AppLogic.files![selectedFiles[0]]!['filename']),
             tooltip: 'Rename this file',
           ),
         IconButton(
           icon: Icon(Icons.delete),
           onPressed: () {
-            handleFileDelete(List.from(AppLogic.selected),
-                onYes: () => setState(() => AppLogic.selected.clear()));
+            handleFileDelete(List.from(selectedFiles.value),
+                onYes: () => selectedFiles.clear());
           },
           tooltip: 'Delete selected file(s)',
         ),
         IconButton(
           icon: Icon(Icons.get_app),
           onPressed: () async {
-            // we need to export ONLY AppLogic.selected here
-            // AppLogic.selected is a list of _files keys, so it should be easy to export.
             Map _exportFiles = {};
-            AppLogic.selected
+            selectedFiles.value
                 .forEach((e) => _exportFiles[e] = AppLogic.files![e]);
             String _filename = 'uploadgram_files.json';
-            if (AppLogic.selected.length == 1)
-              _filename =
-                  _exportFiles[AppLogic.selected[0]]['filename'] + '.json';
+            if (selectedFiles.length == 1)
+              _filename = _exportFiles[selectedFiles[0]]['filename'] + '.json';
             if (await AppLogic.platformApi
                     .saveFile(_filename, json.encode(_exportFiles)) !=
                 true) {
@@ -476,25 +474,33 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         ),
       ];
     }
+    return actions;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: AppLogic.selected.length > 0
-            ? Text(
-                AppLogic.selected.length.toString() +
-                    ' file' +
-                    (AppLogic.selected.length > 1 ? 's' : '') +
-                    ' selected',
-              )
-            : Text('Uploadgram'),
-        leading: AppLogic.selected.length > 0
-            ? IconButton(
-                icon: Icon(Icons.clear),
-                onPressed: () => setState(() {
-                      AppLogic.selected.clear();
-                    }))
-            : null,
-        actions: actions,
-      ),
+      appBar: PreferredSize(
+          child: ValueListenableBuilder(
+              builder: (BuildContext context, List<String> selected, _) =>
+                  AppBar(
+                    title: selected.length > 0
+                        ? Text(
+                            selected.length.toString() +
+                                ' file' +
+                                (selected.length > 1 ? 's' : '') +
+                                ' selected',
+                          )
+                        : Text('Uploadgram'),
+                    leading: selected.length > 0
+                        ? IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () => selectedFiles.clear())
+                        : null,
+                    actions: _buildAppBarActions(),
+                  ),
+              valueListenable: selectedFiles),
+          preferredSize: AppBar().preferredSize),
       // replace this with a future builder of _initStateAsync
       body: AppLogic.files == null
           ? Center(
@@ -504,20 +510,24 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               height: 100,
             ))
           : FilesGrid(),
-      floatingActionButton: AppSettings.fabTheme == 'extended'
-          ? FloatingActionButton.extended(
-              onPressed: _uploadFile,
-              label: Text("UPLOAD"),
-              icon: _canUpload
-                  ? const Icon(Icons.cloud_upload)
-                  : CircularProgressIndicator())
-          : AppSettings.fabTheme == 'compact'
-              ? FloatingActionButton(
+      floatingActionButton: ValueListenableBuilder(
+          builder: (BuildContext context, bool _canUpload, _) => AppSettings
+                      .fabTheme ==
+                  'extended'
+              ? FloatingActionButton.extended(
                   onPressed: _uploadFile,
-                  child: _canUpload
+                  label: Text("UPLOAD"),
+                  icon: _canUpload
                       ? const Icon(Icons.cloud_upload)
                       : CircularProgressIndicator())
-              : null,
+              : AppSettings.fabTheme == 'compact'
+                  ? FloatingActionButton(
+                      onPressed: _uploadFile,
+                      child: _canUpload
+                          ? const Icon(Icons.cloud_upload)
+                          : CircularProgressIndicator())
+                  : Container(), // Temporarily, while settings are getting fetched
+          valueListenable: _canUploadNotifier),
       floatingActionButtonLocation: AppSettings.fabTheme == 'extended'
           ? FloatingActionButtonLocation.centerFloat
           : AppSettings.fabTheme == 'compact'

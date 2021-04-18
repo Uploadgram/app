@@ -143,7 +143,7 @@ class _AboutRouteState extends State<AboutRoute> {
                                 launch(_backendLibs[index].value['link']),
                           )),
                   Divider(height: 25),
-                  Text('Also check out',
+                  Text('Check also out',
                       style:
                           TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   ...List.generate(

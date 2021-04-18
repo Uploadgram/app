@@ -2,7 +2,6 @@
 import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -33,7 +32,7 @@ class InternalAPIWrapper {
           children: [
             Icon(Icons.cloud_upload, size: 78),
             Text(
-              'Drop your file here!',
+              'Drop your files here!',
               style: theme.textTheme.bodyText1?.copyWith(
                 fontSize: 42,
                 fontWeight: FontWeight.w500,
@@ -67,6 +66,7 @@ class InternalAPIWrapper {
       }
       if (event.dataTransfer.files == null) return;
       if (event.dataTransfer.files!.length > 0) {
+        if (event.dataTransfer.files![0].size <= 0) return;
         uploadFile.call(UploadgramFile(
           realFile: event.dataTransfer.files![0],
           size: event.dataTransfer.files![0].size,
@@ -164,10 +164,9 @@ class InternalAPIWrapper {
     if (uploadgramFile.hasError()) return null;
     html.File file = uploadgramFile.realFile;
     html.FileReader reader = html.FileReader();
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file);
     await reader.onLoad.first;
-    Uint8List bytes = Uint8List.view(reader.result as ByteBuffer);
-    Map? files = json.decode(String.fromCharCodes(bytes));
+    Map? files = json.decode(reader.result as String);
     return files is Map ? files : null;
   }
 

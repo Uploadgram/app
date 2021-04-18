@@ -56,11 +56,11 @@ class AppLogic {
             .add(UploadingEventEnd(delete: result.delete!, file: fileObj));
         saveFiles();
       } else {
-        String? _error = 'An error occurred while obtaining the response';
+        String _error = 'An error occurred while obtaining the response';
         if (result.statusCode > 500)
           _error = 'We are having server problems. Try again later.';
-        if (result.errorMessage != null) _error = result.errorMessage;
-        controller.addError({'message': _error});
+        if (result.errorMessage != null) _error = result.errorMessage!;
+        controller.addError(_error);
       }
       controller.close();
       uploadingQueue.removeAt(0);

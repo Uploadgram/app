@@ -68,7 +68,6 @@ class _FilesGridState extends State<FilesGrid> {
                 _error = snapshot.error!.toString();
               }
               return FileWidgetGrid(
-                selected: false,
                 icon: fileIcon,
                 delete: _delete,
                 uploading: _uploading,
@@ -81,6 +80,8 @@ class _FilesGridState extends State<FilesGrid> {
                 filename: _file['filename'],
                 fileSize: _file['size'].toDouble(),
                 url: _file['url'],
+                selectedFilesNotifier:
+                    UploadgramRoute.of(context)!.selectedFiles,
                 handleDelete: _uploading
                     ? null
                     : (String delete, {Function? onYes}) =>
@@ -89,8 +90,6 @@ class _FilesGridState extends State<FilesGrid> {
                 handleRename: _uploading
                     ? null
                     : UploadgramRoute.of(context)?.handleFileRename,
-                onPressed: _uploading ? () => null : null,
-                onLongPress: _uploading ? () => null : null,
                 compact: AppSettings.filesTheme == 'new_compact',
               );
             }));
@@ -101,17 +100,15 @@ class _FilesGridState extends State<FilesGrid> {
       IconData fileIcon =
           fileIcons[fileObject['filename']?.split('.')?.last?.toLowerCase()] ??
               fileIcons['default']!;
-      bool isSelected = AppLogic.selected.contains(delete);
       rows.add(FileWidgetGrid(
         key: Key(delete),
-        selected: isSelected,
-        selectOnPress: AppLogic.selected.length > 0,
         icon: fileIcon,
         delete: delete,
         uploading: false,
         filename: fileObject['filename'],
         fileSize: fileObject['size'].toDouble(),
         url: fileObject['url'],
+        selectedFilesNotifier: UploadgramRoute.of(context)!.selectedFiles,
         handleDelete: (String delete, {Function? onYes}) =>
             UploadgramRoute.of(context)
                 ?.handleFileDelete([delete], onYes: onYes),
