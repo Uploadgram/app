@@ -40,7 +40,7 @@ class AppLogic {
       }
       var result = await webApi.uploadFile(
         file.uploadgramFile,
-        onProgress: (double progress, double bytesPerSec, String remaining) {
+        onProgress: (double progress, int bytesPerSec, String remaining) {
           controller.add(UploadingEventProgress(
               progress: progress, bytesPerSec: bytesPerSec));
         },

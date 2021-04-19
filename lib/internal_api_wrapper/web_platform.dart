@@ -107,9 +107,9 @@ class InternalAPIWrapper {
     return html.window.localStorage[name] ?? defaultValue;
   }
 
-  Future<bool> getBool(String name) async {
-    if (html.window.localStorage[name] == null) return false;
-    return json.decode(html.window.localStorage[name]!) ?? false;
+  Future<bool> getBool(String name, bool defaultValue) async {
+    if (html.window.localStorage[name] == null) return defaultValue;
+    return json.decode(html.window.localStorage[name]!) ?? defaultValue;
   }
 
   Future<bool> setBool(String name, bool value) async {

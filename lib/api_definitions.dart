@@ -100,7 +100,7 @@ class UploadingEvent {}
 
 class UploadingEventProgress extends UploadingEvent {
   double progress;
-  double bytesPerSec;
+  int bytesPerSec;
 
   UploadingEventProgress({
     required this.progress,

@@ -35,7 +35,7 @@ class WebAPIWrapper {
 
   Future<UploadApiResponse> uploadFile(
     UploadgramFile file, {
-    Function(double, double, String)? onProgress,
+    Function(double, int, String)? onProgress,
     Function? onError,
   }) async {
     if (!(file.realFile is File && file.size > 0))
@@ -86,10 +86,11 @@ class WebAPIWrapper {
     int _lastUploadedBytes = 0;
     Response response = await _dio.post('https://api.uploadgram.me/upload',
         data: formData, onSendProgress: (loaded, total) {
-      var bytesPerSec = loaded /
-          (DateTime.now().millisecondsSinceEpoch -
-              initDate.millisecondsSinceEpoch) *
-          1000;
+      int bytesPerSec = (loaded /
+              (DateTime.now().millisecondsSinceEpoch -
+                  initDate.millisecondsSinceEpoch) *
+              1000)
+          .toInt();
       var progress = loaded / total;
       int secondsRemaining = (total - loaded) ~/ bytesPerSec;
       String stringRemaining = (secondsRemaining >= 3600
@@ -162,7 +163,7 @@ class WebAPIWrapper {
   Future<DeleteApiResponse> deleteFile(String file) async {
     Response response =
         await _dio.get('https://api.uploadgram.me/delete/$file');
-    if (response.statusCode != 200 && response.data is Map) {
+    if (response.statusCode != 200 || !(response.data is Map)) {
       return DeleteApiResponse(ok: false, statusCode: response.statusCode!);
     }
     return DeleteApiResponse.fromJson(response.data);

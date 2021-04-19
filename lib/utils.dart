@@ -3,14 +3,15 @@ import 'dart:convert';
 import 'package:uploadgram/app_logic.dart';
 
 class Utils {
-  static String humanSize(double bytes) {
+  static String humanSize(int bytes) {
+    double tmp = bytes.toDouble();
     List<String> sizes = ["B", "KB", "MB", "GB"];
     int i = 0;
-    while (bytes > 1000) {
-      bytes /= 1000;
+    while (tmp > 1000) {
+      tmp /= 1000;
       if (++i >= (sizes.length - 1)) break;
     }
-    return bytes.toStringAsFixed(2) + ' ' + sizes[i];
+    return tmp.toStringAsFixed(2) + ' ' + sizes[i];
   }
 
   static Future<String> parseName(String name) async {

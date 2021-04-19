@@ -80,7 +80,7 @@ public class MainActivity extends FlutterActivity {
                             result.success(_sharedPrefs.edit().putBoolean(call.argument("name"), call.argument("value")).commit());
                             break;
                         case "getBool":
-                            result.success(_sharedPrefs.getBoolean(call.argument("name"), false));
+                            result.success(_sharedPrefs.getBoolean(call.argument("name"), call.argument("default")));
                             break;
                     }
                 });

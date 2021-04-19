@@ -59,8 +59,9 @@ class InternalAPIWrapper {
       (await _methodChannel.invokeMethod('getString',
           <String, String>{'name': name, 'default': defaultValue})) as String;
 
-  Future<bool> getBool(String name) async => (await _methodChannel
-      .invokeMethod('getBool', <String, String>{'name': name})) as bool;
+  Future<bool> getBool(String name, bool defaultValue) async =>
+      (await _methodChannel.invokeMethod('getBool',
+          <String, dynamic>{'name': name, 'default': defaultValue})) as bool;
 
   Future<bool> setBool(String name, bool value) async =>
       (await _methodChannel.invokeMethod(

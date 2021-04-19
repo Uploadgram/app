@@ -5,6 +5,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uploadgram/app_definitions.dart';
 
 import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 import 'package:uploadgram/api_definitions.dart';
@@ -12,6 +13,7 @@ import 'package:uploadgram/app_settings.dart';
 import 'package:uploadgram/app_logic.dart';
 import 'package:uploadgram/selected_files_notifier.dart';
 import 'package:uploadgram/widgets/files_grid.dart';
+import 'package:uploadgram/widgets/files_list.dart';
 
 class UploadgramRoute extends StatefulWidget {
   static _UploadgramRouteState? of(BuildContext context) =>
@@ -26,8 +28,8 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   int _checkSeconds = 0;
   Timer? _lastConnectivityTimer;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
-  final SelectedFilesNotifier selectedFiles = SelectedFilesNotifier();
   final ValueNotifier<bool> _canUploadNotifier = ValueNotifier<bool>(false);
+  final SelectedFilesNotifier selectedFiles = SelectedFilesNotifier();
 
   void selectWidget(String id) {
     selectedFiles.contains(id)
@@ -159,7 +161,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   Future<void> _uploadFile() async {
     if (_canUploadNotifier.value == false) return;
-    if (await AppLogic.platformApi.getBool('tos_accepted') == false) {
+    if (await AppLogic.platformApi.getBool('tos_accepted', false) == false) {
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
@@ -225,7 +227,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     }
     if (AppLogic.files!.length >= 5 &&
         AppLogic.platformApi.isWebAndroid() &&
-        await AppLogic.platformApi.getBool('has_asked_app') == false) {
+        await AppLogic.platformApi.getBool('has_asked_app', false) == false) {
       AppLogic.platformApi.setBool('has_asked_app', true);
       showDialog(
           context: context,
@@ -264,8 +266,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _initStateAsync() async {
-    await AppLogic.getFiles();
-    await AppSettings.getSettings();
+    if (AppLogic.files == null) await AppLogic.getFiles();
     // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
     if (kIsWeb) {
@@ -321,19 +322,14 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       actions = [
         if (selectedFiles.length < AppLogic.files!.length)
           IconButton(
+            key: Key('select_all'),
             icon: Icon(Icons.select_all),
             onPressed: () => setState(() =>
                 selectedFiles.value = List<String>.from(AppLogic.files!.keys)),
             tooltip: 'Select all the files',
           ),
-        if (selectedFiles.length == 1)
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () => handleFileRename(selectedFiles[0],
-                oldName: AppLogic.files![selectedFiles[0]]!['filename']),
-            tooltip: 'Rename this file',
-          ),
         IconButton(
+          key: Key('delete'),
           icon: Icon(Icons.delete),
           onPressed: () {
             handleFileDelete(List.from(selectedFiles.value),
@@ -342,6 +338,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           tooltip: 'Delete selected file(s)',
         ),
         IconButton(
+          key: Key('export'),
           icon: Icon(Icons.get_app),
           onPressed: () async {
             Map _exportFiles = {};
@@ -375,7 +372,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 await Navigator.pushNamed(context, '/settings');
                 if (previousSettings !=
                     [AppSettings.fabTheme, AppSettings.filesTheme]) {
-                  AppSettings.saveSettings();
                   setState(() => null);
                 }
                 break;
@@ -396,7 +392,14 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                 }
                 break;
               case 'import':
-                Map? _importedFiles = await AppLogic.platformApi.importFiles();
+                late Map? _importedFiles;
+                try {
+                  _importedFiles = await AppLogic.platformApi.importFiles();
+                } on FormatException {
+                  // ScaffoldMessenger.of(context)
+                  //     .showSnackBar(SnackBar(content: Text(e.toString())));
+                  _importedFiles = null;
+                }
                 print('_importedFiles = ${_importedFiles.toString()}');
                 if (_importedFiles == null) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -435,7 +438,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black),
-                    Container(width: 15),
+                    SizedBox(width: 15),
                     Text('Export files list'),
                   ])),
               PopupMenuItem(
@@ -445,7 +448,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black),
-                    Container(width: 15),
+                    SizedBox(width: 15),
                     Text('Settings'),
                   ])),
               if (AppLogic.platformApi.isWebAndroid() == true)
@@ -456,7 +459,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.white
                               : Colors.black),
-                      Container(width: 15),
+                      SizedBox(width: 15),
                       Text('Download the app!'),
                     ])),
               PopupMenuItem(
@@ -466,7 +469,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black),
-                    Container(width: 15),
+                    SizedBox(width: 15),
                     Text('About'),
                   ])),
             ];
@@ -509,18 +512,33 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               width: 100,
               height: 100,
             ))
-          : FilesGrid(),
+          : (AppLogic.files!.length > 0 || AppLogic.uploadingQueue.length > 0)
+              ? Scrollbar(
+                  isAlwaysShown: MediaQuery.of(context).size.width > 950,
+                  child: AppSettings.filesTheme == FilesTheme.list
+                      ? FilesList(selectedFiles: selectedFiles)
+                      : FilesGrid(selectedFiles: selectedFiles))
+              : Center(
+                  child: RichText(
+                      text: TextSpan(children: [
+                        TextSpan(
+                            text: 'There\'s nothing here\n',
+                            style: TextStyle(fontSize: 32)),
+                        TextSpan(
+                            text: '...yet', style: TextStyle(fontSize: 18)),
+                      ], style: Theme.of(context).textTheme.bodyText2),
+                      textAlign: TextAlign.center)),
       floatingActionButton: ValueListenableBuilder(
           builder: (BuildContext context, bool _canUpload, _) => AppSettings
                       .fabTheme ==
-                  'extended'
+                  FabTheme.centerExtended
               ? FloatingActionButton.extended(
                   onPressed: _uploadFile,
                   label: Text("UPLOAD"),
                   icon: _canUpload
                       ? const Icon(Icons.cloud_upload)
                       : CircularProgressIndicator())
-              : AppSettings.fabTheme == 'compact'
+              : AppSettings.fabTheme == FabTheme.left
                   ? FloatingActionButton(
                       onPressed: _uploadFile,
                       child: _canUpload
@@ -528,11 +546,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                           : CircularProgressIndicator())
                   : Container(), // Temporarily, while settings are getting fetched
           valueListenable: _canUploadNotifier),
-      floatingActionButtonLocation: AppSettings.fabTheme == 'extended'
-          ? FloatingActionButtonLocation.centerFloat
-          : AppSettings.fabTheme == 'compact'
-              ? FloatingActionButtonLocation.endFloat
-              : null,
+      floatingActionButtonLocation:
+          AppSettings.fabTheme == FabTheme.centerExtended
+              ? FloatingActionButtonLocation.centerFloat
+              : AppSettings.fabTheme == FabTheme.left
+                  ? FloatingActionButtonLocation.endFloat
+                  : null,
     );
   }
 }

@@ -26,7 +26,7 @@ class InternalAPIWrapper {
   Future<String?> getString(String name, String defaultValue) =>
       throw UnsupportedError('getString() has not been implemented.');
 
-  Future<bool> getBool(String name) =>
+  Future<bool> getBool(String name, bool defaultValue) =>
       throw UnsupportedError('getBool() has not been implemented.');
   Future<bool> setBool(String name, bool content) =>
       throw UnsupportedError('setBool() has not been implemented.');

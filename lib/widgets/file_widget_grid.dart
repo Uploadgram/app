@@ -1,28 +1,25 @@
-import 'dart:convert';
-
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:uploadgram/app_definitions.dart';
 
-import 'package:uploadgram/app_logic.dart';
 import 'package:uploadgram/selected_files_notifier.dart';
 import 'package:uploadgram/utils.dart';
 import 'package:uploadgram/routes/uploadgram_route.dart';
 import 'package:uploadgram/routes/file_info.dart';
 
-// ignore: must_be_immutable
-class FileWidgetGrid extends StatefulWidget {
-  String filename;
-  double fileSize;
-  String url = '';
-  String delete = '';
-  bool uploading;
-  IconData icon;
-  Function(String, {Function? onYes})? handleDelete;
-  Function(String, {Function(String)? onDone, String? oldName})? handleRename;
-  String? error;
-  double? progress = 0;
-  bool compact;
-  Widget? upperWidget;
+class FileWidgetGrid extends StatelessWidget {
+  final String filename;
+  final int fileSize;
+  final String url;
+  final String delete;
+  final bool uploading;
+  final IconData icon;
+  final Function(String, {Function? onYes})? handleDelete;
+  final Function(String, {Function(String)? onDone, String? oldName})?
+      handleRename;
+  final String? error;
+  final double? progress;
+  final bool compact;
+  final Widget? upperWidget;
   final SelectedFilesNotifier selectedFilesNotifier;
 
   FileWidgetGrid({
@@ -43,40 +40,24 @@ class FileWidgetGrid extends StatefulWidget {
   })  : assert((handleDelete != null && handleRename != null) || uploading),
         super(key: key);
 
-  static _FileWidgetGridState? of(BuildContext c) =>
-      c.findAncestorStateOfType<_FileWidgetGridState>();
-
-  @override
-  _FileWidgetGridState createState() => _FileWidgetGridState();
-}
-
-class _FileWidgetGridState extends State<FileWidgetGrid> {
-  late ValueNotifier<String> _filenameNotifier;
-
-  @override
-  void initState() {
-    _filenameNotifier = ValueNotifier<String>(widget.filename);
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
+    ValueNotifier<String> _filenameNotifier = ValueNotifier<String>(filename);
     Function() openFileInfo = () => Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => FileInfoRoute(
                   filename: _filenameNotifier,
-                  fileSize: widget.fileSize,
-                  fileIcon: widget.icon,
-                  delete: widget.delete,
-                  handleDelete: widget.handleDelete!,
-                  handleRename: widget.handleRename!,
-                  url: widget.url,
+                  fileSize: fileSize,
+                  fileIcon: icon,
+                  delete: delete,
+                  handleDelete: handleDelete!,
+                  handleRename: handleRename!,
+                  url: url,
                 )));
     Function() selectFile =
-        () => UploadgramRoute.of(context)!.selectWidget(widget.delete);
-    if (!widget.uploading) {
-    } else {
+        () => UploadgramRoute.of(context)!.selectWidget(delete);
+    if (uploading) {
       openFileInfo = selectFile = () => null;
     }
     List<Widget> columnChildren = [
@@ -95,20 +76,20 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
                     margin: EdgeInsets.symmetric(horizontal: 10),
                     child: GestureDetector(
                       child: ValueListenableBuilder(
-                        builder: (BuildContext context, List<String> value,
-                                _) =>
-                            AnimatedCrossFade(
-                                firstChild: Icon(widget.icon,
-                                    size: 24, color: Colors.grey.shade700),
-                                secondChild: Icon(Icons.check_circle,
-                                    size: 24, color: Colors.blue.shade600),
-                                firstCurve: Curves.easeInOut,
-                                secondCurve: Curves.easeInOut,
-                                crossFadeState: value.contains(widget.delete)
-                                    ? CrossFadeState.showSecond
-                                    : CrossFadeState.showFirst,
-                                duration: Duration(milliseconds: 200)),
-                        valueListenable: widget.selectedFilesNotifier,
+                        builder:
+                            (BuildContext context, List<String> value, _) =>
+                                AnimatedCrossFade(
+                                    firstChild: Icon(icon,
+                                        size: 24, color: Colors.grey.shade700),
+                                    secondChild: Icon(Icons.check_circle,
+                                        size: 24, color: Colors.blue.shade600),
+                                    firstCurve: Curves.easeInOut,
+                                    secondCurve: Curves.easeInOut,
+                                    crossFadeState: value.contains(delete)
+                                        ? CrossFadeState.showSecond
+                                        : CrossFadeState.showFirst,
+                                    duration: Duration(milliseconds: 200)),
+                        valueListenable: selectedFilesNotifier,
                       ),
                       onTap: selectFile,
                       onLongPress: selectFile,
@@ -144,7 +125,7 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
                             children: [
                               Expanded(
                                   child: Text(
-                                Utils.humanSize(widget.fileSize),
+                                Utils.humanSize(fileSize),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               )),
@@ -155,21 +136,21 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
         ),
       )
     ];
-    if (!widget.compact)
+    if (!compact)
       columnChildren.insert(
           0,
           Expanded(
-            child: Icon(widget.icon, size: 37, color: Colors.grey.shade700),
+            child: Icon(icon, size: 37, color: Colors.grey.shade700),
           ));
     Widget container = ValueListenableBuilder(
-      valueListenable: widget.selectedFilesNotifier,
+      valueListenable: selectedFilesNotifier,
       builder: (BuildContext context, List<String> value, Widget? child) =>
           AnimatedContainer(
               duration: Duration(milliseconds: 200),
               curve: Curves.easeInOut,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: value.contains(widget.delete)
+                    color: value.contains(delete)
                         ? Colors.blue.shade700
                         : (Theme.of(context).brightness == Brightness.dark
                             ? Colors.grey.shade900
@@ -177,81 +158,17 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
                     width: 2.0),
                 borderRadius: BorderRadius.circular(2),
               ),
-              child: Listener(
-                  onPointerDown: (PointerDownEvent event) {
-                    if (event.buttons != kSecondaryMouseButton) return;
-                    final overlay = Overlay?.of(context)
-                        ?.context
-                        .findRenderObject() as RenderBox;
-                    showMenu(
-                        context: context,
-                        position: RelativeRect.fromSize(
-                            event.position & Size.zero, overlay.size),
-                        items: [
-                          PopupMenuItem(
-                              value: 'delete',
-                              child: Row(children: [
-                                Icon(Icons.delete),
-                                SizedBox(width: 15),
-                                Text('Delete'),
-                              ])),
-                          PopupMenuItem(
-                              value: 'rename',
-                              child: Row(children: [
-                                Icon(Icons.edit),
-                                SizedBox(width: 15),
-                                Text('Rename'),
-                              ])),
-                          PopupMenuItem(
-                              value: 'copy',
-                              child: Row(children: [
-                                Icon(Icons.copy),
-                                SizedBox(width: 15),
-                                Text('Copy link'),
-                              ])),
-                          PopupMenuItem(
-                              value: 'export',
-                              child: Row(children: [
-                                Icon(Icons.get_app),
-                                SizedBox(width: 15),
-                                Text('Export'),
-                              ])),
-                        ]).then((value) {
-                      switch (value) {
-                        case 'delete':
-                          widget.handleDelete?.call(widget.delete);
-                          break;
-                        case 'rename':
-                          widget.handleRename?.call(widget.delete,
-                              oldName: widget.filename,
-                              onDone: (String newName) =>
-                                  _filenameNotifier.value = newName);
-                          break;
-                        case 'copy':
-                          AppLogic.copy(widget.url).then((didCopy) =>
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                  content: Text(didCopy
-                                      ? 'Link copied to clipboard successfully!'
-                                      : 'Unable to copy file link. Please copy it manually.'))));
-                          break;
-                        case 'export':
-                          AppLogic.platformApi.saveFile(
-                              _filenameNotifier.value + '.json',
-                              json.encode({
-                                widget.delete: {
-                                  'filename': _filenameNotifier.value,
-                                  'size': widget.fileSize,
-                                  'url': widget.url
-                                }
-                              }));
-                          break;
-                      }
-                    });
-                  },
+              child: FileRightClickListener(
+                  delete: delete,
+                  filenameNotifier: _filenameNotifier,
+                  url: url,
+                  handleDelete: handleDelete,
+                  handleRename: handleRename,
+                  size: fileSize,
                   child: InkWell(
                     onTap: value.length > 0 ? selectFile : openFileInfo,
-                    onLongPress: () => UploadgramRoute.of(context)!
-                        .selectWidget(widget.delete),
+                    onLongPress: () =>
+                        UploadgramRoute.of(context)!.selectWidget(delete),
                     child: child,
                   ))),
       child: Column(
@@ -260,16 +177,15 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
         children: columnChildren,
       ),
     );
-    if (widget.uploading == true) {
+    if (uploading == true) {
       List<Widget> columnChildren = [
         LinearProgressIndicator(
-          value: widget.progress,
+          value: progress,
           valueColor: AlwaysStoppedAnimation<Color>(
               Theme.of(context).primaryColorLight),
         )
       ];
-      if (widget.upperWidget != null)
-        columnChildren.insert(0, widget.upperWidget!);
+      if (upperWidget != null) columnChildren.insert(0, upperWidget!);
       return Stack(children: [
         container,
         Positioned.fill(
@@ -287,7 +203,7 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
         ),
       ]);
     }
-    if (widget.error != null)
+    if (error != null)
       return Stack(children: [
         container,
         Positioned.fill(
@@ -298,7 +214,7 @@ class _FileWidgetGridState extends State<FileWidgetGrid> {
         Positioned.fill(
           child: Center(
               child: Text(
-            widget.error!,
+            error!,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.red[400],

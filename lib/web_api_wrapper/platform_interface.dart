@@ -3,7 +3,7 @@ import 'package:uploadgram/api_definitions.dart';
 class WebAPIWrapper {
   Future<UploadApiResponse> uploadFile(
     UploadgramFile file, {
-    Function(double, double, String)? onProgress,
+    Function(double, int, String)? onProgress,
     Function(int)? onError,
   }) =>
       throw UnsupportedError('uploadFile() has not been implemented.');

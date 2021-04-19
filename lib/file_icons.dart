@@ -56,3 +56,8 @@ const Map<String, IconData> fileIcons = {
   'jar': Icons.settings_applications,
   'default': Icons.insert_drive_file
 };
+
+IconData getFileIconFromName(String filename) {
+  return fileIcons[filename.split('.').last.toLowerCase()] ??
+      fileIcons['default']!;
+}

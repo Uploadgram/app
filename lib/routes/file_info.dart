@@ -7,7 +7,7 @@ import 'package:uploadgram/app_logic.dart';
 
 // ignore: must_be_immutable
 class FileInfoRoute extends StatefulWidget {
-  final double fileSize;
+  final int fileSize;
   final String url;
   final IconData fileIcon;
   final Function(String, {Function? onYes}) handleDelete;

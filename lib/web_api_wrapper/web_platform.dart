@@ -9,7 +9,7 @@ import 'package:uploadgram/utils.dart';
 class WebAPIWrapper {
   Future<UploadApiResponse> uploadFile(
     UploadgramFile file, {
-    Function(double, double, String)? onProgress,
+    Function(double, int, String)? onProgress,
     Function(int?)? onError,
   }) {
     var completer = Completer<UploadApiResponse>();
@@ -24,10 +24,11 @@ class WebAPIWrapper {
     xhr.open('POST', 'https://api.uploadgram.me/upload');
     late DateTime initDate;
     xhr.upload.onProgress.listen((html.ProgressEvent e) {
-      double bytesPerSec = e.loaded! /
-          (DateTime.now().millisecondsSinceEpoch -
-              initDate.millisecondsSinceEpoch) *
-          1000;
+      int bytesPerSec = (e.loaded! /
+              (DateTime.now().millisecondsSinceEpoch -
+                  initDate.millisecondsSinceEpoch) *
+              1000)
+          .toInt();
       int secondsRemaining = (e.total! - e.loaded!) ~/ bytesPerSec;
       String stringRemaining = (secondsRemaining >= 3600
               ? (secondsRemaining ~/= 3600).toString() + ' hours '
