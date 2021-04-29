@@ -24,8 +24,8 @@ class FilesGrid extends FilesViewerTheme {
       return buildUploadingWidget(
           (uploading, progress, error, bytesPerSec, delete, file) =>
               FileWidgetGrid(
+                file: file,
                 icon: fileIcon,
-                delete: delete,
                 uploading: uploading,
                 progress: progress,
                 upperWidget: progress == null
@@ -33,9 +33,6 @@ class FilesGrid extends FilesViewerTheme {
                     : Text(
                         '${(progress * 100).round().toString()}% (${Utils.humanSize(bytesPerSec)}/s)'),
                 error: error,
-                filename: file['filename'],
-                fileSize: file['size'],
-                url: file['url'],
                 selectedFilesNotifier: selectedFiles,
                 handleDelete: uploading
                     ? null
@@ -46,31 +43,34 @@ class FilesGrid extends FilesViewerTheme {
                     ? null
                     : UploadgramRoute.of(context)?.handleFileRename,
                 compact: AppSettings.filesTheme == FilesTheme.gridCompact,
+                uploadgramFile: uploadingFile.uploadgramFile,
               ),
           uploadingFile);
     }
     if (key > len) key = key - len;
-    MapEntry entry =
-        AppLogic.files!.entries.elementAt(AppLogic.files!.length - key);
-    String delete = entry.key;
-    Map fileObject = entry.value;
-    IconData fileIcon =
-        fileIcons[fileObject['filename']?.split('.')?.last?.toLowerCase()] ??
-            fileIcons['default']!;
-    return FileWidgetGrid(
-      key: Key(delete),
-      icon: fileIcon,
-      delete: delete,
-      uploading: false,
-      filename: fileObject['filename'],
-      fileSize: fileObject['size'],
-      url: fileObject['url'],
-      selectedFilesNotifier: selectedFiles,
-      handleDelete: (String delete, {Function? onYes}) =>
-          UploadgramRoute.of(context)?.handleFileDelete([delete], onYes: onYes),
-      handleRename: UploadgramRoute.of(context)?.handleFileRename,
-      compact: AppSettings.filesTheme == FilesTheme.gridCompact,
-    );
+
+    return FutureBuilder(
+        builder: (BuildContext context,
+                AsyncSnapshot<UploadedFile?> snapshot) =>
+            snapshot.connectionState == ConnectionState.done
+                ? FileWidgetGrid(
+                    key: Key(snapshot.data!.delete!),
+                    icon: fileIcons[snapshot.data!.name
+                            .split('.')
+                            .last
+                            .toLowerCase()] ??
+                        fileIcons['default']!,
+                    file: snapshot.data!,
+                    uploading: false,
+                    selectedFilesNotifier: selectedFiles,
+                    handleDelete: (String delete, {Function? onYes}) =>
+                        UploadgramRoute.of(context)
+                            ?.handleFileDelete([delete], onYes: onYes),
+                    handleRename: UploadgramRoute.of(context)?.handleFileRename,
+                    compact: AppSettings.filesTheme == FilesTheme.gridCompact,
+                  )
+                : Center(child: CircularProgressIndicator()),
+        future: AppLogic.files.elementAt(AppLogic.files.length - key));
   }
 
   @override
@@ -87,7 +87,7 @@ class FilesGrid extends FilesViewerTheme {
             crossAxisSpacing: 5,
             crossAxisCount: gridSize > 0 ? gridSize : 1),
         itemBuilder: _filesWidgets,
-        itemCount: AppLogic.files!.length + AppLogic.uploadingQueue.length,
+        itemCount: AppLogic.files.length + AppLogic.uploadingQueue.length,
         padding: EdgeInsets.only(left: 15, right: 15, top: 15, bottom: 78));
     // bottom: 78, normal padding + fab
   }

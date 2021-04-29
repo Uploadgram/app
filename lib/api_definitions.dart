@@ -1,3 +1,5 @@
+import 'package:uploadgram/app_logic.dart';
+
 class RenameApiResponse {
   final bool ok;
   final String? newName;
@@ -110,7 +112,7 @@ class UploadingEventProgress extends UploadingEvent {
 
 class UploadingEventEnd extends UploadingEvent {
   String delete;
-  Map file;
+  UploadedFile file;
 
   UploadingEventEnd({
     required this.delete,

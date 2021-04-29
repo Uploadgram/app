@@ -33,15 +33,16 @@ class Utils {
     return name;
   }
 
-  static Future<Map?> parseFragment(String fragment) async {
-    Map files = {};
+  static Future<Map<String, dynamic>?> parseFragment(String fragment) async {
+    Map<String, dynamic> files = {};
     if (fragment.indexOf('import:') == 0) {
       fragment = fragment.substring(7);
-      print(fragment);
       if (fragment.substring(0, 1) == '{') {
         try {
-          Map parsedFiles = json.decode(fragment);
-          parsedFiles.forEach((key, value) {
+          var parsedFiles = json.decode(fragment);
+          if (parsedFiles is! Map) return {};
+
+          parsedFiles.cast<String, dynamic>().forEach((String key, value) {
             if (key.length == 48 || key.length == 49) {
               files[key] = value;
             }
@@ -60,4 +61,7 @@ class Utils {
       return files;
     }
   }
+
+  static int getUploadedDate(String url) =>
+      int.parse(url.split('/').last.substring(0, 8), radix: 16);
 }

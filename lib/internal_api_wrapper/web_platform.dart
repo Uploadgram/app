@@ -90,10 +90,11 @@ class InternalAPIWrapper {
     }
   }
 
-  Future<Map> getFiles() async {
-    Map files = json.decode(await getString('uploaded_files', '{}'));
+  Future<Map<String, dynamic>> getFiles() async {
+    Map<String, dynamic> files =
+        json.decode(await getString('uploaded_files', '{}'));
     if (lastUri != null) {
-      Map? importedFiles =
+      Map<String, dynamic>? importedFiles =
           await Utils.parseFragment(Uri.decodeComponent(lastUri!));
       if (importedFiles != null) {
         files.addAll(importedFiles);
@@ -105,11 +106,6 @@ class InternalAPIWrapper {
 
   Future<String> getString(String name, String defaultValue) async {
     return html.window.localStorage[name] ?? defaultValue;
-  }
-
-  Future<bool> getBool(String name, bool defaultValue) async {
-    if (html.window.localStorage[name] == null) return defaultValue;
-    return json.decode(html.window.localStorage[name]!) ?? defaultValue;
   }
 
   Future<bool> setBool(String name, bool value) async {
@@ -171,6 +167,7 @@ class InternalAPIWrapper {
   }
 
   Future<void> clearFilesCache() async => null;
+  Future<void> deleteCachedFile(String name) async => null;
 
   Future<bool?> saveFile(String filename, String content) async {
     print('[web] saveFile called');
@@ -183,5 +180,11 @@ class InternalAPIWrapper {
     a.remove();
     html.Url.revokeObjectUrl(url);
     return true;
+  }
+
+  Future<void> deletePreferences() async => html.window.localStorage.clear();
+  Future<void> shareUploadgramLink(String url) async {
+    if (html.window.navigator.share != null)
+      await html.window.navigator.share({'url': url});
   }
 }

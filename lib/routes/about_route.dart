@@ -16,16 +16,7 @@ class _AboutRouteState extends State<AboutRoute> {
       'contacts': {
         'Telegram': 'https://t.me/Pato05',
         'Github': 'https://github.com/Pato05',
-        'Website': 'https://pato05mc.tk'
-      }
-    },
-    'Daniil Gentili': {
-      'subtitle':
-          'Hosts Uploadgram and has helped a lot in Uploadgram\'s development. Owns MadelineProto, the heart of Uploadgram.',
-      'contacts': {
-        'Telegram': 'https://t.me/danogentili',
-        'Github': 'https://github.com/danog',
-        'Website': 'https://daniil.it'
+        'Website': 'https://pato05mc.tk',
       }
     },
     'ShiSHcat': {
@@ -34,7 +25,8 @@ class _AboutRouteState extends State<AboutRoute> {
       'contacts': {
         'Telegram': 'https://t.me/shishcat',
         'Github': 'https://github.com/shishcat',
-        'Website': 'https://shish.cat'
+        'Website': 'https://shish.cat',
+        'Uploadgram v1': 'https://github.com/shishcat/uploadgram-v1',
       }
     },
   }.entries.toList();
@@ -74,7 +66,7 @@ class _AboutRouteState extends State<AboutRoute> {
     final double widgetSize =
         screenWidth >= 550 ? 128 : (128 * screenWidth / 550);
     return Scaffold(
-      appBar: AppBar(title: Text('About Uploadgram')),
+      appBar: AppBar(title: Text('About')),
       body: SafeArea(
           child: Scrollbar(
               isAlwaysShown: screenWidth > 950,
@@ -84,6 +76,12 @@ class _AboutRouteState extends State<AboutRoute> {
                   UploadgramTitle(
                       size: widgetSize,
                       mainAxisAlignment: MainAxisAlignment.center),
+                  ListTile(
+                    leading: Icon(Icons.dns),
+                    title: Text('Spacecore'),
+                    subtitle: Text('Check out our sponsor!'),
+                    onTap: () => launch('https://spacecore.pro'),
+                  ),
                   ListTile(
                     leading: Icon(Icons.campaign),
                     title: Text('Telegram Channel'),
@@ -143,7 +141,7 @@ class _AboutRouteState extends State<AboutRoute> {
                                 launch(_backendLibs[index].value['link']),
                           )),
                   Divider(height: 25),
-                  Text('Check out also',
+                  Text('Also check out',
                       style:
                           TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   ...List.generate(

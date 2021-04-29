@@ -17,8 +17,7 @@ void main() {
     AppSettings.fabTheme = FabTheme.centerExtended;
 
     await tester.pumpFrames(
-        buildTestableWidget(UploadgramApp(shouldCheckNetwork: false)),
-        Duration(seconds: 5));
+        buildTestableWidget(UploadgramApp()), Duration(seconds: 5));
     expect(find.text('Your uploaded files will appear here!'), findsOneWidget);
     AppLogic.files = {
       'delete1': {
@@ -61,11 +60,10 @@ void main() {
         'size': 98538
       },
     };
-    final Widget testable =
-        buildTestableWidget(UploadgramApp(shouldCheckNetwork: false));
+    final Widget testable = buildTestableWidget(UploadgramApp());
     await tester.pumpFrames(testable, Duration(seconds: 5));
     int i = 1;
-    for (Map file in AppLogic.files!.values) {
+    for (Map file in AppLogic.files.values) {
       print('Testing ${file['filename']}.. ($i)');
       await tester.longPress(find.text(file['filename']));
       await tester.pump();
@@ -86,8 +84,7 @@ void main() {
     AppSettings.fabTheme = FabTheme.centerExtended;
 
     await tester.pumpFrames(
-        buildTestableWidget(UploadgramApp(shouldCheckNetwork: false)),
-        Duration(seconds: 5));
+        buildTestableWidget(UploadgramApp()), Duration(seconds: 5));
 
     goSettings() async {
       expect(find.byIcon(Icons.more_vert), findsOneWidget);

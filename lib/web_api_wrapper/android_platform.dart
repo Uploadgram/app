@@ -187,10 +187,14 @@ class WebAPIWrapper {
   }
 
   Future<bool> checkNetwork() async {
-    Response response = await _dio.head('https://api.uploadgram.me/status');
-    if (response.statusCode != 200) {
+    try {
+      Response response = await _dio.head('https://api.uploadgram.me/status');
+      if (response.statusCode != 200) {
+        return false;
+      }
+      return true;
+    } on DioError {
       return false;
     }
-    return true;
   }
 }

@@ -11,7 +11,7 @@ enum FabTheme { centerExtended, left }
 abstract class FilesViewerTheme extends StatelessWidget {
   StreamBuilder buildUploadingWidget(
       Widget Function(bool uploading, double? progress, String? error,
-              int bytesPerSec, String delete, Map file)
+              int bytesPerSec, String? delete, UploadedFile file)
           builder,
       UploadingFile uploadingFile) {
     Stream<UploadingEvent>? _uploadStream = uploadingFile.stream ??
@@ -24,12 +24,13 @@ abstract class FilesViewerTheme extends StatelessWidget {
           String? error;
           int bytesPerSec = 0;
           bool uploading = true;
-          String delete = uploadingFile.fileKey.toString();
-          Map? file = {
-            'filename': uploadingFile.uploadgramFile.name,
-            'size': uploadingFile.uploadgramFile.size,
-            'url': '',
-          };
+          String? delete;
+          UploadedFile? file = UploadedFile(
+            name: uploadingFile.uploadgramFile.name,
+            size: uploadingFile.uploadgramFile.size,
+            url: '',
+            delete: delete,
+          );
           if (snapshot.hasData)
             switch (snapshot.connectionState) {
               case ConnectionState.active:
@@ -61,7 +62,7 @@ abstract class FilesViewerTheme extends StatelessWidget {
 }
 
 class FileRightClickListener extends StatelessWidget {
-  final String delete;
+  final String? delete;
   final Function(String, {Function? onYes})? handleDelete;
   final Function(String, {Function(String)? onDone, String? oldName})?
       handleRename;
@@ -83,74 +84,77 @@ class FileRightClickListener extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Listener(
-      onPointerDown: (PointerDownEvent event) {
-        if (event.buttons != kSecondaryMouseButton) return;
-        final overlay =
-            Overlay?.of(context)?.context.findRenderObject() as RenderBox;
-        showMenu(
-            context: context,
-            position:
-                RelativeRect.fromSize(event.position & Size.zero, overlay.size),
-            items: [
-              PopupMenuItem(
-                  value: 'delete',
-                  child: Row(children: [
-                    Icon(Icons.delete),
-                    SizedBox(width: 15),
-                    Text('Delete'),
-                  ])),
-              PopupMenuItem(
-                  value: 'rename',
-                  child: Row(children: [
-                    Icon(Icons.edit),
-                    SizedBox(width: 15),
-                    Text('Rename'),
-                  ])),
-              PopupMenuItem(
-                  value: 'copy',
-                  child: Row(children: [
-                    Icon(Icons.copy),
-                    SizedBox(width: 15),
-                    Text('Copy link'),
-                  ])),
-              PopupMenuItem(
-                  value: 'export',
-                  child: Row(children: [
-                    Icon(Icons.get_app),
-                    SizedBox(width: 15),
-                    Text('Export'),
-                  ])),
-            ]).then((value) {
-          switch (value) {
-            case 'delete':
-              handleDelete?.call(delete);
-              break;
-            case 'rename':
-              handleRename?.call(delete,
-                  oldName: filenameNotifier.value,
-                  onDone: (String newName) => filenameNotifier.value = newName);
-              break;
-            case 'copy':
-              AppLogic.copy(url).then((didCopy) => ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(
-                      content: Text(didCopy
-                          ? 'Link copied to clipboard successfully!'
-                          : 'Unable to copy file link. Please copy it manually.'))));
-              break;
-            case 'export':
-              AppLogic.platformApi.saveFile(
-                  filenameNotifier.value + '.json',
-                  json.encode({
-                    delete: {
-                      'filename': filenameNotifier.value,
-                      'size': size,
-                      'url': url
-                    }
-                  }));
-              break;
-          }
-        });
-      },
+      onPointerDown: delete != null
+          ? (PointerDownEvent event) {
+              if (event.buttons != kSecondaryMouseButton) return;
+              final overlay =
+                  Overlay?.of(context)?.context.findRenderObject() as RenderBox;
+              showMenu(
+                  context: context,
+                  position: RelativeRect.fromSize(
+                      event.position & Size.zero, overlay.size),
+                  items: [
+                    PopupMenuItem(
+                        value: 'delete',
+                        child: Row(children: [
+                          Icon(Icons.delete),
+                          SizedBox(width: 15),
+                          Text('Delete'),
+                        ])),
+                    PopupMenuItem(
+                        value: 'rename',
+                        child: Row(children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 15),
+                          Text('Rename'),
+                        ])),
+                    PopupMenuItem(
+                        value: 'copy',
+                        child: Row(children: [
+                          Icon(Icons.copy),
+                          SizedBox(width: 15),
+                          Text('Copy link'),
+                        ])),
+                    PopupMenuItem(
+                        value: 'export',
+                        child: Row(children: [
+                          Icon(Icons.get_app),
+                          SizedBox(width: 15),
+                          Text('Export'),
+                        ])),
+                  ]).then((value) {
+                switch (value) {
+                  case 'delete':
+                    handleDelete?.call(delete!);
+                    break;
+                  case 'rename':
+                    handleRename?.call(delete!,
+                        oldName: filenameNotifier.value,
+                        onDone: (String newName) =>
+                            filenameNotifier.value = newName);
+                    break;
+                  case 'copy':
+                    AppLogic.copy(url).then((didCopy) =>
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(didCopy
+                                ? 'Link copied to clipboard successfully!'
+                                : 'Unable to copy file link. Please copy it manually.'))));
+                    break;
+                  case 'export':
+                    AppLogic.platformApi.saveFile(
+                        filenameNotifier.value + '.json',
+                        json.encode({
+                          delete: {
+                            'filename': filenameNotifier.value,
+                            'size': size,
+                            'url': url
+                          }
+                        }));
+                    break;
+                }
+              });
+            }
+          : null,
       child: child,
     );
   }
@@ -160,6 +164,7 @@ enum Themes { system, dark, white }
 
 Map<Themes, ThemeData> get themes => {
       Themes.dark: ThemeData(
+        primaryColor: Colors.blue,
         appBarTheme: AppBarTheme(color: Color(0xFF222222)),
         floatingActionButtonTheme:
             FloatingActionButtonThemeData(backgroundColor: Color(0xFF222222)),
@@ -168,11 +173,11 @@ Map<Themes, ThemeData> get themes => {
         primaryColorDark: Colors.grey[900],
         primaryColorLight: Colors.blue,
         primaryIconTheme: IconThemeData(color: Colors.white),
-        primaryColor: Colors.blue,
         primaryColorBrightness: Brightness.dark,
         brightness: Brightness.dark,
         canvasColor: Colors.black,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        toggleableActiveColor: Colors.blue,
       ),
       Themes.white: ThemeData(
         appBarTheme: AppBarTheme(brightness: Brightness.dark),
@@ -182,7 +187,36 @@ Map<Themes, ThemeData> get themes => {
         primaryColorLight: Colors.blue,
         brightness: Brightness.light,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        toggleableActiveColor: Colors.blue,
       ),
     };
 
 class AppRebuildNotification extends Notification {}
+
+enum UploadgramAction {
+  export_files,
+  import_files,
+  settings_tile,
+  about_tile,
+  download_app,
+}
+
+enum SortBy {
+  name,
+  size,
+  upload_date,
+}
+
+enum SortType {
+  ascending,
+  descending,
+}
+
+class SortOptions {
+  final SortBy sortBy;
+  final SortType sortType;
+  SortOptions({
+    required this.sortBy,
+    required this.sortType,
+  });
+}

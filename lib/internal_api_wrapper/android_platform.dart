@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share/share.dart';
 
 import 'package:uploadgram/api_definitions.dart';
 import 'package:uploadgram/utils.dart';
@@ -25,20 +27,12 @@ class InternalAPIWrapper {
     UploadgramFile uploadgramFile = await askForFile();
     if (uploadgramFile.hasError()) return null;
     File file = uploadgramFile.realFile!;
-    Map? files = json.decode(
-        await file.readAsString()); // returns null if the file is not valid
+    Map? files = await compute((File file) async {
+      return json.decode(
+        await file.readAsString())
+    }, file); // returns null if the file is not valid
     return files is Map ? files : null;
   }
-
-  Future<bool> saveFiles(Map files) {
-    print('called api.saveFiles($files)');
-    return setString('uploaded_files', json.encode(files));
-  }
-
-  Future<bool> setString(String name, String content) async =>
-      (await _methodChannel.invokeMethod(
-              'saveString', <String, String>{'name': name, 'content': content}))
-          as bool;
 
   Future<Map> getFiles() async {
     Map files = json.decode(await getString('uploaded_files', '{}'));
@@ -49,7 +43,6 @@ class InternalAPIWrapper {
         Map? importedFiles =
             await Utils.parseFragment(Uri.decodeComponent(uri.fragment));
         if (importedFiles != null) files.addAll(importedFiles);
-        saveFiles(files);
       }
     }
     return files;
@@ -58,14 +51,6 @@ class InternalAPIWrapper {
   Future<String> getString(String name, String defaultValue) async =>
       (await _methodChannel.invokeMethod('getString',
           <String, String>{'name': name, 'default': defaultValue})) as String;
-
-  Future<bool> getBool(String name, bool defaultValue) async =>
-      (await _methodChannel.invokeMethod('getBool',
-          <String, dynamic>{'name': name, 'default': defaultValue})) as bool;
-
-  Future<bool> setBool(String name, bool value) async =>
-      (await _methodChannel.invokeMethod(
-          'setBool', <String, dynamic>{'name': name, 'value': value})) as bool;
 
   Future<UploadgramFile> askForFile([String type = '*/*']) async {
     String? filePath = await _methodChannel
@@ -85,6 +70,10 @@ class InternalAPIWrapper {
 
   Future<void> clearFilesCache() =>
       _methodChannel.invokeMethod('clearFilesCache');
+  Future<void> deleteCachedFile(String name) =>
+      _methodChannel.invokeMethod('deleteCachedFile',<String, String> {
+        'name': name
+      });
 
   Future<bool?> saveFile(String filename, String content) async {
     String? filePath = await _methodChannel
@@ -98,4 +87,9 @@ class InternalAPIWrapper {
   static void listenDropzone(
           BuildContext context, Function(UploadgramFile) uploadFile) =>
       throw UnsupportedError('listenDropzone() has not been implemented.');
+
+  Future<void> deletePreferences() =>
+      _methodChannel.invokeMethod('deletePreferences');
+
+      Future<void> shareUploadgramLink(String url) async => Share.share(url);
 }

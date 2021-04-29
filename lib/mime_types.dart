@@ -1,7 +1,9 @@
+import 'dart:collection';
+
 import 'package:http_parser/http_parser.dart';
 
 // Extracted from https://mimetype.io/all-types/
-Map<String, MediaType> mimeTypes = {
+Map<String, MediaType> _mimeTypes = {
   '123': MediaType('application', 'vnd.lotus-1-2-3'),
   'ez': MediaType('application', 'andrew-inset'),
   'aw': MediaType('application', 'applixware'),
@@ -866,3 +868,6 @@ Map<String, MediaType> mimeTypes = {
   'movie': MediaType('video', 'x-sgi-movie'),
   'ice': MediaType('x-conference', 'x-cooltalk')
 };
+
+HashMap<String, MediaType> mimeTypes =
+    HashMap.from(_mimeTypes); // hash maps are supposed to be faster

@@ -23,7 +23,6 @@ import java.util.ArrayList;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL_NAME = "com.pato05.uploadgram";
-    private SharedPreferences _sharedPrefs;
     private MethodChannel.Result _pendingResult;
     private static final int REQUEST_CODE_OPEN = MainActivity.class.hashCode() + 30;
     private static final int REQUEST_CODE_SAVE = MainActivity.class.hashCode() + 60;
@@ -38,9 +37,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
-        Context context = getApplicationContext();
         handleIntent(getIntent());
-        _sharedPrefs = context.getSharedPreferences("UploadgramPreferences", context.MODE_PRIVATE);
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_NAME)
                 .setMethodCallHandler((call, result) -> {
                     String name;
@@ -48,12 +45,17 @@ public class MainActivity extends FlutterActivity {
                         case "getLastUrl":
                             result.success(_lastUri);
                             break;
-                        case "saveString":
-                            result.success(_sharedPrefs.edit().putString(call.argument("name"), call.argument("content")).commit());
-                            break;
                         case "getString":
                             result.success(
-                                    _sharedPrefs.getString(call.argument("name"), call.argument("default")));
+                                    getApplicationContext().getSharedPreferences("UploadgramPreferences", 0).getString(call.argument("name"), call.argument("default")));
+                            break;
+                        case "getBool":
+                            result.success(
+                                    getApplicationContext().getSharedPreferences("UploadgramPreferences", 0).getBoolean(call.argument("name"), call.argument("default")));
+                            break;
+                        case "deletePreferences":
+                            getApplicationContext().getSharedPreferences("UploadgramPreferences", 0).edit().clear().apply();
+                            result.success(null);
                             break;
                         case "getFile":
                             _pendingResult = result;
@@ -65,7 +67,11 @@ public class MainActivity extends FlutterActivity {
                         case "clearFilesCache":
                             FileUtils.deleteCacheDir(getApplicationContext());
                             result.success(true);
-                        break;
+                            break;
+                        case "deleteCachedFile":
+                            FileUtils.deleteCachedFile(getApplicationContext(), call.argument("name"));
+                            result.success(true);
+                            break;
                         case "saveFile":
                             _pendingResult = result;
                             if (requestPermissionIfNeeded()) {
@@ -75,12 +81,6 @@ public class MainActivity extends FlutterActivity {
                             break;
                         default:
                             result.notImplemented();
-                            break;
-                        case "setBool":
-                            result.success(_sharedPrefs.edit().putBoolean(call.argument("name"), call.argument("value")).commit());
-                            break;
-                        case "getBool":
-                            result.success(_sharedPrefs.getBoolean(call.argument("name"), call.argument("default")));
                             break;
                     }
                 });

@@ -27,8 +27,13 @@ dependencies:
   connectivity: ^3.0.2
   connectivity_for_web: ^0.4.0
   url_launcher: ^6.0.3
+  path_provider: ^2.0.1
+  image: ^3.0.2
+  photo_view: ^0.11.1
+  hive: ^2.0.4
   flutter:
     sdk: flutter
+  share: ^2.0.1
 
 dev_dependencies:
   flutter_test:

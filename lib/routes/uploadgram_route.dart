@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:uploadgram/app_definitions.dart';
+import 'package:connectivity/connectivity.dart';
 
+import 'package:uploadgram/app_definitions.dart';
 import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 import 'package:uploadgram/api_definitions.dart';
 import 'package:uploadgram/app_settings.dart';
@@ -14,6 +14,7 @@ import 'package:uploadgram/app_logic.dart';
 import 'package:uploadgram/selected_files_notifier.dart';
 import 'package:uploadgram/widgets/files_grid.dart';
 import 'package:uploadgram/widgets/files_list.dart';
+import 'package:uploadgram/widgets/uploaded_file_thumbnail.dart';
 
 class UploadgramRoute extends StatefulWidget {
   static _UploadgramRouteState? of(BuildContext context) =>
@@ -88,12 +89,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     print(result);
     if (result.ok) {
       onDone(result.newName!);
-      AppLogic.files![delete]!['filename'] = result.newName!;
-      AppLogic.saveFiles();
+      (await AppLogic.files[delete])!.name = result.newName!;
     } else if (result.statusCode == 403) {
       setState(() {
-        AppLogic.files!.remove(delete);
-        AppLogic.saveFiles();
+        AppLogic.files.remove(delete);
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('File not found.')));
@@ -154,14 +153,16 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       if (_message != null)
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_message)));
-      setState(() => deleteList.forEach((key) => AppLogic.files!.remove(key)));
-      AppLogic.saveFiles();
+      setState(() => deleteList.forEach((key) {
+            AppLogic.files.remove(key);
+            ThumbnailsUtils.deleteThumbsForFile(key);
+          }));
     }
   }
 
   Future<void> _uploadFile() async {
     if (_canUploadNotifier.value == false) return;
-    if (await AppLogic.platformApi.getBool('tos_accepted', false) == false) {
+    if (AppSettings.tosAccepted == false) {
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
@@ -185,7 +186,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      AppLogic.platformApi.setBool('tos_accepted', true);
+                      AppSettings.tosAccepted = true;
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text('You can now start uploading files!'),
                       ));
@@ -225,10 +226,10 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           SnackBar(content: Text('Please select a non-empty file.')));
       return;
     }
-    if (AppLogic.files!.length >= 5 &&
+    if (AppLogic.files.length >= 5 &&
         AppLogic.platformApi.isWebAndroid() &&
-        await AppLogic.platformApi.getBool('has_asked_app', false) == false) {
-      AppLogic.platformApi.setBool('has_asked_app', true);
+        AppSettings.get('hasAskedApp', false)) {
+      AppSettings.put('hasAskedApp', true);
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
@@ -266,7 +267,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
   }
 
   Future<void> _initStateAsync() async {
-    if (AppLogic.files == null) await AppLogic.getFiles();
+    await AppLogic.getFiles();
     // this function is used to refresh the state, so, refresh the files list
     setState(() => null);
     if (kIsWeb) {
@@ -310,8 +311,6 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
 
   @override
   void dispose() {
-    AppLogic.saveFiles();
-    AppSettings.saveSettings();
     _connectivitySubscription?.cancel();
     super.dispose();
   }
@@ -320,12 +319,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     List<Widget> actions = [];
     if (selectedFiles.length > 0) {
       actions = [
-        if (selectedFiles.length < AppLogic.files!.length)
+        if (selectedFiles.length < AppLogic.files.length)
           IconButton(
             key: Key('select_all'),
             icon: Icon(Icons.select_all),
-            onPressed: () => setState(() =>
-                selectedFiles.value = List<String>.from(AppLogic.files!.keys)),
+            onPressed: () =>
+                selectedFiles.value = List<String>.from(AppLogic.files.keys),
             tooltip: 'Select all the files',
           ),
         IconButton(
@@ -343,13 +342,13 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           onPressed: () async {
             Map _exportFiles = {};
             selectedFiles.value
-                .forEach((e) => _exportFiles[e] = AppLogic.files![e]);
+                .forEach((e) => _exportFiles[e] = AppLogic.files[e]);
             String _filename = 'uploadgram_files.json';
             if (selectedFiles.length == 1)
               _filename = _exportFiles[selectedFiles[0]]['filename'] + '.json';
             if (await AppLogic.platformApi
-                    .saveFile(_filename, json.encode(_exportFiles)) !=
-                true) {
+                    .saveFile(_filename, json.encode(_exportFiles)) ==
+                false) {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('Couldn\'t export files.'),
               ));
@@ -360,23 +359,27 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       ];
     } else {
       actions = [
+        IconButton(
+            icon: Icon(Icons.sort),
+            onPressed: () => showDialog<SortOptions>(
+                        context: context,
+                        builder: (BuildContext context) =>
+                            SortByDialog(AppSettings.preferredSortOptions))
+                    .then((SortOptions? sortOptions) async {
+                  if (sortOptions != null) {
+                    AppLogic.showFullscreenLoader(context);
+                    if (await AppLogic.files.sort(sortOptions))
+                      setState(() => AppLogic.files);
+                    AppSettings.preferredSortOptions = sortOptions;
+                    Navigator.pop(context);
+                  }
+                })),
         PopupMenuButton(
           icon: Icon(Icons.more_vert),
-          onSelected: (dynamic selected) async {
+          onSelected: (UploadgramAction selected) async {
             switch (selected) {
-              case 'settings':
-                List previousSettings = [
-                  AppSettings.fabTheme,
-                  AppSettings.filesTheme
-                ];
-                await Navigator.pushNamed(context, '/settings');
-                if (previousSettings !=
-                    [AppSettings.fabTheme, AppSettings.filesTheme]) {
-                  setState(() => null);
-                }
-                break;
-              case 'export':
-                if (AppLogic.files!.isEmpty) {
+              case UploadgramAction.export_files:
+                if (AppLogic.files.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(
                         'Your files list is empty. Upload some files before exporting them.'),
@@ -391,7 +394,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   ));
                 }
                 break;
-              case 'import':
+              case UploadgramAction.import_files:
                 late Map? _importedFiles;
                 try {
                   _importedFiles = await AppLogic.platformApi.importFiles();
@@ -400,21 +403,30 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   //     .showSnackBar(SnackBar(content: Text(e.toString())));
                   _importedFiles = null;
                 }
-                print('_importedFiles = ${_importedFiles.toString()}');
                 if (_importedFiles == null) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('The selected file is not valid')));
                   break;
                 }
-                AppLogic.files!.addAll(
+                AppLogic.files.addAll(
                     _importedFiles.cast<String, Map<dynamic, dynamic>>());
-                AppLogic.saveFiles();
                 setState(() => null);
                 break;
-              case 'dlapp':
+              case UploadgramAction.settings_tile:
+                List previousSettings = [
+                  AppSettings.fabTheme,
+                  AppSettings.filesTheme
+                ];
+                await Navigator.pushNamed(context, '/settings');
+                if (previousSettings !=
+                    [AppSettings.fabTheme, AppSettings.filesTheme]) {
+                  setState(() => null);
+                }
+                break;
+              case UploadgramAction.download_app:
                 AppLogic.webApi.downloadApp();
                 break;
-              case 'about':
+              case UploadgramAction.about_tile:
                 Navigator.of(context).pushNamed('/about');
                 break;
             }
@@ -422,7 +434,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           itemBuilder: (BuildContext context) {
             return [
               PopupMenuItem(
-                  value: 'import',
+                  value: UploadgramAction.import_files,
                   child: Row(children: [
                     Icon(Icons.publish,
                         color: Theme.of(context).brightness == Brightness.dark
@@ -432,7 +444,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     Text('Import files list'),
                   ])),
               PopupMenuItem(
-                  value: 'export',
+                  value: UploadgramAction.export_files,
                   child: Row(children: [
                     Icon(Icons.get_app,
                         color: Theme.of(context).brightness == Brightness.dark
@@ -442,7 +454,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                     Text('Export files list'),
                   ])),
               PopupMenuItem(
-                  value: 'settings',
+                  value: UploadgramAction.settings_tile,
                   child: Row(children: [
                     Icon(Icons.settings,
                         color: Theme.of(context).brightness == Brightness.dark
@@ -453,7 +465,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   ])),
               if (AppLogic.platformApi.isWebAndroid() == true)
                 PopupMenuItem(
-                    value: 'dlapp',
+                    value: UploadgramAction.download_app,
                     child: Row(children: [
                       Icon(Icons.android,
                           color: Theme.of(context).brightness == Brightness.dark
@@ -463,7 +475,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                       Text('Download the app!'),
                     ])),
               PopupMenuItem(
-                  value: 'about',
+                  value: UploadgramAction.about_tile,
                   child: Row(children: [
                     Icon(Icons.info,
                         color: Theme.of(context).brightness == Brightness.dark
@@ -505,14 +517,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
               valueListenable: selectedFiles),
           preferredSize: AppBar().preferredSize),
       // replace this with a future builder of _initStateAsync
-      body: AppLogic.files == null
-          ? Center(
-              child: SizedBox(
-              child: CircularProgressIndicator(),
-              width: 100,
-              height: 100,
-            ))
-          : (AppLogic.files!.length > 0 || AppLogic.uploadingQueue.length > 0)
+      body: !AppLogic.files.isInitialised
+          ? Center(child: CircularProgressIndicator())
+          : AppLogic.files.length > 0 || AppLogic.uploadingQueue.length > 0
               ? Scrollbar(
                   isAlwaysShown: MediaQuery.of(context).size.width > 950,
                   child: AppSettings.filesTheme == FilesTheme.list
@@ -553,5 +560,70 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
                   ? FloatingActionButtonLocation.endFloat
                   : null,
     );
+  }
+}
+
+class SortByDialog extends StatefulWidget {
+  final SortOptions? sortOptions;
+  SortByDialog([this.sortOptions]);
+
+  @override
+  _SortByDialogState createState() => _SortByDialogState();
+}
+
+class _SortByDialogState extends State<SortByDialog> {
+  SortType _sortType = SortType.ascending;
+  SortBy _sortBy = SortBy.name;
+
+  @override
+  void initState() {
+    if (widget.sortOptions != null) {
+      _sortBy = widget.sortOptions!.sortBy;
+      _sortType = widget.sortOptions!.sortType;
+    }
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+        title: Text('Sort by'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          RadioListTile(
+            value: SortBy.name,
+            groupValue: _sortBy,
+            onChanged: (SortBy? value) => setState(() => _sortBy = value!),
+            title: Text('Name'),
+          ),
+          RadioListTile(
+            value: SortBy.size,
+            groupValue: _sortBy,
+            onChanged: (SortBy? value) => setState(() => _sortBy = value!),
+            title: Text('Size'),
+          ),
+          RadioListTile(
+            value: SortBy.upload_date,
+            groupValue: _sortBy,
+            onChanged: (SortBy? value) => setState(() => _sortBy = value!),
+            title: Text('Upload date'),
+          ),
+          Divider(),
+          CheckboxListTile(
+              title: Text('Ascending'),
+              value: _sortType == SortType.ascending,
+              onChanged: (bool? value) {
+                if (value == null) return;
+                setState(() => _sortType =
+                    value ? SortType.ascending : SortType.descending);
+              }),
+        ]),
+        actions: [
+          TextButton(
+              onPressed: Navigator.of(context).pop, child: Text('CANCEL')),
+          TextButton(
+              onPressed: () => Navigator.pop(
+                  context, SortOptions(sortBy: _sortBy, sortType: _sortType)),
+              child: Text('OK'))
+        ]);
   }
 }

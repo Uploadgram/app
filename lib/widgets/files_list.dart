@@ -24,11 +24,8 @@ class FilesList extends FilesViewerTheme {
         return FileListTile(
           bytesPerSec: bytesPerSec,
           icon: fileIcon,
-          filename: file['filename'],
-          size: file['size'],
+          file: file,
           selectedFilesNotifier: selectedFiles,
-          delete: delete,
-          url: file['url'],
           handleDelete: uploading
               ? null
               : (String delete, {Function? onYes}) =>
@@ -42,20 +39,21 @@ class FilesList extends FilesViewerTheme {
       }, uploadingFile);
     }
     if (index >= queueLength) index = index - queueLength;
-    MapEntry file =
-        AppLogic.files!.entries.elementAt(AppLogic.files!.length - index - 1);
-    IconData fileIcon = getFileIconFromName(file.value['filename']);
-    return FileListTile(
-      icon: fileIcon,
-      delete: file.key,
-      url: file.value['url'],
-      filename: file.value['filename'],
-      size: file.value['size'],
-      selectedFilesNotifier: selectedFiles,
-      handleDelete: (String delete, {Function? onYes}) =>
-          UploadgramRoute.of(context)!.handleFileDelete([delete], onYes: onYes),
-      handleRename: UploadgramRoute.of(context)!.handleFileRename,
-    );
+    return FutureBuilder(
+        builder: (BuildContext context,
+                AsyncSnapshot<UploadedFile?> snapshot) =>
+            snapshot.connectionState == ConnectionState.done
+                ? FileListTile(
+                    icon: getFileIconFromName(snapshot.data!.name),
+                    file: snapshot.data!,
+                    selectedFilesNotifier: selectedFiles,
+                    handleDelete: (String delete, {Function? onYes}) =>
+                        UploadgramRoute.of(context)!
+                            .handleFileDelete([delete], onYes: onYes),
+                    handleRename: UploadgramRoute.of(context)!.handleFileRename,
+                  )
+                : ListTile(leading: CircularProgressIndicator()),
+        future: AppLogic.files.elementAt(AppLogic.files.length - index - 1));
   }
 
   @override
@@ -63,7 +61,7 @@ class FilesList extends FilesViewerTheme {
     return ListTileTheme(
       child: ListView.builder(
           itemBuilder: _filesWidgets,
-          itemCount: AppLogic.files!.length + AppLogic.uploadingQueue.length,
+          itemCount: AppLogic.files.length + AppLogic.uploadingQueue.length,
           padding: EdgeInsets.only(left: 15, right: 15, top: 15, bottom: 78)),
       selectedTileColor: Colors
           .grey[Theme.of(context).brightness == Brightness.dark ? 900 : 200],
@@ -73,27 +71,21 @@ class FilesList extends FilesViewerTheme {
 
 class FileListTile extends StatelessWidget {
   final IconData icon;
-  final String delete;
-  final String filename;
   final String? error;
   final bool uploading;
   final double? progress;
-  final int size;
   final bool selected;
   final SelectedFilesNotifier selectedFilesNotifier;
   final Function(String, {Function? onYes})? handleDelete;
   final Function(String, {Function(String)? onDone, String? oldName})?
       handleRename;
-  final String url;
   final int? bytesPerSec;
+  final UploadedFile file;
 
   FileListTile({
     Key? key,
     required this.icon,
-    required this.delete,
-    required this.url,
-    required this.filename,
-    required this.size,
+    required this.file,
     required this.selectedFilesNotifier,
     this.uploading = false,
     this.selected = false,
@@ -108,7 +100,7 @@ class FileListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ValueNotifier<String> _filenameNotifier =
-        ValueNotifier<String>(filename);
+        ValueNotifier<String>(file.name);
     final subtitle = error != null
         ? Text(error!, style: TextStyle(color: Colors.red))
         : uploading
@@ -128,27 +120,29 @@ class FileListTile extends StatelessWidget {
                   ],
                 )
               ])
-            : Text(Utils.humanSize(size));
-    final Function() openFileInfo = () => Navigator.push(
+            : Text(Utils.humanSize(file.size));
+    Function() openFileInfo = () => Navigator.push(
         context,
         MaterialPageRoute(
             builder: (BuildContext context) => FileInfoRoute(
-                filename: _filenameNotifier,
-                fileSize: size,
-                fileIcon: icon,
-                delete: delete,
-                handleDelete: handleDelete!,
-                handleRename: handleRename!,
-                url: url)));
-    final Function() selectWidget =
-        () => UploadgramRoute.of(context)!.selectWidget(delete);
+                  file: file,
+                  filename: _filenameNotifier,
+                  fileIcon: icon,
+                  handleDelete: handleDelete!,
+                  handleRename: handleRename!,
+                )));
+    Function() selectWidget =
+        () => UploadgramRoute.of(context)!.selectWidget(file.delete!);
+    if (uploading || file.delete == null) {
+      selectWidget = openFileInfo = () => null;
+    }
     return FileRightClickListener(
-        delete: delete,
+        delete: file.delete,
         filenameNotifier: _filenameNotifier,
         handleDelete: handleDelete,
         handleRename: handleRename,
-        size: size,
-        url: url,
+        size: file.size,
+        url: file.url,
         child: ValueListenableBuilder(
             builder: (BuildContext context, List<String> value, _) => ListTile(
                   leading: GestureDetector(
@@ -159,7 +153,7 @@ class FileListTile extends StatelessWidget {
                               size: 24, color: Colors.blue.shade600),
                           firstCurve: Curves.easeInOut,
                           secondCurve: Curves.easeInOut,
-                          crossFadeState: value.contains(delete)
+                          crossFadeState: value.contains(file.delete)
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
                           duration: Duration(milliseconds: 200)),
@@ -178,7 +172,7 @@ class FileListTile extends StatelessWidget {
                           ? selectWidget
                           : openFileInfo,
                   onLongPress: uploading ? null : selectWidget,
-                  selected: value.contains(delete),
+                  selected: value.contains(file.delete),
                 ),
             valueListenable: selectedFilesNotifier));
   }

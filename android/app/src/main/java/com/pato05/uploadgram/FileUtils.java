@@ -420,6 +420,17 @@ public class FileUtils {
         }
     }
 
+    public static void deleteCachedFile(final Context context, String name) {
+        File cacheDir = getDocumentCacheDir(context);
+        try {
+            File file = new File(cacheDir, name);
+            if (file.exists())
+                file.delete();            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static boolean deleteDir(File dir) {
         if (dir != null && dir.isDirectory()) {
             String[] children = dir.list();
