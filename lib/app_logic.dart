@@ -88,7 +88,7 @@ class AppLogic {
 class UploadedFiles {
   bool isInitialised = false;
   late LazyBox _filesBox;
-  late LazyBox<String> _filesOrderBox;
+  late LazyBox _filesOrderBox;
 
   Future<void> init() async {
     if (!await Hive.boxExists('files')) {
@@ -174,8 +174,19 @@ class UploadedFiles {
     ]);
   }
 
-  void remove(String fileId) =>
-      Future.wait([_filesBox.delete(fileId), _filesOrderBox.delete(fileId)]);
+  Future<void> remove(String fileId) async {
+    for (int i = 0; i < _filesOrderBox.length; i++) {
+      // this is needed because it seems like .delete doesn't delete if you pass in a value, it looks for the key
+      if (await _filesOrderBox.getAt(i) == fileId) _filesOrderBox.deleteAt(i);
+    }
+    await _filesBox.delete(fileId);
+  }
+
+  Future<void> removeAt(int index) async => await Future.wait([
+        _filesBox.delete(await _filesOrderBox.getAt(index)),
+        _filesOrderBox.deleteAt(index)
+      ]);
+
   int get length => _filesBox.length;
   Iterable<dynamic> get keys => _filesBox.keys;
   bool get isEmpty => _filesBox.isEmpty;

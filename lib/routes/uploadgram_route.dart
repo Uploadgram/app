@@ -12,6 +12,7 @@ import 'package:uploadgram/api_definitions.dart';
 import 'package:uploadgram/app_settings.dart';
 import 'package:uploadgram/app_logic.dart';
 import 'package:uploadgram/selected_files_notifier.dart';
+import 'package:uploadgram/utils.dart';
 import 'package:uploadgram/widgets/files_grid.dart';
 import 'package:uploadgram/widgets/files_list.dart';
 import 'package:uploadgram/widgets/uploaded_file_thumbnail.dart';
@@ -38,8 +39,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
         : selectedFiles.add(id);
   }
 
-  Future<void> handleFileRename(String delete,
-      {Function(String)? onDone, String? newName, String? oldName = ''}) async {
+  Future<void> handleFileRename(
+    String delete, {
+    Function(String)? onDone,
+    String? newName,
+    String? oldName = '',
+  }) async {
     if (onDone == null) onDone = (_) => null;
     if (newName == null) {
       showDialog(
@@ -84,6 +89,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
           });
       return;
     }
+    AppLogic.showFullscreenLoader(context);
     RenameApiResponse result =
         await AppLogic.webApi.renameFile(delete, newName);
     print(result);
@@ -91,9 +97,9 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       onDone(result.newName!);
       (await AppLogic.files[delete])!.name = result.newName!;
     } else if (result.statusCode == 403) {
-      setState(() {
-        AppLogic.files.remove(delete);
-      });
+      await AppLogic.files.remove(delete);
+      Navigator.pop(context);
+      setState(() => AppLogic.files);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('File not found.')));
     } else
@@ -138,6 +144,7 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     } else {
       String? _message;
       List<String> deletedFiles = [];
+      AppLogic.showFullscreenLoader(context);
       for (String delete in deleteList) {
         print('deleting $delete');
         DeleteApiResponse result = await AppLogic.webApi.deleteFile(delete);
@@ -153,10 +160,12 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
       if (_message != null)
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_message)));
-      setState(() => deleteList.forEach((key) {
-            AppLogic.files.remove(key);
-            ThumbnailsUtils.deleteThumbsForFile(key);
-          }));
+      for (String delete in deleteList) {
+        await AppLogic.files.remove(delete);
+        ThumbnailsUtils.deleteThumbsForFile(delete);
+      }
+      Navigator.pop(context);
+      setState(() => AppLogic.files);
     }
   }
 
