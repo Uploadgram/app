@@ -1,0 +1,381 @@
+{
+    "language": "Pyccĸий",
+    "@language": {
+        "description": "The language's name (in YOUR translating language)"
+    },
+    "aboutTitle": "О приложении",
+    "@aboutTitle": {
+        "description": "The title of the About route"
+    },
+    "aboutWebsiteText": "Веб-сайт",
+    "@aboutWebsiteText": {
+        "description": "The website field's text"
+    },
+    "aboutSponsorTileSubtitle": "Познакомьтесь с нашим спонсором!",
+    "@aboutSponsorTileSubtitle": {
+        "description": "The subtitle of the sponsor tile"
+    },
+    "aboutTelegramChannelTileTitle": "Telegram Канал",
+    "@aboutTelegramChannelTileTitle": {
+        "description": "The title of the Telegram Channel tile"
+    },
+    "aboutTelegramChannelTileSubtitle": "Следите за обновлениями Uploadgram!",
+    "@aboutTelegramChannelTileSubtitle": {
+        "description": "The subtitle of the Telegram Channel tile"
+    },
+    "aboutTelegramGroupTileTitle": "Группа в Telegram",
+    "@aboutTelegramGroupTileTitle": {
+        "description": "The title of the Telegram Group tile"
+    },
+    "aboutTelegramGroupTileSubtitle": "Обсудите с другими людьми Uploadgram!",
+    "@aboutTelegramGroupTileSubtitle": {
+        "description": "The subtitle of the Telegram Group tile"
+    },
+    "aboutAppRepositoryTileTitle": "Репозиторий приложения",
+    "@aboutAppRepositoryTileTitle": {
+        "description": "The app repository tile's title"
+    },
+    "aboutAppRepositoryTileSubitle": "Проверьте код приложения!",
+    "@aboutAppRepositoryTileSubitle": {
+        "description": "The app repository tile's subtitle"
+    },
+    "aboutAuthorsTitle": "Авторы",
+    "@aboutAuthorsTitle": {
+        "description": "The Authors title of the About section"
+    },
+    "aboutPato05Subtitle": "Текущий владелец Uploadgram, разработал Backend и Frontend",
+    "@aboutPato05Subtitle": {
+        "description": "Description of Pato05's role in Uploadgram"
+    },
+    "aboutShishcatSubtitle": "Придумал и разработал оригинальный Uploadgram. Помогает в его разработке.",
+    "@aboutShishcatSubtitle": {
+        "description": "Description of ShiSHcat's role in Uploadgram"
+    },
+    "aboutLibrariesUsedInBackendTitle": "Библиотеки, используемые в коде бэкэнда",
+    "@aboutLibrariesUsedInBackendTitle": {
+        "description": "Libraries used in the backend title in the About section"
+    },
+    "aboutMadelineprotoSubtitle": "Замечательный клиент MTProto, полностью асинхронный с использованием Amphp и ядра Uploadgram. Автор: @danogentili.",
+    "@aboutMadelineprotoSubtitle": {
+        "description": "Description of the MadelineProto library"
+    },
+    "aboutAmphpSubtitle": "Коллекция невероятно быстрых библиотек PHP для его асинхронной работы.",
+    "@aboutAmphpSubtitle": {
+        "description": "Description of the Amphp library"
+    },
+    "aboutComposerSubtitle": "Менеджер зависимостей PHP.",
+    "@aboutComposerSubtitle": {
+        "description": "Description of Composer"
+    },
+    "aboutAlsoCheckOutTitle": "Также посмотрите",
+    "@aboutAlsoCheckOutTitle": {
+        "description": "\"Also check out\" subsection's title"
+    },
+    "aboutSnapdropSubtitle": "Веб-сайт для обмена файлами между устройствами в Вашей локальной сети",
+    "@aboutSnapdropSubtitle": {
+        "description": "Description of Snapdrop.io"
+    },
+    "aboutTelegramSubtitle": "Отличное приложение для обмена сообщениями, безлимитное хранилище файлов Uploadgram.",
+    "@aboutTelegramSubtitle": {
+        "description": "Description of Telegram"
+    },
+    "aboutLicensesTileTitle": "Лицензии и библиотеки, используемые в приложении",
+    "@aboutLicensesTileTitle": {
+        "description": "The title of the licenses tile"
+    },
+    "aboutLicensesTileSubtitle": "Нажмите здесь, чтобы просмотреть библиотеки, используемые в этом приложении, и их лицензии.",
+    "@aboutLicensesTileSubtitle": {
+        "description": "The subtitle of the licenses tile"
+    },
+    "dialogOK": "ОК",
+    "@dialogOK": {
+        "description": "The OK button in a generic dialog, must be all uppercase."
+    },
+    "dialogCancel": "ОТМЕНА",
+    "@dialogCancel": {
+        "description": "The CANCEL button in a generic dialog, must be all uppercase."
+    },
+    "dialogYes": "ДА",
+    "@dialogYes": {
+        "description": "The YES button in a generic dialog, must be all uppercase."
+    },
+    "dialogNo": "НЕТ",
+    "@dialogNo": {
+        "description": "The NO button in a generic dialog, must be all uppercase."
+    },
+    "dialogRenameTitle": "Переименовать файл",
+    "dialogRenameDescription": "Введите новое имя файла",
+    "errorFileNotFound": "Файл не найден.",
+    "dialogDeleteTitle": "Удалить файл",
+    "dialogDeleteDescription": "{count,plural, =1{Вы действительно хотите удалить этот файл?} few{Вы подтверждаете удаление {count} файлов?} many{Вы подтверждаете удаление {count} файлов?} other{Вы подтверждаете удаление {count} файлов?}}",
+    "@dialogDeleteDescription": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "errorSomeFilesHaveNotBeenDeleted": "Не удалось удалить некоторые файлы (ответ: {statusCode}).",
+    "@errorSomeFilesHaveNotBeenDeleted": {
+        "placeholders": {
+            "statusCode": {}
+        }
+    },
+    "errorUnknown": "Произошла ошибка при удалении файла: {message}",
+    "@errorUnknown": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "tosDialogTitle": "Прежде чем продолжить...",
+    "tosDialogContent": "Условия пользования\n1. Запрещено загружать порнографический контент или материалы, пропагандирующие насилие.\n2. Запрещается каким-либо образом обманывать пользователей, использующих данный Сервис.\n3. Материалы, нарушающие эти условия, могут быть удалены, и загрузивший их пользователь может быть заблокирован.\n3.1 Заявки на удаление материалов принимаются на abuse@uploadgram.me или через Telegram (@Pato05).\n\nПолитика конфиденциальности\n— Uploadgram не сохраняет Ваше имя или любую другую конфиденциальную информацию.\n— Ваш IP будет храниться в базе данных Uploadgram (или Ваш идентификатор пользователя, если вы используете бота).\n— Uploadgram использует Arc для ускорения работы веб-сайта (дополнительная информация доступна по адресу https://arc.io/about/).\n\nПолитика использования файлов Cookie\n— Uploadgram использует cookies в панели управления для сохранения списка файлов между сессиями.\n— Arc может использовать файлы cookies на веб-сайте (более подробная информация доступна по адресу https://arc. o/about/).\n\n\nПользовательское соглашение может быть изменено в любой момент. В этом случае Вы получите уведомление для подтверждения ознакомления с новыми правилами сервиса.",
+    "@tosDialogContent": {
+        "description": "The terms of service of Uploadgram"
+    },
+    "tosErrorDisagree": "Вы должны принять условия предоставления услуг, прежде чем загружать новые файлы.",
+    "tosDialogOK": "Теперь Вы можете начать загрузку файлов!",
+    "tosDialogAgree": "ПОНЯТНО!",
+    "@tosDialogAgree": {
+        "description": "The 'GOT IT!' button in the TOS dialog, must be all uppercase."
+    },
+    "tosDialogDisagree": "НЕ СОГЛАСЕН(-НА)",
+    "@tosDialogDisagree": {
+        "description": "The 'I DISAGREE' button in the TOS dialog, must be all uppercase."
+    },
+    "dialogPermissionsNotGranted": "Разрешения не предоставлены. Нажмите кнопку, чтобы попробовать еще раз, или предоставьте их в настройках.",
+    "errorText": "Ошибка",
+    "dialogDownloadAppTitle": "Привет!",
+    "dialogDownloadAppSubtitle": "Похоже, что Вам нравится Uploadgram! Вы знали, что у Uploadgram есть приложение для Android?\nСкачайте его, нажав на кнопку ниже или используя три точки в правом углу.",
+    "dialogDownloadAppNo": "НЕТ, СПАСИБО",
+    "dialogDownloadAppYes": "СКАЧАТЬ ПРИЛОЖЕНИЕ!",
+    "errorFileTooLarge": "Выбранный Вами файл слишком велик. Максимально допустимый размер: {maxSize}",
+    "@errorFileTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "String"
+            }
+        }
+    },
+    "errorUploadgramDown": "{seconds,plural, one {} few {На Uploadgram ведутся технические работы. Попробуйте еще раз через {seconds} секунды.} many {На Uploadgram ведутся технические работы. Попробуйте еще раз через {seconds} секунд.} =1{На Uploadgram ведутся технические работы. Попробуйте еще раз через {seconds} секунду.} other{На Uploadgram ведутся технические работы. Попробуйте еще раз через {seconds} секунд.}}",
+    "@errorUploadgramDown": {
+        "placeholders": {
+            "seconds": {}
+        }
+    },
+    "actionSnackbarTryNow": "Попробовать сейчас",
+    "actionSnackbarDismiss": "СКРЫТЬ",
+    "@actionSnackbarDismiss": {
+        "description": "A generic 'DISMISS' button in a snackbar, must be all uppercase."
+    },
+    "errorFileEmpty": "Выбранный файл не может быть пустым.",
+    "deleteAppbarTooltip": "Удалить выбранный файл(ы)",
+    "selectAllTooltip": "Выбрать все файлы",
+    "exportListTooltip": "Экспорт выбранного файла(ов)",
+    "exportingError": "Не удалось экспортировать файлы.",
+    "sortTooltip": "Сортировать файлы",
+    "importTileTitle": "Импортировать список файлов",
+    "exportTileTitle": "Экспортировать список файлов",
+    "downloadAppTileTitle": "Скачать приложение",
+    "exportingErrorEmpty": "Ваш список файлов пуст. Загрузите хотя бы один файл перед экспортом.",
+    "importingErrorInvalid": "Выбранный файл не подходит.",
+    "titleFilesSelected": "{count,plural, one {} few {{count} файла выбрано} many {{count} файлов выбрано} =1{{count} файл выбран} other{{count} файлов выбрано}}",
+    "@titleFilesSelected": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "uploadExtendedFAB": "ЗАГРУЗИТЬ",
+    "@uploadExtendedFAB": {
+        "description": "The Floating Action Button's text, must be all uppercase."
+    },
+    "sortByDialogTitle": "Сортировать по",
+    "nameText": "Имя",
+    "sizeText": "Размер",
+    "uploadDateText": "Дата выгрузки",
+    "linkText": "Ссылка",
+    "sortByDialogAscending": "По возрастанию",
+    "settingsTitle": "Настройки",
+    "uploadDateFormatted": "E', 'd MMMM yyyy' г. в 'HH:mm:ss",
+    "uploadedOnText": "Загружено",
+    "fileInfoTitle": "Информация о файле",
+    "renameFileTooltip": "Переименовать этот файл",
+    "shareLinkText": "Поделиться ссылкой на этот файл",
+    "linkCopySuccessful": "Ссылка успешно скопирована в буфер обмена!",
+    "linkCopyError": "Не удалось скопировать ссылку на файл. Пожалуйста, скопируйте его вручную.",
+    "deleteThisFileTile": "Удалить этот файл",
+    "noFilesTitle": "Пока ничего нет.",
+    "noFilesSubtitle": "Нажмите на кнопку, чтобы начать загрузку!",
+    "uploadButtonThemesCenterExtended": "По центру, с текстом (по умолчанию)",
+    "uploadButtonThemesRight": "С правой стороны, без текста",
+    "filesListThemesGrid": "Сетка (по умолчанию)",
+    "filesListThemesGridCompact": "Компактная Сетка",
+    "filesListThemesList": "Список",
+    "appThemesSystem": "Использовать системную тему",
+    "appThemesDark": "Тёмная",
+    "appThemesLight": "Светлая",
+    "sectionPersonalizationText": "ПЕРСОНАЛИЗАЦИЯ",
+    "@sectionPersonalizationText": {
+        "description": "Personalization section's title. Section titles MUST be all uppercase."
+    },
+    "uploadButtonTheme": "Вид кнопки загрузки",
+    "uploadButtonThemeTooltip": "Выберите тему кнопки загрузки",
+    "filesListTheme": "Отображение списка файлов",
+    "filesListThemeTooltip": "Изменить тему списка файлов",
+    "appThemeTileTitle": "Тема приложения",
+    "appThemeTileTooltip": "Изменить тему приложения",
+    "sectionThumbnailsText": "МИНИАТЮРЫ",
+    "@sectionThumbnailsText": {
+        "description": "Thumbnails section's title. Section titles MUST be all uppercase."
+    },
+    "toggleThumbnailGeneration": "Включить генерацию миниатюр",
+    "saveFullSizedPhotos": "Сохранять фото в полном разрешении",
+    "smallThumbnailSize": "Размер маленьких миниатюр",
+    "smallThumbnailSizeSubtitle": "Текущее: {current}",
+    "@smallThumbnailSizeSubtitle": {
+        "placeholders": {
+            "current": {}
+        }
+    },
+    "clearThumbnailsData": "Очистить данные миниатюр",
+    "clearSmallThumbnails": "Очистить маленькие миниатюры",
+    "clearBigThumbnails": "Очистить большие миниатюры",
+    "clearAllThumbnails": "Очистить все миниатюры",
+    "changeEndpoints": "Изменить эндпоинты (конечные точки)",
+    "changeEndpointsSubtitle": "Если вы размещаете сервер Uploadgram самостоятельно, вы можете изменить свои эндпоинты (конечные точки) здесь!",
+    "clearAppFilesCache": "Очистить кэш файлов приложения",
+    "clearAppFilesCacheSubtitle": "Используется при загрузке файла не из вашей внутренней памяти",
+    "endpointsText": "Эндпоинты (конечные точки)",
+    "endpointsMain": "Главная",
+    "endpointsDownload": "Скачать",
+    "endpointsAPI": "API",
+    "endpointsDialogActionDefault": "ПО УМОЛЧАНИЮ",
+    "@endpointsDialogActionDefault": {
+        "description": "DEFAULT button in the endpoints dialog, must be all uppercase."
+    },
+    "endpointsDialogActionSave": "СОХРАНИТЬ",
+    "@endpointsDialogActionSave": {
+        "description": "SAVE button in the endpoints dialog, must be all uppercase."
+    },
+    "languageTileTitle": "Язык",
+    "languageTileSubtitle": "Выбранный язык: {language}",
+    "@languageTileSubtitle": {
+        "placeholders": {
+            "language": {
+                "type": "String"
+            }
+        }
+    },
+    "selectLanguageDialogTitle": "Выберите свой язык",
+    "languageSystemText": "Системный язык",
+    "aboutTranslatorsTitle": "Переводили",
+    "dropzoneDropFilesHere": "Перетащите свои файлы сюда!",
+    "deleteText": "Удалить",
+    "@deleteText": {
+        "description": "\"Delete\", it is only used in the right click context menu for now."
+    },
+    "renameText": "Переименовать",
+    "@renameText": {
+        "description": "\"Rename\", it is only used in the right click context menu for now."
+    },
+    "linkCopyText": "Скопировать ссылку",
+    "@linkCopyText": {
+        "description": "\"Copy link\", it is only used in the right click context menu for now."
+    },
+    "exportText": "Экспортировать",
+    "@exportText": {
+        "description": "\"Export\", it is only used in the right click context menu for now."
+    },
+    "uploadProgressNotificationTitle": "Уведомление о ходе загрузки",
+    "@uploadProgressNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadProgressNotificationDetails": "Уведомление о статусе и процессе загрузки",
+    "@uploadProgressNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationTitle": "Уведомление о завершении загрузки",
+    "@uploadCompletedNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationDetails": "Уведомление о завершении загрузки файла",
+    "@uploadCompletedNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCanceled": "Загрузка отменена",
+    "uploadFailedNotification": "Ошибка загрузки!",
+    "uploadCompletedNotification": "Загрузка прошла успешно!",
+    "uploadPausedNotification": "Загрузка приостановлена",
+    "secondsRemaining": "Осталось {relativeDateFormatted}",
+    "@secondsRemaining": {
+        "description": "The amount of time left formatted to \"X minutes Y seconds left\"",
+        "placeholders": {
+            "relativeDateFormatted": {
+                "type": "String"
+            }
+        }
+    },
+    "operationCompleting": "{percent}% выполнено",
+    "@operationCompleting": {
+        "placeholders": {
+            "percent": {
+                "type": "String"
+            }
+        }
+    },
+    "sectionThemingText": "ТЕМА",
+    "@sectionThemingText": {
+        "description": "The title of the theming section, must be all uppercase"
+    },
+    "accentColorTileTitle": "Основной цвет",
+    "syncAccentWithSystemTileTitle": "Синхронизировать цвет сайта с системой",
+    "pickAccentColor": "Выбрать цвет сайта",
+    "appLogs": "Логи",
+    "appLogsSubtitle": "Просмотреть или экспортировать логи приложения",
+    "logsNoLogsToDeleteError": "Нет логов для удаления",
+    "deleteLogs": "Удалить логи",
+    "deleteLogsDialogSubtitle": "Вы уверены, что хотите удалить все логи НАВСЕГДА?",
+    "collapseAll": "Свернуть всё",
+    "expandAll": "Развернуть всё",
+    "errorClearingLogsTip": "Может потребоваться очистка файла с логами.",
+    "exportLogsTooltip": "Экспорт логов",
+    "filterLogsDialog": "Фильтр логов",
+    "filterLogsDialogFrom": "ОТ",
+    "@filterLogsDialogFrom": {
+        "description": "This must be all uppercase, it contains the list of logs providers to choose from"
+    },
+    "filterLogsDialogVerbosity": "ПОДРОБНОСТЬ ЖУРНАЛОВ",
+    "@filterLogsDialogVerbosity": {
+        "description": "Must be all uppercase, it is used to define the logs' verbosity"
+    },
+    "updaterNoUpdatesAvailable": "Обновления отсутствуют",
+    "updaterUpdateAvailable": "Доступно обновление!",
+    "updaterIgnore": "ИГНОРИРОВАТЬ",
+    "updaterNotNow": "НЕ СЕЙЧАС",
+    "updaterDownload": "СКАЧАТЬ",
+    "updaterCheckProgressInNotifications": "Вы можете увидеть прогресс загрузки в уведомлениях!",
+    "updaterError": "Произошла ошибка, проверьте логи для получения подробной информации",
+    "checkForUpdatesTile": "Проверить обновления",
+    "checkForUpdatesTileSubtitle": "Выполняется проверка через GitHub",
+    "newUpdateNotificationTitle": "Доступно новое обновление!",
+    "newUpdateNotificationBtnDownload": "Скачать",
+    "newUpdateNotificationBtnIgnore": "Игнорировать",
+    "downloadingUpdateNotificationTitle": "Загрузка обновления...",
+    "updateCorruptedNotificationTitle": "Обновление не удалось",
+    "updateCorruptedNotificationSubtitle": "Загруженный apk поврежден!",
+    "errorCouldNotUploadFile": "Файл не может быть загружен (код: {code})",
+    "@errorCouldNotUploadFile": {
+        "placeholders": {
+            "code": {}
+        }
+    },
+    "updaterHideProgressButton": "СКРЫТЬ",
+    "@updaterHideProgressButton": {
+        "description": "The 'HIDE' button on the downloding dialog, must be all uppercase"
+    },
+    "updaterErrorDownload": "Не удалось загрузить apk",
+    "generateThumbnailsTileTitle": "Сгенерировать миниатюры",
+    "generateThumbnailsTileSubtitle": "Принудительное создание эскизов для всех файлов",
+    "generateThumbnailsDialogTitle": "Вы уверены, что хотите принудительно создать эскизы для всех файлов?",
+    "generateThumbnailsDialogSubtitle": "Обратите внимание, будет выполнена загрузка всех изображений для создания эскизов из Uploadgram, поэтому этот процесс может разрядить батарею вашего устройства!",
+    "actionCopy": "Копировать"
+}

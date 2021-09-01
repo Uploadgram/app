@@ -23,14 +23,6 @@
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
-            <!-- Displays an Android View that continues showing the launch screen
-                 Drawable until Flutter paints its first frame, then this splash
-                 screen fades out. A splash screen is useful to avoid any visual
-                 gap between the end of Android's launch screen and the painting of
-                 Flutter's first frame. -->
-            <meta-data
-                android:name="io.flutter.embedding.android.SplashScreenDrawable"
-                android:resource="@drawable/launch_background" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -65,6 +57,33 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            android:enabled="false"
+            android:exported="false" />
+
+        <provider
+            android:name="com.bluechilli.flutteruploader.FlutterUploaderInitializer"
+            android:authorities="${applicationId}.flutter-uploader-init"
+            android:exported="false">
+            <!-- changes this number to configure the maximum number of concurrent tasks -->
+            <meta-data
+                android:name="com.bluechilli.flutteruploader.MAX_CONCURRENT_TASKS"
+                android:value="1" />
+
+            <!-- changes this number to configure connection timeout for the upload http request -->
+            <meta-data android:name="com.bluechilli.flutteruploader.UPLOAD_CONNECTION_TIMEOUT_IN_SECONDS" android:value="300" />
+        </provider>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -72,4 +91,5 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_ALL_DOWNLOADS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission-sdk-23 android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 </manifest>

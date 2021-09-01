@@ -1,22 +1,31 @@
-// ignore: avoid_web_libraries_in_flutter
+// ignore_for_file: avoid_web_libraries_in_flutter
+
 import 'dart:html' as html;
+import 'dart:js';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:uploadgram/api_definitions.dart';
 import 'package:uploadgram/utils.dart';
 
 class InternalAPIWrapper {
-  static String? lastUri;
-  static bool overlayMounted = false;
-  static bool isDropzoneListening = false;
+  static final instance = InternalAPIWrapper._();
+  factory InternalAPIWrapper() => instance;
 
-  InternalAPIWrapper() {
+  InternalAPIWrapper._() {
     html.document.onContextMenu.listen((event) =>
         event.preventDefault()); // disable normal browser right click
   }
+
+  static const isAndroid = false;
+  static const isNative = false;
+
+  static String? lastUri;
+  static bool overlayMounted = false;
+  static bool isDropzoneListening = false;
 
   static void listenDropzone(
       BuildContext context, Function(UploadgramFile) uploadFile) {
@@ -26,13 +35,13 @@ class InternalAPIWrapper {
     final dropOverlay = OverlayEntry(
       builder: (BuildContext context) => Positioned.fill(
           child: Container(
-        color: Color.fromRGBO(0, 0, 0, 0.4),
+        color: const Color.fromRGBO(0, 0, 0, 0.4),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_upload, size: 78),
+            const Icon(Icons.cloud_upload, size: 78),
             Text(
-              'Drop your files here!',
+              AppLocalizations.of(context).dropzoneDropFilesHere,
               style: theme.textTheme.bodyText1?.copyWith(
                 fontSize: 42,
                 fontWeight: FontWeight.w500,
@@ -42,14 +51,15 @@ class InternalAPIWrapper {
         ),
       )),
     );
-    [html.document.onDragEnter, html.document.onDragOver]
-        .forEach((element) => element.listen((event) {
-              event.preventDefault();
-              if (!overlayMounted) {
-                Overlay?.of(context)?.insert(dropOverlay);
-                overlayMounted = true;
-              }
-            }));
+    for (var element in [html.document.onDragEnter, html.document.onDragOver]) {
+      element.listen((event) {
+        event.preventDefault();
+        if (!overlayMounted) {
+          Overlay?.of(context)?.insert(dropOverlay);
+          overlayMounted = true;
+        }
+      });
+    }
     html.document.onDragLeave.listen((event) {
       event.preventDefault();
       if (overlayMounted) {
@@ -65,7 +75,7 @@ class InternalAPIWrapper {
         overlayMounted = false;
       }
       if (event.dataTransfer.files == null) return;
-      if (event.dataTransfer.files!.length > 0) {
+      if (event.dataTransfer.files!.isNotEmpty) {
         if (event.dataTransfer.files![0].size <= 0) return;
         uploadFile.call(UploadgramFile(
           realFile: event.dataTransfer.files![0],
@@ -90,18 +100,12 @@ class InternalAPIWrapper {
     }
   }
 
-  Future<Map<String, dynamic>> getFiles() async {
-    Map<String, dynamic> files =
-        json.decode(await getString('uploaded_files', '{}'));
+  Future<Map<String, dynamic>?> getImportedFiles() async {
     if (lastUri != null) {
       Map<String, dynamic>? importedFiles =
           await Utils.parseFragment(Uri.decodeComponent(lastUri!));
-      if (importedFiles != null) {
-        files.addAll(importedFiles);
-        saveFiles(files);
-      }
+      return importedFiles;
     }
-    return files;
   }
 
   Future<String> getString(String name, String defaultValue) async {
@@ -132,46 +136,47 @@ class InternalAPIWrapper {
     input.setSelectionRange(0, text.length);
     bool copyStatus = html.document.execCommand('copy');
     input.remove();
+    if (!copyStatus) context.callMethod('prompt', ['', text]);
     return copyStatus;
   }
 
-  Future<UploadgramFile> askForFile([String? type]) {
-    var completer = Completer<UploadgramFile>();
+  Future<UploadgramFile?> askForFile([String? type]) {
+    var completer = Completer<UploadgramFile?>();
     html.FileUploadInputElement inputFile = html.FileUploadInputElement();
     if (type != null) inputFile.accept = type;
     html.document.body!.append(inputFile);
     inputFile.click();
     inputFile.onChange.listen((_) {
-      if (inputFile.files!.length == 0) return null;
+      if (inputFile.files!.isEmpty) return;
       html.File? file = inputFile.files![0];
       inputFile.remove();
       completer.complete(
           UploadgramFile(realFile: file, size: file.size, name: file.name));
     });
-    inputFile.onAbort.listen((_) => completer
-        .complete(UploadgramFile(error: UploadgramFileError.abortedByUser)));
+    inputFile.onAbort.listen((_) => completer.complete(null));
     return completer.future;
   }
 
   bool isWebAndroid() => html.window.navigator.userAgent.contains('Android');
 
   Future<Map?> importFiles() async {
-    UploadgramFile uploadgramFile = await askForFile();
-    if (uploadgramFile.hasError()) return null;
-    html.File file = uploadgramFile.realFile;
+    UploadgramFile? uploadgramFile = await askForFile();
+    if (uploadgramFile == null) return null;
+    html.File file = uploadgramFile.realFile as html.File;
     html.FileReader reader = html.FileReader();
     reader.readAsText(file);
-    await reader.onLoad.first;
-    Map? files = json.decode(reader.result as String);
+    await Future.any([reader.onLoad.first, reader.onError.first]);
+    String? result = reader.result as String?;
+    if (result == null) return null;
+    Map? files = json.decode(result);
     return files is Map ? files : null;
   }
 
-  Future<void> clearFilesCache() async => null;
-  Future<void> deleteCachedFile(String name) async => null;
+  Future<void> clearFilesCache() async {}
+  Future<void> deleteCachedFile(String name) async {}
 
   Future<bool?> saveFile(String filename, String content) async {
-    print('[web] saveFile called');
-    html.Blob blob = new html.Blob([content]);
+    html.Blob blob = html.Blob([content]);
     html.AnchorElement a = html.AnchorElement();
     String url = a.href = html.Url.createObjectUrlFromBlob(blob);
     a.setAttribute('download', filename);
@@ -183,8 +188,7 @@ class InternalAPIWrapper {
   }
 
   Future<void> deletePreferences() async => html.window.localStorage.clear();
-  Future<void> shareUploadgramLink(String url) async {
-    if (html.window.navigator.share != null)
-      await html.window.navigator.share({'url': url});
-  }
+
+  Future<Color> getAccent() =>
+      throw UnsupportedError('getAccent() has not been implemented.');
 }

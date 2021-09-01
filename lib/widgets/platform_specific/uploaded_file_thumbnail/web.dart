@@ -1,7 +1,7 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:uploadgram/widgets/platform_specific/uploaded_file_thumbnail/common.dart';
 
 class UploadedFileThumbnail extends StatelessWidget {
@@ -12,17 +12,19 @@ class UploadedFileThumbnail extends StatelessWidget {
   final Color? defaultIconColor;
   final File? file;
 
-  UploadedFileThumbnail({
+  const UploadedFileThumbnail({
+    Key? key,
     required this.fileId,
     required this.defaultIcon,
     this.defaultIconSize,
     this.defaultIconColor,
     this.fullImageSize = false,
     this.file,
-  }) : assert(fileId.length == 49 || fileId.length == 48);
+  })  : assert(fileId.length == 49 || fileId.length == 48),
+        super(key: key);
 
-  static Future<void> generateThumbs(String fileId, File? file) async => null;
-  static Future<void> deleteThumbs(String fileId) async => null;
+  static Future<void> generateThumbs(String fileId, File? file) async {}
+  static Future<void> deleteThumbs(String fileId) async {}
 
   @override
   Widget build(BuildContext context) {

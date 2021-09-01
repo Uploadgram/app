@@ -1,10 +1,10 @@
-import 'package:image/image.dart' as fltImage;
-import 'package:uploadgram/app_settings.dart';
-import 'package:uploadgram/mime_types.dart';
+import 'package:image/image.dart' as flt_image;
+import 'package:uploadgram/app_definitions.dart';
+import 'package:uploadgram/settings.dart';
 
 abstract class ThumbnailGeneratorData {
   final String? url;
-  final ThumbnailData thumbnailsData;
+  final ThumbnailDataImpl thumbnailsData;
   final int finalImageSize;
   get file;
 
@@ -15,38 +15,40 @@ abstract class ThumbnailGeneratorData {
   });
 }
 
-abstract class ThumbnailData {
+abstract class ThumbnailDataImpl {
   get thumbFull;
   get thumbSmall;
 }
 
 Future<List<int>?> generateThumbnail(
     List<int> imageBytes, int finalImageSize) async {
-  final image = fltImage.decodeImage(imageBytes);
+  final image = flt_image.decodeImage(imageBytes);
   if (image == null) {
     return null;
   }
-  if (image.width < finalImageSize || image.height < finalImageSize)
-    return fltImage.encodePng(
-        image); // in case the image is smaller than the finalImageSize, don't resize it
+  if (image.width <= finalImageSize && image.height <= finalImageSize) {
+    return flt_image.encodePng(image);
+  } // in case the image is smaller than the finalImageSize, don't resize it
   final bool isLarger = image.width > image.height;
-  final fltImage.Image resizedImage = fltImage.copyResize(image,
+  final flt_image.Image resizedImage = flt_image.copyResize(image,
       width: isLarger ? null : finalImageSize,
       height: isLarger ? finalImageSize : null);
-  final fltImage.Image finalImage = fltImage.copyCrop(
+  final flt_image.Image finalImage = flt_image.copyCrop(
     resizedImage,
     isLarger ? (resizedImage.width / 2 - finalImageSize / 2).toInt() : 0,
     isLarger ? 0 : (resizedImage.height / 2 - finalImageSize / 2).toInt(),
     finalImageSize,
     finalImageSize,
   );
-  return fltImage.encodePng(finalImage);
+  return flt_image.encodePng(finalImage);
 }
 
+const allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'];
+
 bool canGenerateThumbnail(int size, String name) {
-  if (!AppSettings.shouldGenerateThumbnails) return false;
+  if (!settings.shouldGenerateThumbnails) return false;
   if (size > 5000000) return false;
-  if (mimeTypes[name.split('.').last]?.type != 'image') return false;
+  if (!allowedExtensions.contains(extension(name))) return false;
   return true;
 }
 

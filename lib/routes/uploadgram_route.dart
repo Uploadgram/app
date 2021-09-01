@@ -1,43 +1,95 @@
 import 'dart:async';
-import 'dart:convert';
 
+import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:logging/logging.dart';
+import 'package:provider/provider.dart';
 
 import 'package:uploadgram/app_definitions.dart';
+import 'package:uploadgram/config.dart';
+import 'package:uploadgram/fading_page_route.dart';
 import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 import 'package:uploadgram/api_definitions.dart';
-import 'package:uploadgram/app_settings.dart';
+import 'package:uploadgram/settings.dart';
 import 'package:uploadgram/app_logic.dart';
-import 'package:uploadgram/selected_files_notifier.dart';
+import 'package:uploadgram/main.dart';
+import 'package:uploadgram/routes/file_info.dart';
+import 'package:uploadgram/list_notifier.dart';
 import 'package:uploadgram/utils.dart';
+import 'package:uploadgram/web_api_wrapper/platform_instance.dart';
 import 'package:uploadgram/widgets/files_grid.dart';
 import 'package:uploadgram/widgets/files_list.dart';
+import 'package:uploadgram/widgets/popup_menu_item_icon.dart';
+import 'package:uploadgram/widgets/selected_files_builder.dart';
 import 'package:uploadgram/widgets/uploaded_file_thumbnail.dart';
 
+class SelectedFilesProvider extends ListNotifier<String> {
+  SelectedFilesProvider() : super();
+}
+
 class UploadgramRoute extends StatefulWidget {
+  const UploadgramRoute({Key? key}) : super(key: key);
+
   static _UploadgramRouteState? of(BuildContext context) =>
       context.findAncestorStateOfType<_UploadgramRouteState>();
+
   @override
   _UploadgramRouteState createState() => _UploadgramRouteState();
 }
 
-class _UploadgramRouteState extends State<UploadgramRoute> {
-  static const int maxSize = 2 * 1000 * 1000 * 1000;
-  final Connectivity _connectivity = Connectivity();
+class _UploadgramRouteState extends State<UploadgramRoute>
+    with WidgetsBindingObserver {
   int _checkSeconds = 0;
   Timer? _lastConnectivityTimer;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   final ValueNotifier<bool> _canUploadNotifier = ValueNotifier<bool>(false);
-  final SelectedFilesNotifier selectedFiles = SelectedFilesNotifier();
+  final _selectedFiles = SelectedFilesProvider();
 
-  void selectWidget(String id) {
-    selectedFiles.contains(id)
-        ? selectedFiles.remove(id)
-        : selectedFiles.add(id);
+  late Future _future;
+  final _key = GlobalKey<State<FilesViewerTheme>>();
+
+  static final _logger = Logger('_UploadgramRouteState');
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.detached:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+        _lastConnectivityTimer?.cancel();
+        break;
+      case AppLifecycleState.resumed:
+        checkConnection();
+        break;
+    }
+    super.didChangeAppLifecycleState(state);
   }
+
+  void selectWidget(String id) => _selectedFiles.contains(id)
+      ? _selectedFiles.remove(id)
+      : _selectedFiles.add(id);
+
+  Future<T?> openFileInfo<T>({
+    required UploadedFile file,
+    required ValueNotifier<String> filenameNotifier,
+    required IconData icon,
+    Object? tag,
+  }) =>
+      Navigator.of(context).push<T>(FadingPageRoute(FileInfoRoute(
+        file: file,
+        filename: filenameNotifier,
+        fileIcon: icon,
+        tag: tag,
+        handleRename: handleFileRename,
+        handleDelete: (delete, {Function? onYes}) =>
+            handleFileDelete([delete], onYes: onYes),
+      )));
 
   Future<void> handleFileRename(
     String delete, {
@@ -45,98 +97,83 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     String? newName,
     String? oldName = '',
   }) async {
-    if (onDone == null) onDone = (_) => null;
+    onDone ??= (_) => null;
+    final localizations = AppLocalizations.of(context);
     if (newName == null) {
-      showDialog(
+      return showDialog(
           context: context,
           builder: (BuildContext context) {
-            late String _text;
+            String _text = '';
             return AlertDialog(
-              title: Text('Rename file'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Enter a new name for this file',
-                  ),
-                  TextFormField(
-                    initialValue: oldName,
-                    maxLength: 255,
-                    showCursor: true,
-                    onChanged: (newText) => _text = newText,
-                    decoration: InputDecoration(filled: true),
-                  ),
-                ],
+              title: Text(localizations.dialogRenameTitle),
+              content: TextFormField(
+                initialValue: oldName,
+                maxLength: 255,
+                showCursor: true,
+                onChanged: (newText) => _text = newText,
+                decoration: const InputDecoration(filled: true),
               ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text('CANCEL'),
+                  child: Text(localizations.dialogCancel),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    selectedFiles.clear();
                     handleFileRename(delete, onDone: onDone, newName: _text);
+                    _selectedFiles.clear();
                   },
-                  child: Text('OK'),
+                  child: Text(localizations.dialogOK),
                 )
               ],
             );
           });
-      return;
     }
     AppLogic.showFullscreenLoader(context);
     RenameApiResponse result =
-        await AppLogic.webApi.renameFile(delete, newName);
-    print(result);
+        await WebAPIWrapper().renameFile(delete, newName);
     if (result.ok) {
       onDone(result.newName!);
-      (await AppLogic.files[delete])!.name = result.newName!;
+      (await UploadedFiles()[delete])!.name = result.newName!;
     } else if (result.statusCode == 403) {
-      await AppLogic.files.remove(delete);
+      await UploadedFiles().remove(delete);
       Navigator.pop(context);
-      setState(() => AppLogic.files);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('File not found.')));
-    } else
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result.errorMessage!)));
+      refreshList();
+      ScaffoldMessenger.of(context).snack(localizations.errorFileNotFound);
+    } else {
+      ScaffoldMessenger.of(context).snack(result.errorMessage!);
+    }
   }
 
   Future<void> handleFileDelete(List<String> deleteList,
       {noDialog = false, Function? onYes}) async {
-    if (deleteList.length == 0) return;
-    if (onYes == null) onYes = () => null;
+    if (deleteList.isEmpty) return;
+    onYes ??= () => null;
+    final localizations = AppLocalizations.of(context);
     int listLength = deleteList.length;
-    print('called  _handleFileDelete');
+
     if (!noDialog) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Delete file'),
-              content: Text('Are you sure you want to delete ' +
-                  (listLength == 1
-                      ? 'this file'
-                      : listLength.toString() + ' files') +
-                  '?'),
+              title: Text(localizations.dialogDeleteTitle),
+              content: Text(localizations.dialogDeleteDescription(listLength)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('NO'),
+                  child: Text(localizations.dialogNo),
                 ),
                 TextButton(
                   onPressed: () {
-                    print(deleteList);
-                    handleFileDelete(deleteList, noDialog: true);
                     Navigator.pop(context);
+                    handleFileDelete(deleteList, noDialog: true);
                     onYes?.call();
                   },
-                  child: Text('YES'),
+                  child: Text(localizations.dialogYes),
                 ),
               ],
             );
@@ -144,444 +181,491 @@ class _UploadgramRouteState extends State<UploadgramRoute> {
     } else {
       String? _message;
       List<String> deletedFiles = [];
-      AppLogic.showFullscreenLoader(context);
+      final progressNotifier = ValueNotifier<double?>(null);
+      AppLogic.showFullscreenLoader(context, progressNotifier);
+      int i = 0;
       for (String delete in deleteList) {
-        print('deleting $delete');
-        DeleteApiResponse result = await AppLogic.webApi.deleteFile(delete);
-        if (result.statusCode == 403) {
-          _message = 'File not found. It was probably deleted';
-        } else if (!result.ok) {
-          _message =
-              'Some files have not been deleted (code: ${result.statusCode}).';
-          continue;
+        _logger.info('deleting $delete');
+        try {
+          DeleteApiResponse result = await WebAPIWrapper().deleteFile(delete);
+          if (result.statusCode == 403) {
+            _message = localizations.errorFileNotFound;
+          } else if (!result.ok) {
+            _message = localizations
+                .errorSomeFilesHaveNotBeenDeleted(result.statusCode);
+            continue;
+          }
+
+          deletedFiles.add(delete);
+        } on DioError catch (e) {
+          _message = localizations.errorUnknown(e.message);
+        } finally {
+          progressNotifier.value = ++i / deleteList.length;
         }
-        deletedFiles.add(delete);
       }
-      if (_message != null)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(_message)));
-      for (String delete in deleteList) {
-        await AppLogic.files.remove(delete);
-        ThumbnailsUtils.deleteThumbsForFile(delete);
+      if (_message != null) ScaffoldMessenger.of(context).snack(_message);
+      for (String delete in deletedFiles) {
+        await UploadedFiles().remove(delete);
+        await ThumbnailsUtils.deleteThumbsForFile(delete);
       }
       Navigator.pop(context);
-      setState(() => AppLogic.files);
+
+      refreshList();
     }
   }
 
   Future<void> _uploadFile() async {
+    if (_canUploadNotifier.value == false) _checkUploadgramConnection();
     if (_canUploadNotifier.value == false) return;
-    if (AppSettings.tosAccepted == false) {
+    final localizations = AppLocalizations.of(context);
+    if (settings.tosAccepted == false) {
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
-                // fetch tos instead of having them hardcoded
-                title: Text('Before proceeding...'),
-                content: Text(
-                    'Uploadgram uses the Telegram network to store its files, therefore you must accept Telegram\'s Terms of Service before continuing (https://telegram.org/tos).'
-                    '\nBy continuing, you accept NOT to:'
-                    '\n  - Use Uploadgram to scam users'
-                    '\n  - upload pornographic content or content that promotes violence.'),
+                title: Text(localizations.tosDialogTitle),
+                content: SingleChildScrollView(
+                    child: Text(localizations.tosDialogContent)),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content:
-                            Text('You must accept the TOS to upload files.'),
-                      ));
+                      ScaffoldMessenger.of(context)
+                          .snack(localizations.tosErrorDisagree);
                     },
-                    child: Text('I DISAGREE'),
+                    child: Text(localizations.tosDialogDisagree),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      AppSettings.tosAccepted = true;
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('You can now start uploading files!'),
-                      ));
+                      settings.tosAccepted = true;
+                      ScaffoldMessenger.of(context)
+                          .snack(localizations.tosDialogOK);
                       _uploadFile();
                     },
-                    child: Text('GOT IT!'),
+                    child: Text(localizations.tosDialogAgree),
                   ),
                 ],
               ));
       return;
     }
-    print('asking for file');
-    UploadgramFile file = await AppLogic.platformApi.askForFile();
-    if (file.error == UploadgramFileError.abortedByUser) return;
-    if (file.error == UploadgramFileError.permissionNotGranted) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-                  title: Text('Error'),
-                  content: Text(
-                      'Permissions not granted. Click the button to try again, or grant them in the settings.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('OK'),
-                    )
-                  ]));
-      return;
-    }
+    _logger.info('asking for file');
+    UploadgramFile? file = await InternalAPIWrapper().askForFile();
+    if (file == null) return;
+
     return await uploadFile(file);
   }
 
   Future<void> uploadFile(UploadgramFile file) async {
-    if (_canUploadNotifier.value == false) return;
+    final localizations = AppLocalizations.of(context);
     if (file.size == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please select a non-empty file.')));
+      ScaffoldMessenger.of(context).snack(localizations.errorFileEmpty);
       return;
     }
-    if (AppLogic.files.length >= 5 &&
-        AppLogic.platformApi.isWebAndroid() &&
-        AppSettings.get('hasAskedApp', false)) {
-      AppSettings.put('hasAskedApp', true);
+    if (UploadedFiles().length >= 5 &&
+        InternalAPIWrapper().isWebAndroid() &&
+        settings.hasAskedApp) {
+      settings.hasAskedApp = true;
       showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
-                title: Text('Hi!'),
-                content: Text(
-                    'Seems like you are enjoying Uploadgram! Did you know that Uploadgram has an Android app too?'
-                    '\nYou can download the app by clicking the button below or by clicking on the three-dots!'),
+                title: Text(localizations.dialogDownloadAppTitle),
+                content: Text(localizations.dialogDownloadAppSubtitle),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('NO, THANKS'),
+                    child: Text(localizations.dialogDownloadAppNo),
                   ),
                   TextButton(
-                    onPressed: AppLogic.webApi.downloadApp,
-                    child: Text('DOWNLOAD THE APP!'),
+                    onPressed: WebAPIWrapper().downloadApp,
+                    child: Text(localizations.dialogDownloadAppYes),
                   ),
                 ],
               ));
     }
-    print('got file ${file.name}');
-    if (file.size > maxSize) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              'The file you selected is too large. The maximum allowed size is 2GB')));
+    _logger.info('got file ${file.name}');
+    if (file.size > maxUploadSize) {
+      ScaffoldMessenger.of(context).snack(
+          localizations.errorFileTooLarge(Utils.humanSize(maxUploadSize)));
       return;
     }
-    setState(() => AppLogic.uploadingQueue
-        .add(UploadingFile(uploadgramFile: file, fileKey: UniqueKey())));
+    WebAPIWrapper().enqueueUpload(file).then((value) => refreshList());
+  }
+
+  void refreshList() {
+    if (_key.currentState == null ||
+        !_key.currentState!.mounted ||
+        UploadedFiles().length == 0) {
+      setState(() {});
+      return;
+    }
+    _key.currentState!.setState(() {});
+  }
+
+  void onOnlineChanged() {
+    if (_canUploadNotifier.value) {
+      checkForUpdates(context);
+    }
   }
 
   @override
   void initState() {
-    _initStateAsync();
+    SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+      initializeOrRefreshNotifications(AppLocalizations.of(context));
+    });
+    _future = _initStateAsync();
+    _canUploadNotifier.addListener(onOnlineChanged);
+    WidgetsBinding.instance?.addObserver(this);
     super.initState();
   }
 
   Future<void> _initStateAsync() async {
     await AppLogic.getFiles();
-    // this function is used to refresh the state, so, refresh the files list
-    setState(() => null);
+    await WebAPIWrapper().ensureInitialized();
+    await ThumbnailsMemoryCache.init();
     if (kIsWeb) {
-      _connectivity.checkConnectivity().then(_checkConnection);
+      checkConnection();
       InternalAPIWrapper.listenDropzone(context, uploadFile);
     }
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen(_checkConnection);
+        Connectivity().onConnectivityChanged.listen(_checkConnection);
   }
+
+  Future<void> checkConnection() =>
+      Connectivity().checkConnectivity().then(_checkConnection);
 
   Future<void> _checkConnection(ConnectivityResult connectivityResult) async {
     _canUploadNotifier.value = false;
-    print('Check connection called.');
+    _logger.info('Check connection called.');
     if (connectivityResult != ConnectivityResult.none) {
-      if (connectivityResult == ConnectivityResult.mobile)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('WARNING: You are using Mobile Data!')));
+      // if (connectivityResult == ConnectivityResult.mobile)
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(content: Text('WARNING: You are using Mobile Data!')));
       return _checkUploadgramConnection();
     }
   }
 
   Future<void> _checkUploadgramConnection() async {
     _lastConnectivityTimer?.cancel();
-    if (await AppLogic.webApi.checkNetwork()) {
+    if (await WebAPIWrapper().checkNetwork()) {
       _canUploadNotifier.value = true;
     } else {
       if (_checkSeconds < 90) _checkSeconds += 15;
+      final localizations = AppLocalizations.of(context);
       _lastConnectivityTimer =
           Timer(Duration(seconds: _checkSeconds), _checkUploadgramConnection);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              'Uploadgram is down. Checking again in $_checkSeconds seconds.'),
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).snack(
+          localizations.errorUploadgramDown(_checkSeconds),
           action: SnackBarAction(
-              label: 'Try now',
-              textColor: Theme.of(context).accentColor,
-              onPressed: () {
-                _checkUploadgramConnection();
-              })));
+              label: localizations.actionSnackbarTryNow,
+              onPressed: _checkUploadgramConnection),
+          duration: Duration(seconds: _checkSeconds));
     }
   }
 
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
+    _lastConnectivityTimer?.cancel();
+    WidgetsBinding.instance?.removeObserver(this);
+    _selectedFiles.dispose();
+
+    _canUploadNotifier.removeListener(onOnlineChanged);
+    _canUploadNotifier.dispose();
     super.dispose();
   }
 
   List<Widget> _buildAppBarActions() {
     List<Widget> actions = [];
-    if (selectedFiles.length > 0) {
+    final localizations = AppLocalizations.of(context);
+    if (_selectedFiles.length > 0) {
       actions = [
-        if (selectedFiles.length < AppLogic.files.length)
+        if (_selectedFiles.length < UploadedFiles().length)
           IconButton(
-            key: Key('select_all'),
-            icon: Icon(Icons.select_all),
+            key: const Key('select_all'),
+            icon: const Icon(Icons.select_all),
             onPressed: () =>
-                selectedFiles.value = List<String>.from(AppLogic.files.keys),
-            tooltip: 'Select all the files',
+                _selectedFiles.value = List<String>.from(UploadedFiles().keys),
+            tooltip: localizations.selectAllTooltip,
           ),
         IconButton(
-          key: Key('delete'),
-          icon: Icon(Icons.delete),
+          key: const Key('delete'),
+          icon: const Icon(Icons.delete),
           onPressed: () {
-            handleFileDelete(List.from(selectedFiles.value),
-                onYes: () => selectedFiles.clear());
+            handleFileDelete(List.from(_selectedFiles.value),
+                onYes: () => _selectedFiles.clear());
           },
-          tooltip: 'Delete selected file(s)',
+          tooltip: localizations.deleteAppbarTooltip,
         ),
         IconButton(
-          key: Key('export'),
-          icon: Icon(Icons.get_app),
+          key: const Key('export'),
+          icon: const Icon(Icons.get_app),
           onPressed: () async {
-            Map _exportFiles = {};
-            selectedFiles.value
-                .forEach((e) => _exportFiles[e] = AppLogic.files[e]);
-            String _filename = 'uploadgram_files.json';
-            if (selectedFiles.length == 1)
-              _filename = _exportFiles[selectedFiles[0]]['filename'] + '.json';
-            if (await AppLogic.platformApi
-                    .saveFile(_filename, json.encode(_exportFiles)) ==
-                false) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Couldn\'t export files.'),
-              ));
+            final Map<String, UploadedFile> _exportFiles = await Future.wait(
+                    _selectedFiles.value.map((e) => UploadedFiles()[e]
+                        .then((value) => MapEntry(e, value!))))
+                .then((value) => Map.fromEntries(value));
+            final _result =
+                await InternalAPIWrapper().exportFiles(_exportFiles);
+            if (_result == false || _result == null) {
+              ScaffoldMessenger.of(context).snack(localizations.exportingError);
             }
           },
-          tooltip: 'Export selected file(s)',
+          tooltip: localizations.exportListTooltip,
         )
       ];
     } else {
+      sortButtonBuilder(context) => ValueListenableBuilder(
+            valueListenable: UploadedFiles().listenable,
+            builder: (context, _, __) {
+              if (UploadedFiles().length > 1) {
+                return IconButton(
+                    tooltip: localizations.sortTooltip,
+                    icon: const Icon(Icons.sort),
+                    onPressed: () => showDialog<SortOptions>(
+                                context: context,
+                                builder: (BuildContext context) => SortByDialog(
+                                    sortOptions: settings.preferredSortOptions))
+                            .then((SortOptions? sortOptions) async {
+                          if (sortOptions != null) {
+                            AppLogic.showFullscreenLoader(context);
+                            if (await UploadedFiles().sort(sortOptions)) {
+                              refreshList();
+                            }
+                            settings.preferredSortOptions = sortOptions;
+                            Navigator.pop(context);
+                          }
+                        }));
+              }
+              return const SizedBox();
+            },
+          );
+      final Widget sortButton;
+      if (!UploadedFiles().isInitialized) {
+        sortButton = FutureBuilder(
+          builder: (context, snapshot) =>
+              snapshot.connectionState == ConnectionState.done
+                  ? sortButtonBuilder(context)
+                  : const SizedBox(),
+          future: _future,
+        );
+      } else {
+        sortButton = sortButtonBuilder(context);
+      }
       actions = [
-        IconButton(
-            icon: Icon(Icons.sort),
-            onPressed: () => showDialog<SortOptions>(
-                        context: context,
-                        builder: (BuildContext context) =>
-                            SortByDialog(AppSettings.preferredSortOptions))
-                    .then((SortOptions? sortOptions) async {
-                  if (sortOptions != null) {
-                    AppLogic.showFullscreenLoader(context);
-                    if (await AppLogic.files.sort(sortOptions))
-                      setState(() => AppLogic.files);
-                    AppSettings.preferredSortOptions = sortOptions;
-                    Navigator.pop(context);
-                  }
-                })),
+        sortButton,
         PopupMenuButton(
-          icon: Icon(Icons.more_vert),
-          onSelected: (UploadgramAction selected) async {
-            switch (selected) {
-              case UploadgramAction.export_files:
-                if (AppLogic.files.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(
-                        'Your files list is empty. Upload some files before exporting them.'),
-                  ));
+            icon: const Icon(Icons.more_vert),
+            onSelected: (UploadgramMoreSettingsAction selected) async {
+              switch (selected) {
+                case UploadgramMoreSettingsAction.exportFiles:
+                  if (UploadedFiles().isEmpty) {
+                    ScaffoldMessenger.of(context)
+                        .snack(localizations.exportingErrorEmpty);
+                    break;
+                  }
+                  if (await InternalAPIWrapper()
+                          .exportFiles(await UploadedFiles().toJson()) !=
+                      true) {
+                    ScaffoldMessenger.of(context)
+                        .snack(localizations.exportingError);
+                  }
                   break;
-                }
-                if (await AppLogic.platformApi.saveFile(
-                        'uploadgram_files.json', json.encode(AppLogic.files)) !=
-                    true) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Couldn\'t export files.'),
-                  ));
-                }
-                break;
-              case UploadgramAction.import_files:
-                late Map? _importedFiles;
-                try {
-                  _importedFiles = await AppLogic.platformApi.importFiles();
-                } on FormatException {
-                  // ScaffoldMessenger.of(context)
-                  //     .showSnackBar(SnackBar(content: Text(e.toString())));
-                  _importedFiles = null;
-                }
-                if (_importedFiles == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('The selected file is not valid')));
+                case UploadgramMoreSettingsAction.importFiles:
+                  Map? _importedFiles;
+                  try {
+                    _importedFiles = await InternalAPIWrapper().importFiles();
+                  } catch (e) {
+                    _logger.finest(e);
+                    _importedFiles = null;
+                  }
+                  if (_importedFiles == null) {
+                    ScaffoldMessenger.of(context)
+                        .snack(localizations.importingErrorInvalid);
+                    break;
+                  }
+                  UploadedFiles()
+                      .addAll(
+                          _importedFiles.cast<String, Map<dynamic, dynamic>>())
+                      .then((value) => refreshList());
                   break;
-                }
-                AppLogic.files.addAll(
-                    _importedFiles.cast<String, Map<dynamic, dynamic>>());
-                setState(() => null);
-                break;
-              case UploadgramAction.settings_tile:
-                List previousSettings = [
-                  AppSettings.fabTheme,
-                  AppSettings.filesTheme
-                ];
-                await Navigator.pushNamed(context, '/settings');
-                if (previousSettings !=
-                    [AppSettings.fabTheme, AppSettings.filesTheme]) {
-                  setState(() => null);
-                }
-                break;
-              case UploadgramAction.download_app:
-                AppLogic.webApi.downloadApp();
-                break;
-              case UploadgramAction.about_tile:
-                Navigator.of(context).pushNamed('/about');
-                break;
-            }
-          },
-          itemBuilder: (BuildContext context) {
-            return [
-              PopupMenuItem(
-                  value: UploadgramAction.import_files,
-                  child: Row(children: [
-                    Icon(Icons.publish,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
-                    SizedBox(width: 15),
-                    Text('Import files list'),
-                  ])),
-              PopupMenuItem(
-                  value: UploadgramAction.export_files,
-                  child: Row(children: [
-                    Icon(Icons.get_app,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
-                    SizedBox(width: 15),
-                    Text('Export files list'),
-                  ])),
-              PopupMenuItem(
-                  value: UploadgramAction.settings_tile,
-                  child: Row(children: [
-                    Icon(Icons.settings,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
-                    SizedBox(width: 15),
-                    Text('Settings'),
-                  ])),
-              if (AppLogic.platformApi.isWebAndroid() == true)
-                PopupMenuItem(
-                    value: UploadgramAction.download_app,
-                    child: Row(children: [
-                      Icon(Icons.android,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black),
-                      SizedBox(width: 15),
-                      Text('Download the app!'),
-                    ])),
-              PopupMenuItem(
-                  value: UploadgramAction.about_tile,
-                  child: Row(children: [
-                    Icon(Icons.info,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black),
-                    SizedBox(width: 15),
-                    Text('About'),
-                  ])),
-            ];
-          },
-        ),
+                case UploadgramMoreSettingsAction.settingsTile:
+                  List previousSettings = [
+                    settings.fabTheme,
+                    settings.filesTheme
+                  ];
+                  Endpoint previousEndpoints = settings.endpoint;
+                  Navigator.pushNamed(context, '/settings').then((value) {
+                    if (previousEndpoints != settings.endpoint) {
+                      checkConnection();
+                    }
+                    if (!listEquals(previousSettings, [
+                      settings.fabTheme,
+                      settings.filesTheme
+                    ])) setState(() {});
+                  });
+                  break;
+                case UploadgramMoreSettingsAction.downloadApp:
+                  WebAPIWrapper().downloadApp();
+                  break;
+                case UploadgramMoreSettingsAction.aboutTile:
+                  Navigator.of(context).pushNamed('/about');
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+                  PopupMenuItemIcon(
+                    value: UploadgramMoreSettingsAction.importFiles,
+                    child: Text(localizations.importTileTitle),
+                    icon: const Icon(Icons.publish),
+                  ),
+                  PopupMenuItemIcon(
+                    value: UploadgramMoreSettingsAction.exportFiles,
+                    child: Text(localizations.exportTileTitle),
+                    icon: const Icon(Icons.get_app),
+                  ),
+                  PopupMenuItemIcon(
+                    value: UploadgramMoreSettingsAction.settingsTile,
+                    child: Text(localizations.settingsTitle),
+                    icon: const Icon(Icons.settings),
+                  ),
+                  if (InternalAPIWrapper().isWebAndroid() == true)
+                    PopupMenuItemIcon(
+                      value: UploadgramMoreSettingsAction.downloadApp,
+                      child: Text(localizations.downloadAppTileTitle),
+                      icon: const Icon(Icons.android),
+                    ),
+                  PopupMenuItemIcon(
+                    value: UploadgramMoreSettingsAction.aboutTile,
+                    child: Text(localizations.aboutTitle),
+                    icon: const Icon(Icons.info),
+                  ),
+                ]),
       ];
     }
     return actions;
   }
 
+  /// Before actually exiting the app, it will first check
+  /// if [_selectedFiles] has elements, if there are, it will clear
+  /// the list instead of exiting, if there aren't it will just exit.
+  Future<bool> onWillPop() async {
+    if (_selectedFiles.isEmpty) return true;
+    _selectedFiles.clear();
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-          child: ValueListenableBuilder(
-              builder: (BuildContext context, List<String> selected, _) =>
-                  AppBar(
-                    title: selected.length > 0
-                        ? Text(
-                            selected.length.toString() +
-                                ' file' +
-                                (selected.length > 1 ? 's' : '') +
-                                ' selected',
-                          )
-                        : Text('Uploadgram'),
-                    leading: selected.length > 0
-                        ? IconButton(
-                            icon: Icon(Icons.clear),
-                            onPressed: () => selectedFiles.clear())
+    final localizations = AppLocalizations.of(context);
+    final currentLocale = Localizations.localeOf(context);
+
+    final isLargeScreen = MediaQuery.of(context).size.width > 905;
+    // ignore: unused_local_variable, will be used later on
+    final isWideScreen = MediaQuery.of(context).size.width > 600;
+
+    if (AppLogic.currentLocale.value != currentLocale) {
+      AppLogic.currentLocale.value = currentLocale;
+    }
+    return FutureBuilder(
+        // This will show a blank screen while the app is doing its work
+        builder: (context, snapshot) => WillPopScope(
+            onWillPop: onWillPop,
+            child: ChangeNotifierProvider.value(
+              value: _selectedFiles,
+              child: Scaffold(
+                appBar: PreferredSize(
+                    child: FilesSelectedBuilder(
+                        builder: (BuildContext context, int selected, _) =>
+                            AppBar(
+                              backgroundColor:
+                                  selected > 0 ? Colors.black87 : null,
+                              foregroundColor:
+                                  selected > 0 ? Colors.white : null,
+                              title: selected > 0
+                                  ? Text(
+                                      localizations
+                                          .titleFilesSelected(selected),
+                                    )
+                                  : const Text('Uploadgram'),
+                              leading: selected > 0
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () => _selectedFiles.clear())
+                                  : null,
+                              actions: _buildAppBarActions(),
+                            )),
+                    preferredSize: AppBar().preferredSize),
+                body: SafeArea(
+                  child: snapshot.connectionState == ConnectionState.done
+                      ? UploadedFiles().length > 0 || AppLogic.queue.isNotEmpty
+                          ? Scrollbar(
+                              isAlwaysShown: isLargeScreen,
+                              child: settings.filesTheme == FilesTheme.list
+                                  ? FilesList(key: _key)
+                                  : FilesGrid(key: _key))
+                          : Center(
+                              child: RichText(
+                                  text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                            text: localizations.noFilesTitle,
+                                            style:
+                                                const TextStyle(fontSize: 32)),
+                                        const TextSpan(text: '\n'),
+                                        TextSpan(
+                                            text: localizations.noFilesSubtitle,
+                                            style:
+                                                const TextStyle(fontSize: 18)),
+                                      ],
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText2),
+                                  textAlign: TextAlign.center))
+                      : const Center(child: CircularProgressIndicator()),
+                ),
+                floatingActionButton: snapshot.connectionState ==
+                        ConnectionState.done
+                    ? ValueListenableBuilder(
+                        builder: (BuildContext context, bool _canUpload, _) =>
+                            settings.fabTheme == FabTheme.centerExtended
+                                ? FloatingActionButton.extended(
+                                    onPressed: _uploadFile,
+                                    label:
+                                        Text(localizations.uploadExtendedFAB),
+                                    icon: _canUpload
+                                        ? const Icon(Icons.cloud_upload)
+                                        : const CircularProgressIndicator(
+                                            color: Colors.white))
+                                : FloatingActionButton(
+                                    onPressed: _uploadFile,
+                                    child: _canUpload
+                                        ? const Icon(Icons.cloud_upload)
+                                        : const CircularProgressIndicator(
+                                            color: Colors.white)),
+                        valueListenable: _canUploadNotifier)
+                    : null,
+                floatingActionButtonLocation:
+                    snapshot.connectionState == ConnectionState.done
+                        ? (settings.fabTheme == FabTheme.centerExtended
+                            ? FloatingActionButtonLocation.centerFloat
+                            : FloatingActionButtonLocation.endFloat)
                         : null,
-                    actions: _buildAppBarActions(),
-                  ),
-              valueListenable: selectedFiles),
-          preferredSize: AppBar().preferredSize),
-      // replace this with a future builder of _initStateAsync
-      body: !AppLogic.files.isInitialised
-          ? Center(child: CircularProgressIndicator())
-          : AppLogic.files.length > 0 || AppLogic.uploadingQueue.length > 0
-              ? Scrollbar(
-                  isAlwaysShown: MediaQuery.of(context).size.width > 950,
-                  child: AppSettings.filesTheme == FilesTheme.list
-                      ? FilesList(selectedFiles: selectedFiles)
-                      : FilesGrid(selectedFiles: selectedFiles))
-              : Center(
-                  child: RichText(
-                      text: TextSpan(children: [
-                        TextSpan(
-                            text: 'There\'s nothing here\n',
-                            style: TextStyle(fontSize: 32)),
-                        TextSpan(
-                            text: '...yet', style: TextStyle(fontSize: 18)),
-                      ], style: Theme.of(context).textTheme.bodyText2),
-                      textAlign: TextAlign.center)),
-      floatingActionButton: ValueListenableBuilder(
-          builder: (BuildContext context, bool _canUpload, _) => AppSettings
-                      .fabTheme ==
-                  FabTheme.centerExtended
-              ? FloatingActionButton.extended(
-                  onPressed: _uploadFile,
-                  label: Text("UPLOAD"),
-                  icon: _canUpload
-                      ? const Icon(Icons.cloud_upload)
-                      : CircularProgressIndicator())
-              : AppSettings.fabTheme == FabTheme.left
-                  ? FloatingActionButton(
-                      onPressed: _uploadFile,
-                      child: _canUpload
-                          ? const Icon(Icons.cloud_upload)
-                          : CircularProgressIndicator())
-                  : Container(), // Temporarily, while settings are getting fetched
-          valueListenable: _canUploadNotifier),
-      floatingActionButtonLocation:
-          AppSettings.fabTheme == FabTheme.centerExtended
-              ? FloatingActionButtonLocation.centerFloat
-              : AppSettings.fabTheme == FabTheme.left
-                  ? FloatingActionButtonLocation.endFloat
-                  : null,
-    );
+              ),
+            )),
+        future: _future);
   }
 }
 
 class SortByDialog extends StatefulWidget {
   final SortOptions? sortOptions;
-  SortByDialog([this.sortOptions]);
+  const SortByDialog({Key? key, this.sortOptions}) : super(key: key);
 
   @override
   _SortByDialogState createState() => _SortByDialogState();
 }
 
 class _SortByDialogState extends State<SortByDialog> {
-  SortType _sortType = SortType.ascending;
+  SortType _sortType = SortType.descending;
   SortBy _sortBy = SortBy.name;
 
   @override
@@ -595,30 +679,31 @@ class _SortByDialogState extends State<SortByDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return AlertDialog(
-        title: Text('Sort by'),
+        title: Text(localizations.sortByDialogTitle),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           RadioListTile(
             value: SortBy.name,
             groupValue: _sortBy,
             onChanged: (SortBy? value) => setState(() => _sortBy = value!),
-            title: Text('Name'),
+            title: Text(localizations.nameText),
           ),
           RadioListTile(
             value: SortBy.size,
             groupValue: _sortBy,
             onChanged: (SortBy? value) => setState(() => _sortBy = value!),
-            title: Text('Size'),
+            title: Text(localizations.sizeText),
           ),
           RadioListTile(
-            value: SortBy.upload_date,
+            value: SortBy.uploadDate,
             groupValue: _sortBy,
             onChanged: (SortBy? value) => setState(() => _sortBy = value!),
-            title: Text('Upload date'),
+            title: Text(localizations.uploadDateText),
           ),
-          Divider(),
+          const Divider(),
           CheckboxListTile(
-              title: Text('Ascending'),
+              title: Text(localizations.sortByDialogAscending),
               value: _sortType == SortType.ascending,
               onChanged: (bool? value) {
                 if (value == null) return;
@@ -628,11 +713,12 @@ class _SortByDialogState extends State<SortByDialog> {
         ]),
         actions: [
           TextButton(
-              onPressed: Navigator.of(context).pop, child: Text('CANCEL')),
+              onPressed: Navigator.of(context).pop,
+              child: Text(localizations.dialogCancel)),
           TextButton(
               onPressed: () => Navigator.pop(
                   context, SortOptions(sortBy: _sortBy, sortType: _sortType)),
-              child: Text('OK'))
+              child: Text(localizations.dialogOK))
         ]);
   }
 }

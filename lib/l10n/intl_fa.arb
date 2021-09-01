@@ -1,0 +1,342 @@
+{
+    "language": "فارسی",
+    "@language": {
+        "description": "The language's name (in YOUR translating language)"
+    },
+    "aboutTitle": "درباره ما",
+    "@aboutTitle": {
+        "description": "The title of the About route"
+    },
+    "aboutWebsiteText": "وب‌سایت",
+    "@aboutWebsiteText": {
+        "description": "The website field's text"
+    },
+    "aboutSponsorTileSubtitle": "نگاهی به اسپانسر ما بیندازید!",
+    "@aboutSponsorTileSubtitle": {
+        "description": "The subtitle of the sponsor tile"
+    },
+    "aboutTelegramChannelTileTitle": "کانال تلگرام",
+    "@aboutTelegramChannelTileTitle": {
+        "description": "The title of the Telegram Channel tile"
+    },
+    "aboutTelegramChannelTileSubtitle": "در توسعه Uploadgram به روز باشید!",
+    "@aboutTelegramChannelTileSubtitle": {
+        "description": "The subtitle of the Telegram Channel tile"
+    },
+    "aboutTelegramGroupTileTitle": "گروه تلگرام",
+    "@aboutTelegramGroupTileTitle": {
+        "description": "The title of the Telegram Group tile"
+    },
+    "aboutTelegramGroupTileSubtitle": "با دیگران درباره Uploadgram بحث و گفتگو کنید!",
+    "@aboutTelegramGroupTileSubtitle": {
+        "description": "The subtitle of the Telegram Group tile"
+    },
+    "aboutAppRepositoryTileTitle": "مخزن برنامه",
+    "@aboutAppRepositoryTileTitle": {
+        "description": "The app repository tile's title"
+    },
+    "aboutAppRepositoryTileSubitle": "کد برنامه را بررسی کنید!",
+    "@aboutAppRepositoryTileSubitle": {
+        "description": "The app repository tile's subtitle"
+    },
+    "aboutAuthorsTitle": "نویسندگان",
+    "@aboutAuthorsTitle": {
+        "description": "The Authors title of the About section"
+    },
+    "aboutPato05Subtitle": "مالک فعلی Uploadgram بک‌اند و فرانت‌اند را نوشته است",
+    "@aboutPato05Subtitle": {
+        "description": "Description of Pato05's role in Uploadgram"
+    },
+    "aboutLibrariesUsedInBackendTitle": "کتابخانه های استفاده شده درbackend",
+    "@aboutLibrariesUsedInBackendTitle": {
+        "description": "Libraries used in the backend title in the About section"
+    },
+    "aboutAmphpSubtitle": "مجموعه ای از کتابخانه های سریع و سریع PHP برای PHP ناهمزمان.",
+    "@aboutAmphpSubtitle": {
+        "description": "Description of the Amphp library"
+    },
+    "aboutComposerSubtitle": "یک مدیر وابستگی PHP.",
+    "@aboutComposerSubtitle": {
+        "description": "Description of Composer"
+    },
+    "aboutAlsoCheckOutTitle": "همچنین بررسی کنید",
+    "@aboutAlsoCheckOutTitle": {
+        "description": "\"Also check out\" subsection's title"
+    },
+    "aboutSnapdropSubtitle": "وب سایتی برای به اشتراک گذاشتن فایل ها بین دستگاه ها در شبکه محلی شما",
+    "@aboutSnapdropSubtitle": {
+        "description": "Description of Snapdrop.io"
+    },
+    "aboutTelegramSubtitle": "برنامه پیام رسان عالی ، ذخیره سازی Uploadgram برای پرونده ها.",
+    "@aboutTelegramSubtitle": {
+        "description": "Description of Telegram"
+    },
+    "aboutLicensesTileTitle": "لایسنس ها و کتابخانه های مورد استفاده در برنامه",
+    "@aboutLicensesTileTitle": {
+        "description": "The title of the licenses tile"
+    },
+    "aboutLicensesTileSubtitle": "برای دیدن کتابخانه های مورد استفاده در برنامه و مجوز های آنها اینجا کلیک کنید.",
+    "@aboutLicensesTileSubtitle": {
+        "description": "The subtitle of the licenses tile"
+    },
+    "dialogOK": "باشه",
+    "@dialogOK": {
+        "description": "The OK button in a generic dialog, must be all uppercase."
+    },
+    "dialogCancel": "انصراف",
+    "@dialogCancel": {
+        "description": "The CANCEL button in a generic dialog, must be all uppercase."
+    },
+    "dialogYes": "بله",
+    "@dialogYes": {
+        "description": "The YES button in a generic dialog, must be all uppercase."
+    },
+    "dialogNo": "خیر",
+    "@dialogNo": {
+        "description": "The NO button in a generic dialog, must be all uppercase."
+    },
+    "dialogRenameTitle": "تغییر نام فایل",
+    "dialogRenameDescription": "نام جدید برای این فایل را وارد کنید",
+    "errorFileNotFound": "فایل پیدا نشد.",
+    "dialogDeleteTitle": "حذف فایل",
+    "errorSomeFilesHaveNotBeenDeleted": "برخی از پرونده ها حذف نشده اند (کد: {statusCode}).",
+    "@errorSomeFilesHaveNotBeenDeleted": {
+        "placeholders": {
+            "statusCode": {}
+        }
+    },
+    "errorUnknown": "هنگام حذف پرونده خطایی رخ داد: {message}",
+    "@errorUnknown": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "tosDialogTitle": "قبل از ادامه ...",
+    "tosDialogContent": "شرایط استفاده از خدمات\n1. بارگذاری مطالب پورنوگرافی یا مطالبی که خشونت را ترویج می کنند ممنوع است.\n2. کلاهبرداری در کاربران با استفاده از سرویس به هیچ وجه ممنوع است.\n3. هر نوع ماده ای که این شرایط را نقض کند ، ممکن است حذف شود و در نتیجه آپلود کننده ممنوع شود.\n3.1 حذف محتوا ممکن است از طریق abuse@uploadgram.me یا از طریق Telegram (@ Pato05) درخواست شود\n\nسیاست حفظ حریم خصوصی\n- Uploadgram نام شما یا اطلاعات حساس دیگری را ذخیره نمی کند\n- IP شما در پایگاه داده Uploadgram ذخیره می شود (یا اگر از ربات استفاده می کنید شناسه کاربری خود را)\n- Uploadgram از Arc برای سرعت بخشیدن به وب سایت استفاده می کند (اطلاعات بیشتر در https://arc.io/about/ در دسترس است)\n\nسیاست کوکی\n- Uploadgram از کوکی ها در داشبورد استفاده می کند تا لیست پرونده ها را در جلسات ادامه دهد\n- Arc ممکن است از کوکی ها در وب سایت استفاده کند (اطلاعات بیشتر در https://arc.io/about/ در دسترس است)",
+    "@tosDialogContent": {
+        "description": "The terms of service of Uploadgram"
+    },
+    "tosErrorDisagree": "برای آپلود فایل ها ابتدا شرایط استفاده از خدمات را بپذیرید.",
+    "tosDialogOK": "حالا می‌ةوانید پرونده ها را آپلود کنید!",
+    "tosDialogAgree": "فهمیدم!",
+    "@tosDialogAgree": {
+        "description": "The 'GOT IT!' button in the TOS dialog, must be all uppercase."
+    },
+    "tosDialogDisagree": "مخالفم",
+    "@tosDialogDisagree": {
+        "description": "The 'I DISAGREE' button in the TOS dialog, must be all uppercase."
+    },
+    "dialogPermissionsNotGranted": "مجوز ها اعطا نشده اند. برای تلاش مجدد دکمه را کلیک کنید، یا در تنظیمات آنها را اعطا کنید.",
+    "errorText": "خطا",
+    "dialogDownloadAppTitle": "سلام!",
+    "dialogDownloadAppSubtitle": "به نظر میرسد شما از Uploadgram لذت میبرید! آیا میدانستید Uploadgram نسخه اندروید هم دارد؟\nشما می‌توانید با کلیک روی دکمه زیر یا کلیک روی سه نقطه برنامه را بارگیری کنید!",
+    "dialogDownloadAppNo": "نه، مرسی",
+    "dialogDownloadAppYes": "دانلود برنامه!",
+    "errorFileTooLarge": "فایل انتخاب شده خیلی بزرگ است. حداکثر اندازه مجاز {maxSize} است",
+    "@errorFileTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "String"
+            }
+        }
+    },
+    "errorUploadgramDown": "{seconds,plural, =1{Uploadgram از کار افتاده است. دوباره در {seconds} ثانیه بررسی کنید.} other{Uploadgram از کار افتاده است. دوباره در {seconds} ثانیه بررسی کنید.}}",
+    "@errorUploadgramDown": {
+        "placeholders": {
+            "seconds": {}
+        }
+    },
+    "actionSnackbarTryNow": "هم اکنون امتحان کنید",
+    "actionSnackbarDismiss": "رد کردن",
+    "@actionSnackbarDismiss": {
+        "description": "A generic 'DISMISS' button in a snackbar, must be all uppercase."
+    },
+    "errorFileEmpty": "لطفاً یک فایل غیر خالی انتخاب کنید.",
+    "deleteAppbarTooltip": "حذف فایل(های) انتخاب شده",
+    "selectAllTooltip": "انتخاب همه فایل ها",
+    "exportListTooltip": "حذف فایل(های) انتخاب شده",
+    "exportingError": "پرونده ها صادر نشدند.",
+    "sortTooltip": "مرتب سازی فایل ها",
+    "importTileTitle": "وارد کردن لیست فایل ها",
+    "exportTileTitle": "خروجی گرفتن لیست فایل ها",
+    "downloadAppTileTitle": "دانلود برنامه",
+    "exportingErrorEmpty": "لیست فایل های شما خالی است. قبل از خروجی گرفتن مقداری فایل آپلود کنید.",
+    "importingErrorInvalid": "فایل انتخاب شده معتبر نمی‌باشد.",
+    "titleFilesSelected": "{count,plural, =1{{count} فایل انتخاب شده} other{{count} فایل انتخاب شده}}",
+    "@titleFilesSelected": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "uploadExtendedFAB": "آپلود",
+    "@uploadExtendedFAB": {
+        "description": "The Floating Action Button's text, must be all uppercase."
+    },
+    "sortByDialogTitle": "مرتب سازی بر اساس",
+    "nameText": "نام",
+    "sizeText": "اندازه",
+    "uploadDateText": "تاریخ آپلود",
+    "linkText": "لینک",
+    "sortByDialogAscending": "صعودی",
+    "settingsTitle": "تنظیمات",
+    "uploadedOnText": "آپلود شده روی",
+    "fileInfoTitle": "مشخصات فایل",
+    "renameFileTooltip": "تغییر نام فایل",
+    "shareLinkText": "اشتراک لینک این فایل",
+    "linkCopySuccessful": "لینک با موفقیت در کلیپ بورد کپی شد!",
+    "linkCopyError": "نمی‌توان لینک فایل را کپی کرد. لطفا به صورت دستی کپی کنید.",
+    "deleteThisFileTile": "حذف فایل",
+    "noFilesTitle": "هنوز اینجا چیزی نیست.",
+    "noFilesSubtitle": "برای شروع بارگذاری روی دکمه کلیک کنید!",
+    "uploadButtonThemesCenterExtended": "در وسط ، با متن (پیش فرض)",
+    "filesListThemesGrid": "شبکه ای (پیش فرض)",
+    "filesListThemesGridCompact": "شبکه جمع و جور",
+    "filesListThemesList": "لیست",
+    "appThemesSystem": "استفاده از پوسته سیستم",
+    "appThemesDark": "تاریک",
+    "appThemesLight": "روشن",
+    "sectionPersonalizationText": "شخصی سازی",
+    "@sectionPersonalizationText": {
+        "description": "Personalization section's title. Section titles MUST be all uppercase."
+    },
+    "uploadButtonTheme": "پوسته دکمه بارگذاری",
+    "uploadButtonThemeTooltip": "پوسته دکمه بارگذاری را انتخاب کنید",
+    "filesListTheme": "پوسته لیست فایل ها",
+    "filesListThemeTooltip": "تغییر پوسته لیست فایل ها",
+    "appThemeTileTitle": "پوسته برنامه",
+    "appThemeTileTooltip": "تغییر پوسته برنامه",
+    "sectionThumbnailsText": "بند انگشتی",
+    "@sectionThumbnailsText": {
+        "description": "Thumbnails section's title. Section titles MUST be all uppercase."
+    },
+    "toggleThumbnailGeneration": "تغییر تصویر کوچک",
+    "saveFullSizedPhotos": "ذخیره عکس ها با سایز کامل",
+    "smallThumbnailSize": "سایز تصویر بند انگشتی کوچک",
+    "smallThumbnailSizeSubtitle": "کنونی: {current}",
+    "@smallThumbnailSizeSubtitle": {
+        "placeholders": {
+            "current": {}
+        }
+    },
+    "clearThumbnailsData": "پاک کردن داده های بند انگشتی",
+    "clearSmallThumbnails": "تصویر کوچک را پاک کنید",
+    "clearBigThumbnails": "تصویر کوچک، بزرگ شده را پاک کنید",
+    "clearAllThumbnails": "همه تصاویر کوچک را پاک کنید",
+    "changeEndpoints": "تغییر نقاط پایانی",
+    "changeEndpointsSubtitle": "اگر خودتان میزبان یک سرور Uploadgram هستید ، می توانید نقاط نهایی خود را در اینجا تغییر دهید!",
+    "clearAppFilesCache": "پاک کردن حافظه نهان پرونده ها",
+    "clearAppFilesCacheSubtitle": "هنگامی که فایلی را از حافظه داخلی خود بارگذاری می کنید استفاده نمی شود",
+    "endpointsText": "نتایج",
+    "endpointsMain": "اصلی",
+    "endpointsDownload": "بارگیری",
+    "endpointsAPI": "وب سرویس",
+    "endpointsDialogActionDefault": "پیش فرض",
+    "@endpointsDialogActionDefault": {
+        "description": "DEFAULT button in the endpoints dialog, must be all uppercase."
+    },
+    "endpointsDialogActionSave": "ذخیره",
+    "@endpointsDialogActionSave": {
+        "description": "SAVE button in the endpoints dialog, must be all uppercase."
+    },
+    "languageTileTitle": "زبان",
+    "languageTileSubtitle": "کنونی: {language}",
+    "@languageTileSubtitle": {
+        "placeholders": {
+            "language": {
+                "type": "String"
+            }
+        }
+    },
+    "selectLanguageDialogTitle": "زبان خود را انتخاب کنید",
+    "languageSystemText": "زبان سیستم",
+    "aboutTranslatorsTitle": "مترجمان",
+    "dropzoneDropFilesHere": "فایل های خود را اینجا رها کنید!",
+    "deleteText": "حذف",
+    "@deleteText": {
+        "description": "\"Delete\", it is only used in the right click context menu for now."
+    },
+    "renameText": "تغییرنام",
+    "@renameText": {
+        "description": "\"Rename\", it is only used in the right click context menu for now."
+    },
+    "linkCopyText": "کپی لینک",
+    "@linkCopyText": {
+        "description": "\"Copy link\", it is only used in the right click context menu for now."
+    },
+    "exportText": "خروجی گرفتن",
+    "@exportText": {
+        "description": "\"Export\", it is only used in the right click context menu for now."
+    },
+    "uploadProgressNotificationTitle": "اعلان پیشرفت آپلود",
+    "@uploadProgressNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadProgressNotificationDetails": "اعلان های وضعیت و پیشرفت آپلود",
+    "@uploadProgressNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationTitle": "اعلان اتمام آپلود",
+    "@uploadCompletedNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationDetails": "اعلان اتمام آپلود فایل",
+    "@uploadCompletedNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCanceled": "آپلود لغو شد",
+    "uploadFailedNotification": "آپلود ناموفق بود!",
+    "uploadCompletedNotification": "آپلود کامل شد!",
+    "uploadPausedNotification": "آپلود متوقف شد",
+    "secondsRemaining": "{relativeDateFormatted} باقی مانده",
+    "@secondsRemaining": {
+        "description": "The amount of time left formatted to \"X minutes Y seconds left\"",
+        "placeholders": {
+            "relativeDateFormatted": {
+                "type": "String"
+            }
+        }
+    },
+    "operationCompleting": "{percent}% انجام شده",
+    "@operationCompleting": {
+        "placeholders": {
+            "percent": {
+                "type": "String"
+            }
+        }
+    },
+    "accentColorTileTitle": "رنگ اصلی",
+    "appLogs": "گزارش‌ها",
+    "collapseAll": "بستن همه",
+    "expandAll": "باز کردن همه",
+    "updaterNoUpdatesAvailable": "بروزرسانی موجود نيست",
+    "updaterUpdateAvailable": "یک بروز رسانی جدید موجود است!",
+    "updaterIgnore": "نادیده‌ گرفتن",
+    "updaterNotNow": "الآن نه",
+    "updaterDownload": "دانلود",
+    "updaterCheckProgressInNotifications": "می توانید پیشرفت دانلود را در اعلان ها چک کنید!",
+    "checkForUpdatesTile": "چک کردن برای به روز رسانی های جدید",
+    "checkForUpdatesTileSubtitle": "چک کردن برای به روز رسانی های اپلیکیشن از گیتهاب",
+    "newUpdateNotificationTitle": "به روز رسانی جدید موجود است‌!",
+    "newUpdateNotificationBtnDownload": "بارگیری",
+    "newUpdateNotificationBtnIgnore": "نادیده گرفتن",
+    "downloadingUpdateNotificationTitle": "در حال بارگیری به روز رسانی...",
+    "updateCorruptedNotificationTitle": "به روز رسانی ناموفق بود",
+    "updateCorruptedNotificationSubtitle": "فایل APK دانلود شده خراب است!",
+    "errorCouldNotUploadFile": "فایل شما آپلود نشد (کد: {code})",
+    "@errorCouldNotUploadFile": {
+        "placeholders": {
+            "code": {}
+        }
+    },
+    "updaterHideProgressButton": "پنهان کردن",
+    "@updaterHideProgressButton": {
+        "description": "The 'HIDE' button on the downloding dialog, must be all uppercase"
+    },
+    "updaterErrorDownload": "دانلود فایل APK موفق نبود",
+    "generateThumbnailsTileTitle": "تولید تصاویر بند‌انگشتی",
+    "generateThumbnailsTileSubtitle": "ایجاد تصویر بند‌انگشتی برای همه پرونده ها",
+    "generateThumbnailsDialogTitle": "آیا مطمئن هستید که می خواهید برای همه فایلها تصویر بند‌انگشتی ایجاد کنید؟",
+    "actionCopy": "کپی"
+}

@@ -1,112 +1,121 @@
-// write about shit bla bla
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:uploadgram/widgets/uploadgram_logo.dart';
 
 class AboutRoute extends StatefulWidget {
+  const AboutRoute({Key? key}) : super(key: key);
+
   @override
   _AboutRouteState createState() => _AboutRouteState();
 }
 
 class _AboutRouteState extends State<AboutRoute> {
-  final List<MapEntry> _authors = {
-    'Pato05': {
-      'subtitle': 'Current Uploadgram owner, wrote backend and frontend',
-      'contacts': {
-        'Telegram': 'https://t.me/Pato05',
-        'Github': 'https://github.com/Pato05',
-        'Website': 'https://pato05mc.tk',
-      }
-    },
-    'ShiSHcat': {
-      'subtitle':
-          'Created and ideated Uploadgram originally. Helps in Uploadgram\'s development.',
-      'contacts': {
-        'Telegram': 'https://t.me/shishcat',
-        'Github': 'https://github.com/shishcat',
-        'Website': 'https://shish.cat',
-        'Uploadgram v1': 'https://github.com/shishcat/uploadgram-v1',
-      }
-    },
-  }.entries.toList();
-
-  final List<MapEntry> _backendLibs = {
-    'MadelineProto': {
-      'subtitle':
-          'Amazing MTProto client fully asynchronous using Amphp, Uploadgram\'s core. By @danogentili.',
-      'link': 'https://github.com/danog/madelineproto'
-    },
-    'Amphp': {
-      'subtitle':
-          'Collection of blazingly fast PHP Libraries for Asynchronous PHP.',
-      'link': 'https://amphp.org'
-    },
-    'Composer': {
-      'subtitle': 'A PHP Dependency manager.',
-      'link': 'https://getcomposer.org'
-    }
-  }.entries.toList();
-
-  final List<MapEntry> _alsoCheckOut = {
-    'Snapdrop': {
-      'subtitle':
-          'A website to share files between devices on your local network',
-      'link': 'https://snapdrop.net'
-    },
-    'Telegram': {
-      'subtitle': 'Great messaging app, Uploadgram\'s storage for files.',
-      'link': 'https://telegram.org'
-    }
-  }.entries.toList();
-
+  static const _uploadgramEnglishGroup = 'https://t.me/uploadgrammegroup';
+  static const _uploadgramRussianGroup =
+      'https://t.me/joinchat/KYwmw4LndLo1NWY0';
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final List<MapEntry> _authors = {
+      'Pato05': {
+        'subtitle': localizations.aboutPato05Subtitle,
+        'contacts': {
+          'Telegram': 'https://t.me/Pato05',
+          'Github': 'https://github.com/Pato05',
+          localizations.aboutWebsiteText: 'https://pato05mc.tk',
+        }
+      },
+      'ShiSHcat': {
+        'subtitle': localizations.aboutShishcatSubtitle,
+        'contacts': {
+          'Telegram': 'https://t.me/shishcat',
+          'Github': 'https://github.com/shishcat',
+          localizations.aboutWebsiteText: 'https://shish.cat',
+          'Uploadgram v1': 'https://github.com/shishcat/uploadgram-v1',
+        }
+      },
+    }.entries.toList();
+
+    final List<MapEntry> _backendLibs = {
+      'MadelineProto': {
+        'subtitle': localizations.aboutMadelineprotoSubtitle,
+        'link': 'https://github.com/danog/madelineproto'
+      },
+      'Amphp': {
+        'subtitle': localizations.aboutAmphpSubtitle,
+        'link': 'https://amphp.org'
+      },
+      'Composer': {
+        'subtitle': localizations.aboutComposerSubtitle,
+        'link': 'https://getcomposer.org'
+      }
+    }.entries.toList();
+
+    final List<MapEntry> _alsoCheckOut = {
+      'Snapdrop': {
+        'subtitle': localizations.aboutSnapdropSubtitle,
+        'link': 'https://snapdrop.net'
+      },
+      'Telegram': {
+        'subtitle': localizations.aboutTelegramSubtitle,
+        'link': 'https://telegram.org'
+      }
+    }.entries.toList();
     final double screenWidth = MediaQuery.of(context).size.width;
     final double widgetSize =
         screenWidth >= 550 ? 128 : (128 * screenWidth / 550);
+
     return Scaffold(
-      appBar: AppBar(title: Text('About')),
+      appBar: AppBar(title: Text(localizations.aboutTitle)),
       body: SafeArea(
           child: Scrollbar(
               isAlwaysShown: screenWidth > 950,
               child: ListView(
-                padding: EdgeInsets.all(15),
+                padding: const EdgeInsets.all(16.0),
                 children: [
                   UploadgramTitle(
                       size: widgetSize,
                       mainAxisAlignment: MainAxisAlignment.center),
                   ListTile(
-                    leading: Icon(Icons.dns),
-                    title: Text('Spacecore'),
-                    subtitle: Text('Check out our sponsor!'),
+                    leading: const Icon(Icons.dns),
+                    title: const Text('Spacecore'),
+                    subtitle: Text(localizations.aboutSponsorTileSubtitle),
                     onTap: () => launch('https://spacecore.pro'),
                   ),
                   ListTile(
-                    leading: Icon(Icons.campaign),
-                    title: Text('Telegram Channel'),
+                    leading: const Icon(Icons.campaign),
+                    title: Text(localizations.aboutTelegramChannelTileTitle),
                     subtitle:
-                        Text('Stay updated in Uploadgram\'s development!'),
+                        Text(localizations.aboutTelegramChannelTileSubtitle),
                     onTap: () => launch('https://t.me/uploadgramme'),
                   ),
                   ListTile(
-                    leading: Icon(Icons.people),
-                    title: Text('Telegram Group'),
+                    leading: const Icon(Icons.people),
+                    title: Text(localizations.aboutTelegramGroupTileTitle),
                     subtitle:
-                        Text('Discuss with other people about Uploadgram!'),
-                    onTap: () => launch('https://t.me/uploadgrammegroup'),
+                        Text(localizations.aboutTelegramGroupTileSubtitle),
+                    onTap: () {
+                      final locale = Localizations.localeOf(context);
+                      if (locale.languageCode == 'ru') {
+                        launch(_uploadgramRussianGroup);
+                      } else {
+                        launch(_uploadgramEnglishGroup);
+                      }
+                    },
                   ),
                   ListTile(
-                    leading: Icon(Icons.code),
-                    title: Text('Repository'),
-                    subtitle: Text('Check out the app\'s code!'),
+                    leading: const Icon(Icons.code),
+                    title: Text(localizations.aboutAppRepositoryTileTitle),
+                    subtitle: Text(localizations.aboutAppRepositoryTileSubitle),
                     onTap: () =>
                         launch('https://github.com/pato05/uploadgram-app'),
                   ),
-                  Divider(height: 25),
-                  Text('Authors',
-                      style:
-                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  const Divider(height: 25),
+                  Text(localizations.aboutAuthorsTitle,
+                      style: const TextStyle(
+                          fontSize: 26, fontWeight: FontWeight.bold)),
                   ...List.generate(
                     _authors.length,
                     (index) {
@@ -123,53 +132,42 @@ class _AboutRouteState extends State<AboutRoute> {
                                   )));
                     },
                   ),
-                  Divider(height: 25),
-                  Text('Libraries used in the backend',
-                      style:
-                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  const Divider(height: 25),
+                  Text(localizations.aboutLibrariesUsedInBackendTitle,
+                      style: const TextStyle(
+                          fontSize: 26, fontWeight: FontWeight.bold)),
                   ...List.generate(
                       _backendLibs.length,
                       (index) => ListTile(
                             title: Text(_backendLibs[index].key),
                             subtitle:
                                 Text(_backendLibs[index].value['subtitle']),
-                            isThreeLine:
-                                _backendLibs[index].value['subtitle'].length *
-                                        6.5 >
-                                    screenWidth,
                             onTap: () =>
                                 launch(_backendLibs[index].value['link']),
                           )),
-                  Divider(height: 25),
-                  Text('Also check out',
-                      style:
-                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  const Divider(height: 25),
+                  Text(localizations.aboutAlsoCheckOutTitle,
+                      style: const TextStyle(
+                          fontSize: 26, fontWeight: FontWeight.bold)),
                   ...List.generate(
                       _alsoCheckOut.length,
                       (index) => ListTile(
                             title: Text(_alsoCheckOut[index].key),
                             subtitle:
                                 Text(_alsoCheckOut[index].value['subtitle']),
-                            isThreeLine: ((_alsoCheckOut[index]
-                                            .value['subtitle']
-                                            .length *
-                                        6.5) as double)
-                                    .toInt() >
-                                screenWidth,
                             onTap: () =>
                                 launch(_alsoCheckOut[index].value['link']),
                           )),
-                  Divider(height: 25),
+                  const Divider(height: 25),
                   ListTile(
-                      leading: Icon(Icons.copyright),
-                      title: Text('Licenses and libraries used within the app'),
-                      subtitle: Text(
-                          'Click here to see the libraries used within this app and their licenses.'),
+                      leading: const Icon(Icons.copyright),
+                      title: Text(localizations.aboutLicensesTileTitle),
+                      subtitle: Text(localizations.aboutLicensesTileSubtitle),
                       onTap: () => showLicensePage(
                           context: context,
-                          applicationIcon: UploadgramLogo(),
+                          applicationIcon: const UploadgramLogo(),
                           applicationLegalese:
-                              '${DateTime.now().year} \u00a9 Pato05')),
+                              '2020-${DateTime.now().year} \u00a9 Pato05')),
                 ],
               ))),
     );

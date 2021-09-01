@@ -1,0 +1,374 @@
+{
+    "language": "Angielski",
+    "@language": {
+        "description": "The language's name (in YOUR translating language)"
+    },
+    "aboutTitle": "O",
+    "@aboutTitle": {
+        "description": "The title of the About route"
+    },
+    "aboutWebsiteText": "Strona internetowa",
+    "@aboutWebsiteText": {
+        "description": "The website field's text"
+    },
+    "aboutSponsorTileSubtitle": "Sprawdź naszego sponsora!",
+    "@aboutSponsorTileSubtitle": {
+        "description": "The subtitle of the sponsor tile"
+    },
+    "aboutTelegramChannelTileTitle": "Kanał Telegram",
+    "@aboutTelegramChannelTileTitle": {
+        "description": "The title of the Telegram Channel tile"
+    },
+    "aboutTelegramChannelTileSubtitle": "Bądź na bieżąco z rozwojem Uploadgrama!",
+    "@aboutTelegramChannelTileSubtitle": {
+        "description": "The subtitle of the Telegram Channel tile"
+    },
+    "aboutTelegramGroupTileTitle": "Grupa na Telegramie",
+    "@aboutTelegramGroupTileTitle": {
+        "description": "The title of the Telegram Group tile"
+    },
+    "aboutTelegramGroupTileSubtitle": "Dyskutuj z innymi osobami na temat Uploadgrama!",
+    "@aboutTelegramGroupTileSubtitle": {
+        "description": "The subtitle of the Telegram Group tile"
+    },
+    "aboutAppRepositoryTileTitle": "Repozytorium aplikacji",
+    "@aboutAppRepositoryTileTitle": {
+        "description": "The app repository tile's title"
+    },
+    "aboutAppRepositoryTileSubitle": "Sprawdź kod aplikacji!",
+    "@aboutAppRepositoryTileSubitle": {
+        "description": "The app repository tile's subtitle"
+    },
+    "aboutAuthorsTitle": "Autorzy",
+    "@aboutAuthorsTitle": {
+        "description": "The Authors title of the About section"
+    },
+    "aboutPato05Subtitle": "Bieżący właściciel Uploadgrama, napisał backend i frontend",
+    "@aboutPato05Subtitle": {
+        "description": "Description of Pato05's role in Uploadgram"
+    },
+    "aboutShishcatSubtitle": "Utworzył i idealizował Uploadgram oryginalne. Pomaga w rozwoju Uploadgrama.",
+    "@aboutShishcatSubtitle": {
+        "description": "Description of ShiSHcat's role in Uploadgram"
+    },
+    "aboutLibrariesUsedInBackendTitle": "Biblioteki użyte w backendzie",
+    "@aboutLibrariesUsedInBackendTitle": {
+        "description": "Libraries used in the backend title in the About section"
+    },
+    "aboutMadelineprotoSubtitle": "Niesamowity klient MTProto w pełni asynchroniczny za pomocą Amphp, Rdzeń Uploadgrama. Przez @danogentili.",
+    "@aboutMadelineprotoSubtitle": {
+        "description": "Description of the MadelineProto library"
+    },
+    "aboutAmphpSubtitle": "Zbiór mieszająco szybkich bibliotek PHP dla Asynchronicznego PHP.",
+    "@aboutAmphpSubtitle": {
+        "description": "Description of the Amphp library"
+    },
+    "aboutComposerSubtitle": "Menedżer zależności PHP.",
+    "@aboutComposerSubtitle": {
+        "description": "Description of Composer"
+    },
+    "aboutAlsoCheckOutTitle": "Sprawdź również",
+    "@aboutAlsoCheckOutTitle": {
+        "description": "\"Also check out\" subsection's title"
+    },
+    "aboutSnapdropSubtitle": "Strona internetowa do udostępniania plików pomiędzy urządzeniami w sieci lokalnej",
+    "@aboutSnapdropSubtitle": {
+        "description": "Description of Snapdrop.io"
+    },
+    "aboutTelegramSubtitle": "Świetna aplikacja do wysyłania wiadomości, pamięć plików Uploadgrama.",
+    "@aboutTelegramSubtitle": {
+        "description": "Description of Telegram"
+    },
+    "aboutLicensesTileTitle": "Licencje i biblioteki wykorzystywane w aplikacji",
+    "@aboutLicensesTileTitle": {
+        "description": "The title of the licenses tile"
+    },
+    "aboutLicensesTileSubtitle": "Kliknij tutaj, aby zobaczyć biblioteki używane w tej aplikacji oraz ich licencje.",
+    "@aboutLicensesTileSubtitle": {
+        "description": "The subtitle of the licenses tile"
+    },
+    "dialogOK": "OK",
+    "@dialogOK": {
+        "description": "The OK button in a generic dialog, must be all uppercase."
+    },
+    "dialogCancel": "ANULUJ",
+    "@dialogCancel": {
+        "description": "The CANCEL button in a generic dialog, must be all uppercase."
+    },
+    "dialogYes": "TAK",
+    "@dialogYes": {
+        "description": "The YES button in a generic dialog, must be all uppercase."
+    },
+    "dialogNo": "NIE",
+    "@dialogNo": {
+        "description": "The NO button in a generic dialog, must be all uppercase."
+    },
+    "dialogRenameTitle": "Zmień nazwę pliku",
+    "dialogRenameDescription": "Wprowadź nową nazwę dla tego pliku",
+    "errorFileNotFound": "Nie znaleziono pliku.",
+    "dialogDeleteTitle": "Usuń plik",
+    "dialogDeleteDescription": "{count,plural, =1{Czy na pewno chcesz usunąć ten plik?} few {Czy na pewno chcesz usunąć {count} pliki?} other {Czy na pewno chcesz usunąć {count} plików?}}",
+    "@dialogDeleteDescription": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "errorSomeFilesHaveNotBeenDeleted": "Niektóre pliki nie zostały usunięte (kod {statusCode}).",
+    "@errorSomeFilesHaveNotBeenDeleted": {
+        "placeholders": {
+            "statusCode": {}
+        }
+    },
+    "errorUnknown": "Wystąpił błąd podczas usuwania pliku: {message}",
+    "@errorUnknown": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "tosDialogTitle": "Przed kontynuacją...",
+    "tosDialogContent": "Warunki korzystania z usługi\n1. Zabronione jest przesyłanie treści pornograficznych lub materiałów promujących przemoc.\n2. Zabrania się oszukiwania użytkowników korzystających z usługi w jakikolwiek sposób.\n3. Każdy rodzaj materiału, który narusza te warunki, może zostać usunięty, a w rezultacie osoba wysyłająca może zostać zbanowana.\n3.1 Można poprosić o usunięcie treści za pomocą abuse@uploadgram.me lub poprzez Telegram (@Pato05)\n\nPolityka prywatności\n- Uploadgram nie przechowuje Twojego imienia ani żadnych innych poufnych informacji\n- Twój adres IP będzie przechowywany w bazie danych Upadgrama (lub id użytkownika jeśli korzystasz z bota)\n- Uploadgram używa Arc do przyspieszenia strony internetowej (dalsze informacje są dostępne na https://arc.io/about/)\n\nPolityka plików cookies\n- Uploadgram używa plików cookie w menu, aby utrzymać listę plików przez sesje\n- Arc może używać plików cookie na stronie internetowej (dalsze informacje są dostępne na stronie https://arc.io/about/)\n\n\nRegulamin może ulec zmianie i jeśli tak się stanie to zostaniesz poproszony o zapoznanie się z warunkami.",
+    "@tosDialogContent": {
+        "description": "The terms of service of Uploadgram"
+    },
+    "tosErrorDisagree": "Musisz zaakceptować TOS aby przesłać pliki.",
+    "tosDialogOK": "Teraz możesz rozpocząć przesyłanie plików!",
+    "tosDialogAgree": "ROZUMIEM!",
+    "@tosDialogAgree": {
+        "description": "The 'GOT IT!' button in the TOS dialog, must be all uppercase."
+    },
+    "tosDialogDisagree": "NIE ZGADZAM SIĘ",
+    "@tosDialogDisagree": {
+        "description": "The 'I DISAGREE' button in the TOS dialog, must be all uppercase."
+    },
+    "dialogPermissionsNotGranted": "Uprawnienia nie zostały przyznane. Kliknij przycisk, aby spróbować ponownie, lub przyznaj je w ustawieniach.",
+    "errorText": "Błąd",
+    "dialogDownloadAppTitle": "Cześć!",
+    "dialogDownloadAppSubtitle": "Wygląda na to, że lubisz Uploadgram! Czy wiesz, że Uploadgram ma również aplikację na Androida?\nMożesz pobrać aplikację klikając przycisk poniżej lub klikając na trzy kropki!",
+    "dialogDownloadAppNo": "NIE, DZIĘKUJĘ",
+    "dialogDownloadAppYes": "POBIERZ APLIKACJĘ!",
+    "errorFileTooLarge": "Wybrany plik jest zbyt duży. Maksymalny dozwolony rozmiar to {maxSize}",
+    "@errorFileTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "String"
+            }
+        }
+    },
+    "errorUploadgramDown": "{seconds,plural, =1{Uploadgram nie działa. Ponowna próba za {seconds} sekundę.} few {Uploadgram nie działa. Ponowna próba za {seconds} sekundy.} other { Uploadgram nie działa. Ponowna próba za {seconds} sekund.}}",
+    "@errorUploadgramDown": {
+        "placeholders": {
+            "seconds": {}
+        }
+    },
+    "actionSnackbarTryNow": "Wypróbuj teraz",
+    "actionSnackbarDismiss": "ODRZUĆ",
+    "@actionSnackbarDismiss": {
+        "description": "A generic 'DISMISS' button in a snackbar, must be all uppercase."
+    },
+    "errorFileEmpty": "Proszę wybrać niepusty plik.",
+    "deleteAppbarTooltip": "Usuń wybrany plik(wybrane pliki)",
+    "selectAllTooltip": "Zaznacz wszystkie pliki",
+    "exportListTooltip": "Eksportuj wybrany plik(wybrane pliki)",
+    "exportingError": "Nie można wyeksportować plików.",
+    "sortTooltip": "Sortuj pliki",
+    "importTileTitle": "Importuj listę plików",
+    "exportTileTitle": "Eksportuj listę plików",
+    "downloadAppTileTitle": "Pobierz aplikację",
+    "exportingErrorEmpty": "Twoja lista plików jest pusta. Prześlij kilka plików przed ich wyeksportowaniem.",
+    "importingErrorInvalid": "Wybrany plik jest nieprawidłowy.",
+    "titleFilesSelected": "{count, plural, =1{Wybrano {count} plik} few {Wybrano {count} pliki} other {Wybrano {count} plików}}",
+    "@titleFilesSelected": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "uploadExtendedFAB": "PRZEŚLIJ",
+    "@uploadExtendedFAB": {
+        "description": "The Floating Action Button's text, must be all uppercase."
+    },
+    "sortByDialogTitle": "Sortuj według",
+    "nameText": "Nazwa",
+    "sizeText": "Rozmiar",
+    "uploadDateText": "Data przesłania",
+    "linkText": "Link",
+    "sortByDialogAscending": "Rosnąco",
+    "settingsTitle": "Ustawienia",
+    "uploadDateFormatted": "E', 'dd MMMM yy' o 'HH:mm:ss",
+    "uploadedOnText": "Przesłano",
+    "fileInfoTitle": "Informacje o pliku",
+    "renameFileTooltip": "Zmień nazwę tego pliku",
+    "shareLinkText": "Udostępnij link do tego pliku",
+    "linkCopySuccessful": "Link został skopiowany do schowka!",
+    "linkCopyError": "Nie można skopiować linku do pliku. Proszę skopiować go ręcznie.",
+    "deleteThisFileTile": "Usuń ten plik",
+    "noFilesTitle": "Jeszcze nic tu nie ma.",
+    "noFilesSubtitle": "Kliknij przycisk, aby rozpocząć przesyłanie!",
+    "uploadButtonThemesCenterExtended": "Na środku, z tekstem (domyślnie)",
+    "filesListThemesGrid": "Siatka (domyślna)",
+    "filesListThemesGridCompact": "Kompaktowa siatka",
+    "filesListThemesList": "Lista",
+    "appThemesSystem": "Użyj motywu systemowego",
+    "appThemesDark": "Ciemny",
+    "appThemesLight": "Jasny",
+    "sectionPersonalizationText": "PERSONALIZACJA",
+    "@sectionPersonalizationText": {
+        "description": "Personalization section's title. Section titles MUST be all uppercase."
+    },
+    "uploadButtonTheme": "Motyw przycisku Prześlij",
+    "uploadButtonThemeTooltip": "Wybierz motyw przycisku Prześlij",
+    "filesListTheme": "Motyw listy plików",
+    "filesListThemeTooltip": "Zmień motyw listy plików",
+    "appThemeTileTitle": "Motyw aplikacji",
+    "appThemeTileTooltip": "Zmień motyw aplikacji",
+    "sectionThumbnailsText": "MINIATURY",
+    "@sectionThumbnailsText": {
+        "description": "Thumbnails section's title. Section titles MUST be all uppercase."
+    },
+    "toggleThumbnailGeneration": "Przełącz generowanie miniatur",
+    "saveFullSizedPhotos": "Zapisz zdjęcia w pełnym rozmiarze",
+    "smallThumbnailSize": "Mały rozmiar miniatury",
+    "smallThumbnailSizeSubtitle": "Obecnie: {current}",
+    "@smallThumbnailSizeSubtitle": {
+        "placeholders": {
+            "current": {}
+        }
+    },
+    "clearThumbnailsData": "Wyczyść dane miniatur",
+    "clearSmallThumbnails": "Wyczyść małe miniatury",
+    "clearBigThumbnails": "Wyczyść duże miniatury",
+    "clearAllThumbnails": "Wyczyść wszystkie miniatury",
+    "changeEndpoints": "Zmień punkty końcowe",
+    "changeEndpointsSubtitle": "Jeśli jesteś autogospodarzem serwera Uploadgram, możesz zmienić swoje punkty końcowe tutaj!",
+    "clearAppFilesCache": "Wyczyść pliki pamięci podręcznej aplikacji",
+    "clearAppFilesCacheSubtitle": "Używane podczas wysyłania pliku nie z pamięci wewnętrznej",
+    "endpointsText": "Punkty końcowe",
+    "endpointsMain": "Główny",
+    "endpointsDownload": "Pobieranie",
+    "endpointsAPI": "API",
+    "endpointsDialogActionDefault": "DOMYŚLNE",
+    "@endpointsDialogActionDefault": {
+        "description": "DEFAULT button in the endpoints dialog, must be all uppercase."
+    },
+    "endpointsDialogActionSave": "ZAPISZ",
+    "@endpointsDialogActionSave": {
+        "description": "SAVE button in the endpoints dialog, must be all uppercase."
+    },
+    "languageTileTitle": "Język",
+    "languageTileSubtitle": "Obecnie: {language}",
+    "@languageTileSubtitle": {
+        "placeholders": {
+            "language": {
+                "type": "String"
+            }
+        }
+    },
+    "selectLanguageDialogTitle": "Wybierz swój język",
+    "languageSystemText": "Język systemu",
+    "aboutTranslatorsTitle": "Tłumacze",
+    "dropzoneDropFilesHere": "Upuść swoje pliki tutaj!",
+    "deleteText": "Usuń",
+    "@deleteText": {
+        "description": "\"Delete\", it is only used in the right click context menu for now."
+    },
+    "renameText": "Zmień nazwę",
+    "@renameText": {
+        "description": "\"Rename\", it is only used in the right click context menu for now."
+    },
+    "linkCopyText": "Skopiuj link",
+    "@linkCopyText": {
+        "description": "\"Copy link\", it is only used in the right click context menu for now."
+    },
+    "exportText": "Zapisz jako",
+    "@exportText": {
+        "description": "\"Export\", it is only used in the right click context menu for now."
+    },
+    "uploadProgressNotificationTitle": "Powiadomienie o postępie przesyłania",
+    "@uploadProgressNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadProgressNotificationDetails": "Powiadomienie o statusie i postępie przesyłania",
+    "@uploadProgressNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationTitle": "Powiadomienie o ukończeniu przesyłania",
+    "@uploadCompletedNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationDetails": "Powiadomienie o ukończeniu przesyłania pliku",
+    "@uploadCompletedNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCanceled": "Przesyłanie anulowane",
+    "uploadFailedNotification": "Przesyłanie pliku nie powiodło się!",
+    "uploadCompletedNotification": "Przesyłanie zakończone!",
+    "uploadPausedNotification": "Przesyłanie wstrzymane",
+    "secondsRemaining": "Pozostało {relativeDateFormatted}",
+    "@secondsRemaining": {
+        "description": "The amount of time left formatted to \"X minutes Y seconds left\"",
+        "placeholders": {
+            "relativeDateFormatted": {
+                "type": "String"
+            }
+        }
+    },
+    "operationCompleting": "{percent}% ukończono",
+    "@operationCompleting": {
+        "placeholders": {
+            "percent": {
+                "type": "String"
+            }
+        }
+    },
+    "sectionThemingText": "MOTYW",
+    "@sectionThemingText": {
+        "description": "The title of the theming section, must be all uppercase"
+    },
+    "accentColorTileTitle": "Kolor podstawowy",
+    "syncAccentWithSystemTileTitle": "Synchronizuj kolor akcentu z systemem",
+    "pickAccentColor": "Wybierz kolor akcentu",
+    "appLogs": "Logi",
+    "appLogsSubtitle": "Wyświetl lub wyeksportuj logi aplikacji",
+    "logsNoLogsToDeleteError": "Brak logów do usunięcia",
+    "deleteLogs": "Usuń logi",
+    "deleteLogsDialogSubtitle": "Czy na pewno chcesz usunąć wszystkie logi PERMANENTNIE?",
+    "collapseAll": "Zwiń wszystkie",
+    "expandAll": "Rozwiń wszystko",
+    "errorClearingLogsTip": "Wyczyszczenie logów może być konieczne.",
+    "exportLogsTooltip": "Eksportuj logi",
+    "filterLogsDialog": "Filtruj logi",
+    "filterLogsDialogFrom": "OD",
+    "@filterLogsDialogFrom": {
+        "description": "This must be all uppercase, it contains the list of logs providers to choose from"
+    },
+    "updaterNoUpdatesAvailable": "Brak dostępnych aktualizacji",
+    "updaterUpdateAvailable": "Dostępna nowa aktualizacja!",
+    "updaterIgnore": "IGNORUJ",
+    "updaterNotNow": "NIE TERAZ",
+    "updaterDownload": "POBIERZ",
+    "updaterCheckProgressInNotifications": "Sprawdź postęp pobierania w powiadomieniach",
+    "updaterError": "Wystąpił błąd, sprawdź logi po szczegóły",
+    "checkForUpdatesTile": "Sprawdź czy są dostępne nowe aktualizacje",
+    "checkForUpdatesTileSubtitle": "Sprawdź aktualizacje z GitHuba",
+    "newUpdateNotificationTitle": "Dostępna jest nowa aktualizacja!",
+    "newUpdateNotificationBtnDownload": "Pobierz",
+    "newUpdateNotificationBtnIgnore": "Ignoruj",
+    "downloadingUpdateNotificationTitle": "Pobieranie aktualizacji...",
+    "updateCorruptedNotificationTitle": "Aktualizacja nie powiodła się",
+    "updateCorruptedNotificationSubtitle": "Pobrany plik apk jest uszkodzony!",
+    "errorCouldNotUploadFile": "Twój plik nie mógł zostać przesłany (kod {code})",
+    "@errorCouldNotUploadFile": {
+        "placeholders": {
+            "code": {}
+        }
+    },
+    "updaterHideProgressButton": "UKRYJ",
+    "@updaterHideProgressButton": {
+        "description": "The 'HIDE' button on the downloding dialog, must be all uppercase"
+    },
+    "generateThumbnailsTileTitle": "Generuj miniaturki",
+    "generateThumbnailsTileSubtitle": "Wymuś generowanie miniatur dla wszystkich plików",
+    "generateThumbnailsDialogTitle": "Czy na pewno chcesz wymusić generowanie miniatur dla wszystkich plików?",
+    "generateThumbnailsDialogSubtitle": "Uwaga, ściągnie to wszystkie obrazy do generowania miniatur z Uploadgrama, dlatego ten proces może szybko zużyć baterię twojego urządzenia!"
+}

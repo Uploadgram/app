@@ -39,3 +39,7 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Generated files
+lib/**/*.g.dart
+/generate_translators_file.dart

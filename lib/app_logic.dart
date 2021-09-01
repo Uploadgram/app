@@ -2,118 +2,161 @@ import 'dart:ui';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:logging/logging.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'package:uploadgram/api_definitions.dart';
 import 'package:uploadgram/app_definitions.dart';
-import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
+import 'package:uploadgram/settings.dart';
 import 'package:uploadgram/utils.dart';
+import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
 import 'package:uploadgram/web_api_wrapper/platform_instance.dart';
-import 'package:uploadgram/widgets/platform_specific/uploaded_file_thumbnail/common.dart';
 
 class AppLogic {
-  static late UploadedFiles files = UploadedFiles();
-  static InternalAPIWrapper platformApi = InternalAPIWrapper();
-  static WebAPIWrapper webApi = WebAPIWrapper();
+  static final ValueNotifier<Locale?> currentLocale = ValueNotifier(null);
+  static late final ValueNotifier<Color> currentAccent =
+      ValueNotifier(Settings.themeAccent);
 
-  static List<String> selected = [];
-  static List<UploadingFile> uploadingQueue = [];
-
-  static Future<void> getFiles() => files.init();
+  static Future<void> getFiles() async {
+    await UploadedFiles().init();
+    final importedFiles = await InternalAPIWrapper().getImportedFiles();
+    if (importedFiles != null) await UploadedFiles().addAll(importedFiles);
+  }
 
   static Future<bool> copy(String text) =>
       Clipboard.setData(ClipboardData(text: text)).then((value) => true);
 
-  static Stream<UploadingEvent>? uploadFileStream(UploadingFile file) {
-    if (file.locked == true) return null;
-    file.locked = true;
-    var controller = StreamController<UploadingEvent>.broadcast();
-    () async {
-      // this while loop could be probably improved or removed
-      while (uploadingQueue[0].fileKey != file.fileKey) {
-        await Future.delayed(Duration(milliseconds: 500));
-      }
-      var result = await webApi.uploadFile(
-        file.uploadgramFile,
-        onProgress: (double progress, int bytesPerSec, String remaining) {
-          controller.add(UploadingEventProgress(
-              progress: progress, bytesPerSec: bytesPerSec));
-        },
-      );
-      if (result.ok) {
-        var fileObj = UploadedFile(
-          name: file.uploadgramFile.name,
-          size: file.uploadgramFile.size,
-          url: result.url!,
-          delete: result.delete!,
-        );
-        files[result.delete!] = fileObj;
-        controller
-            .add(UploadingEventEnd(delete: result.delete!, file: fileObj));
-      } else {
-        String _error = 'An error occurred while obtaining the response';
-        if (result.statusCode > 500)
-          _error = 'We are having server problems. Try again later.';
-        if (result.errorMessage != null) _error = result.errorMessage!;
-        controller.addError(_error);
-      }
-      controller.close();
-      if (!canGenerateThumbnail(uploadingQueue[0].uploadgramFile.size,
-          uploadingQueue[0].uploadgramFile.name)) {
-        await AppLogic.platformApi
-            .deleteCachedFile(uploadingQueue[0].uploadgramFile.name);
-      }
-      uploadingQueue.removeAt(0);
-    }();
-    return controller.stream;
+  static List<UploadingFile> get queue => WebAPIWrapper().queue;
+
+  static Future<void> updateAccent() => Settings.updateAccent()
+      .then((value) => currentAccent.value = Settings.themeAccent);
+
+  static Future<void> setAccent(Color? accent) async {
+    if (accent == null) {
+      settings.syncAccentWithSystem = true;
+      return await updateAccent();
+    }
+    settings.accent = accent;
+
+    currentAccent.value = Settings.themeAccent;
+    if (settings.syncAccentWithSystem == true) {
+      settings.syncAccentWithSystem = false;
+      return await updateAccent();
+    }
   }
 
-  static void showFullscreenLoader(BuildContext context) {
+  static void showFullscreenLoader(BuildContext context,
+      [ValueNotifier<double?>? progressNotifier]) {
     Navigator.push(
         context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => WillPopScope(
-              child: Center(child: CircularProgressIndicator()),
-              onWillPop: () async => false),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-              FadeTransition(opacity: animation, child: child),
-          opaque: false,
-          barrierDismissible: false,
-          barrierColor: Colors.black.withOpacity(0.75),
-        ));
+        progressNotifier == null
+            ? PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    WillPopScope(
+                        child: const Center(child: CircularProgressIndicator()),
+                        onWillPop: () async => false))
+            : PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  double prevValue = 0.0;
+                  return WillPopScope(
+                      child: Material(
+                          color: Colors.transparent,
+                          child: ValueListenableBuilder<double?>(
+                              builder: (context, value, _) => Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                            child: value == null
+                                                ? const CircularProgressIndicator(
+                                                    strokeWidth: 6.0)
+                                                : TweenAnimationBuilder<
+                                                        double?>(
+                                                    tween: Tween(
+                                                        begin: prevValue,
+                                                        end: prevValue = value),
+                                                    duration: const Duration(
+                                                        milliseconds: 125),
+                                                    curve: Curves.ease,
+                                                    builder: (context,
+                                                            animation, _) =>
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 6.0,
+                                                            value: animation)),
+                                            width: 75,
+                                            height: 75),
+                                        const SizedBox(height: 25.0),
+                                        Text(
+                                            AppLocalizations.of(context)
+                                                .operationCompleting(
+                                                    ((value ?? 0) * 100)
+                                                        .toStringAsFixed(0)),
+                                            style: const TextStyle(
+                                                fontSize: 17.0)),
+                                      ]),
+                              valueListenable: progressNotifier)),
+                      onWillPop: () async => false);
+                },
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) =>
+                        FadeTransition(opacity: animation, child: child),
+                opaque: false,
+                barrierDismissible: false,
+                barrierColor: Colors.black.withOpacity(0.75),
+              ));
   }
 }
 
 class UploadedFiles {
-  bool isInitialised = false;
+  /// The only instance of this class.
+  ///
+  /// Returned when calling [UploadedFiles]'s main constructor
+  static final instance = UploadedFiles._();
+
+  /// Singleton constructor, it's the same as using [UploadedFiles.instance]
+  factory UploadedFiles() => instance;
+
+  UploadedFiles._();
+
+  bool _isInitialised = false;
+  get isInitialized => _isInitialised;
   late LazyBox _filesBox;
   late LazyBox _filesOrderBox;
 
+  static final _logger = Logger('UploadedFiles');
+
   Future<void> init() async {
-    if (!await Hive.boxExists('files')) {
-      _filesBox = await Hive.openLazyBox('files');
-      await _maybeMigrate();
-    } else
-      _filesBox = await Hive.openLazyBox('files');
+    if (_isInitialised) return;
+    _logger.info('initializing...');
+    bool didBoxExist = await Hive.boxExists('files');
+    _filesBox = await Hive.openLazyBox('files');
+    if (!didBoxExist) await _maybeMigrate();
     _filesOrderBox = await Hive.openLazyBox('filesOrder');
-    isInitialised = true;
+    _isInitialised = true;
   }
 
   Future<void> _maybeMigrate() async {
-    var oldFiles = await AppLogic.platformApi.getString('uploaded_files', '{}');
+    _logger.info('importing files from older format...');
+    var oldFiles = await InternalAPIWrapper().getString('uploaded_files', '{}');
+    _logger.fine('importing "$oldFiles"');
     if (oldFiles == null || oldFiles == '{}') return;
-    var maybeDecoded = json.decode(oldFiles);
+    Map<String, dynamic>? maybeDecoded =
+        (json.decode(oldFiles) as Map?)?.cast<String, dynamic>();
     if (maybeDecoded == null) return;
     await addAll(maybeDecoded);
-    await AppLogic.platformApi.deletePreferences();
+    await InternalAPIWrapper().deletePreferences();
   }
 
-  /// this should run in another thread, as this is potentially blocking
+  /// Calls the sorting function with the correct sorting options
   Future<bool> sort(SortOptions sortOptions) {
     switch (sortOptions.sortBy) {
       case SortBy.name:
-        return _bubbleSort(sortOptions.sortType == SortType.ascending
+        return _sort(sortOptions.sortType == SortType.descending
             ? (entry, nextEntry) =>
                 (entry['filename'] as String)
                     .compareTo(nextEntry['filename'] as String) >
@@ -123,13 +166,13 @@ class UploadedFiles {
                     .compareTo(nextEntry['filename'] as String) <=
                 0);
       case SortBy.size:
-        return _bubbleSort(sortOptions.sortType == SortType.ascending
+        return _sort(sortOptions.sortType == SortType.descending
             ? (entry, nextEntry) =>
                 (entry['size'] as int) > (nextEntry['size'] as int)
             : (entry, nextEntry) =>
                 (entry['size'] as int) <= (nextEntry['size'] as int));
-      case SortBy.upload_date:
-        return _bubbleSort(sortOptions.sortType == SortType.ascending
+      case SortBy.uploadDate:
+        return _sort(sortOptions.sortType == SortType.descending
             ? (entry, nextEntry) =>
                 Utils.getUploadedDate(entry['url']) >
                 Utils.getUploadedDate(nextEntry['url'])
@@ -139,8 +182,12 @@ class UploadedFiles {
     }
   }
 
-  Future<bool> _bubbleSort(
-      bool Function(Map entry, Map nextEntry) compare) async {
+  /// Uses a bubble sort implementation to sort the files list.
+  /// A manual implementation is used because [_filesBox] is a [LazyBox],
+  /// and the for loop accesses each value without allocating them all in memory.
+  ///
+  /// This behaviour will definitely be improved in the future.
+  Future<bool> _sort(bool Function(Map entry, Map nextEntry) compare) async {
     int len = _filesOrderBox.length;
     bool didOrder = false;
     bool hasOrderedOnce = false;
@@ -154,7 +201,7 @@ class UploadedFiles {
         Map nextEntry = await _filesBox.get(nextDelete);
         bool shouldSwap = compare.call(entry, nextEntry);
         if (shouldSwap) {
-          print('swapping $delete and $nextDelete');
+          _logger.finest('swapping $delete and $nextDelete');
           await _filesOrderBox.putAt(j, nextDelete);
           await _filesOrderBox.putAt(j + 1, delete);
           didOrder = true;
@@ -167,17 +214,18 @@ class UploadedFiles {
     return hasOrderedOnce;
   }
 
-  Future<void> addAll(Map files) async {
-    await Future.wait([
-      _filesBox.putAll(files),
-      _filesOrderBox.addAll(files.keys as Iterable<String>),
-    ]);
-  }
+  Future<void> addAll(Map<String, dynamic> files) => Future.wait([
+        _filesBox.putAll(files),
+        _filesOrderBox.addAll(files.keys.cast<String>()),
+      ]);
 
   Future<void> remove(String fileId) async {
-    for (int i = 0; i < _filesOrderBox.length; i++) {
-      // this is needed because it seems like .delete doesn't delete if you pass in a value, it looks for the key
-      if (await _filesOrderBox.getAt(i) == fileId) _filesOrderBox.deleteAt(i);
+    for (final key in _filesOrderBox.keys) {
+      // look up for the key containing the value [fileId] and delete it out
+      if (await _filesOrderBox.get(key) == fileId) {
+        await _filesOrderBox.delete(key);
+        break;
+      }
     }
     await _filesBox.delete(fileId);
   }
@@ -190,20 +238,41 @@ class UploadedFiles {
   int get length => _filesBox.length;
   Iterable<dynamic> get keys => _filesBox.keys;
   bool get isEmpty => _filesBox.isEmpty;
+  ValueListenable<void> get listenable => _filesBox.listenable();
+
+  Future<Map<String, UploadedFile>> toJson() =>
+      Future.wait<MapEntry<String, UploadedFile>>(_filesBox.keys
+              .map<Future<MapEntry<String, UploadedFile>>>(
+                  (e) => this[e].then((value) => MapEntry(e, value!))))
+          .then((value) => Map.fromEntries(value));
 
   Future<UploadedFile?> operator [](String fileId) async =>
       UploadedFile.fromJson(await _filesBox.get(fileId), fileId,
-          onChanged: (UploadedFile newValue) => this[fileId] = newValue);
+          onChanged: (UploadedFile newValue) => add(newValue));
+
   Future<UploadedFile?> elementAt(int index) async {
     String? fileId = await _filesOrderBox.getAt(index);
     if (fileId == null) throw IndexError(index, this);
     return await this[fileId];
   }
 
-  operator []=(String fileId, UploadedFile file) async {
+  Future<void> add(UploadedFile file) =>
+      _add(file, filesBox: _filesBox, filesOrderBox: _filesOrderBox);
+
+  static Future<void> _add(UploadedFile file,
+          {required LazyBox filesBox, required LazyBox filesOrderBox}) =>
+      Future.wait([
+        filesBox.put(file.delete, file.toJson()),
+        filesOrderBox.add(file.delete),
+      ]);
+
+  static Future<void> addFile(UploadedFile file) async {
+    final filesBox = await Hive.openLazyBox('files');
+    final filesOrderBox = await Hive.openLazyBox('filesOrder');
+    await _add(file, filesBox: filesBox, filesOrderBox: filesOrderBox);
     await Future.wait([
-      _filesBox.put(fileId, file.toJson()),
-      _filesOrderBox.add(fileId),
+      filesBox.close(),
+      filesOrderBox.close(),
     ]);
   }
 }
@@ -238,21 +307,25 @@ class UploadedFile {
           {String? name,
           int? size,
           String? url,
+          String? delete,
           Function(UploadedFile)? onChanged}) =>
       UploadedFile(
-        name: name ?? this._name,
-        size: size ?? this._size,
-        url: url ?? this._url,
-        onChanged: onChanged ?? this._onChanged,
-        delete: this.delete,
+        name: name ?? _name,
+        size: size ?? _size,
+        url: url ?? _url,
+        onChanged: onChanged ?? _onChanged,
+        delete: delete ?? this.delete,
       );
 
   Map toJson() => {'filename': _name, 'size': _size, 'url': _url};
 
+  @override
   String toString() => json.encode(this);
 
+  @override
   int get hashCode => hashValues(_name, _size, _url);
 
+  @override
   bool operator ==(Object other) =>
       other is UploadedFile &&
       _name == other._name &&

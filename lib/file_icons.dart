@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uploadgram/app_definitions.dart';
 
 const Map<String, IconData> fileIcons = {
   'apk': Icons.android,
@@ -58,6 +59,6 @@ const Map<String, IconData> fileIcons = {
 };
 
 IconData getFileIconFromName(String filename) {
-  return fileIcons[filename.split('.').last.toLowerCase()] ??
+  return fileIcons[filename.split('.').lastEntry.toLowerCase()] ??
       fileIcons['default']!;
 }

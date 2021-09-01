@@ -1,0 +1,316 @@
+{
+    "language": "العربية",
+    "@language": {
+        "description": "The language's name (in YOUR translating language)"
+    },
+    "aboutTitle": "عن البرنامج",
+    "@aboutTitle": {
+        "description": "The title of the About route"
+    },
+    "aboutWebsiteText": "الموقع",
+    "@aboutWebsiteText": {
+        "description": "The website field's text"
+    },
+    "aboutSponsorTileSubtitle": "تحقق من راعينا!",
+    "@aboutSponsorTileSubtitle": {
+        "description": "The subtitle of the sponsor tile"
+    },
+    "aboutTelegramChannelTileTitle": "قناة تليجرام",
+    "@aboutTelegramChannelTileTitle": {
+        "description": "The title of the Telegram Channel tile"
+    },
+    "aboutTelegramChannelTileSubtitle": "ابق على اطلاع في تطوير التطبيق!",
+    "@aboutTelegramChannelTileSubtitle": {
+        "description": "The subtitle of the Telegram Channel tile"
+    },
+    "aboutTelegramGroupTileTitle": "مجموعة تيليجرام",
+    "@aboutTelegramGroupTileTitle": {
+        "description": "The title of the Telegram Group tile"
+    },
+    "aboutTelegramGroupTileSubtitle": "ناقش مع أشخاص آخرين حول التطبيق!",
+    "@aboutTelegramGroupTileSubtitle": {
+        "description": "The subtitle of the Telegram Group tile"
+    },
+    "aboutAppRepositoryTileTitle": "مصدر و اكواد التطيق",
+    "@aboutAppRepositoryTileTitle": {
+        "description": "The app repository tile's title"
+    },
+    "aboutAppRepositoryTileSubitle": "تحقق من شفرة المصدر!",
+    "@aboutAppRepositoryTileSubitle": {
+        "description": "The app repository tile's subtitle"
+    },
+    "aboutAuthorsTitle": "المؤلفين",
+    "@aboutAuthorsTitle": {
+        "description": "The Authors title of the About section"
+    },
+    "aboutPato05Subtitle": "مالك التطبيق الحالي ، كتب الواجهة الخلفية و الواجهة الأمامية",
+    "@aboutPato05Subtitle": {
+        "description": "Description of Pato05's role in Uploadgram"
+    },
+    "aboutShishcatSubtitle": "تم إنشاء وتخيل التطبيق في الأصل. يساعد في تطوير Uploadgram.",
+    "@aboutShishcatSubtitle": {
+        "description": "Description of ShiSHcat's role in Uploadgram"
+    },
+    "aboutLibrariesUsedInBackendTitle": "المكتبات المستخدمة في الواجهة الخلفية",
+    "@aboutLibrariesUsedInBackendTitle": {
+        "description": "Libraries used in the backend title in the About section"
+    },
+    "aboutMadelineprotoSubtitle": "عميل MTProto المدهش تماما باستخدام Amphp، نواة التحميل البرمجي. من قبل @danogentili.",
+    "@aboutMadelineprotoSubtitle": {
+        "description": "Description of the MadelineProto library"
+    },
+    "aboutAmphpSubtitle": "مجموعة من مكتبات PHP السريعة بشكل رائع ل Asynchronous PHP.",
+    "@aboutAmphpSubtitle": {
+        "description": "Description of the Amphp library"
+    },
+    "aboutComposerSubtitle": "مدير التبعية لـ PHP.",
+    "@aboutComposerSubtitle": {
+        "description": "Description of Composer"
+    },
+    "aboutAlsoCheckOutTitle": "تحقق أيضا من",
+    "@aboutAlsoCheckOutTitle": {
+        "description": "\"Also check out\" subsection's title"
+    },
+    "aboutSnapdropSubtitle": "موقع إلكتروني لمشاركة الملفات بين الأجهزة على الشبكة المحلية الخاصة بك",
+    "@aboutSnapdropSubtitle": {
+        "description": "Description of Snapdrop.io"
+    },
+    "aboutTelegramSubtitle": "تطبيق رائع للرسائل، مخزن Uploadgram لتحميل الملفات.",
+    "@aboutTelegramSubtitle": {
+        "description": "Description of Telegram"
+    },
+    "aboutLicensesTileTitle": "التراخيص والمكتبات المستخدمة داخل التطبيق",
+    "@aboutLicensesTileTitle": {
+        "description": "The title of the licenses tile"
+    },
+    "aboutLicensesTileSubtitle": "انقر هنا لرؤية المكتبات المستخدمة داخل هذا التطبيق وتراخيصها.",
+    "@aboutLicensesTileSubtitle": {
+        "description": "The subtitle of the licenses tile"
+    },
+    "dialogOK": "موافق",
+    "@dialogOK": {
+        "description": "The OK button in a generic dialog, must be all uppercase."
+    },
+    "dialogCancel": "إلغاء",
+    "@dialogCancel": {
+        "description": "The CANCEL button in a generic dialog, must be all uppercase."
+    },
+    "dialogYes": "نعم",
+    "@dialogYes": {
+        "description": "The YES button in a generic dialog, must be all uppercase."
+    },
+    "dialogNo": "لا",
+    "@dialogNo": {
+        "description": "The NO button in a generic dialog, must be all uppercase."
+    },
+    "dialogRenameTitle": "إعادة تسمية الملف",
+    "dialogRenameDescription": "أدخل اسماً جديدا لهذا الملف",
+    "errorFileNotFound": "لم يتم العثور على الملف.",
+    "dialogDeleteTitle": "حذف الملف",
+    "dialogDeleteDescription": "{count,plural, zero {} one {هل أنت متأكد من أنك تريد حذف {count} ملفات؟} two {هل أنت متأكد من أنك تريد حذف {count} ملفات؟} few {هل أنت متأكد من أنك تريد حذف {count} ملفات؟} many {هل أنت متأكد من أنك تريد حذف {count} ملفات؟} =1{هل أنت متأكد من أنك تريد حذف هذا الملف؟} other{هل أنت متأكد من أنك تريد حذف {count} ملفات؟}}",
+    "@dialogDeleteDescription": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "errorSomeFilesHaveNotBeenDeleted": "لم يتم حذف بعض الملفات (الرمز: {statusCode}).",
+    "@errorSomeFilesHaveNotBeenDeleted": {
+        "placeholders": {
+            "statusCode": {}
+        }
+    },
+    "errorUnknown": "حدث خطأ أثناء حذف الملف: {message}",
+    "@errorUnknown": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "tosDialogTitle": "قبل المتابعة...",
+    "tosDialogContent": "شروط الخدمة\n1. من المحظور تحميل المحتوى الإباحي أو المواد التي تشجع العنف.\n2. من المحظور الاحتيال على المستخدمين الذين يستخدمون الخدمة بأي شكل من الأشكال\n3. كل نوع من المواد التي تنتهك هذه المصطلحات، يمكن حذفه، وقد يُحظر الرافع نتيجة لذلك.\n3-1 قد يطلب حذف المحتوى عن طريق abuse@uploadgram.me أو عبر Telegram (@Pato05)\n\nسياسة الخصوصية\n- لا يقوم التحميل بتخزين اسمك أو أي معلومات حساسة أخرى\n- سيتم تخزين IP الخاص بك داخل قاعدة بيانات Uploadgram's (أو معرف المستخدم الخاص بك إذا كنت تستخدم البوت)\n- يستخدم Arc\" Uploadgram\" لتسريع الموقع (تتوفر المزيد من المعلومات على (/https://arc.io/about)\n\nسياسة ملفات تعريف الارتباط\n- التحميل يستخدم ملفات تعريف الارتباط على لوحة التحكم، للإبقاء على قائمة الملفات عبر الجلسات\n- قد يستخدم Arc ملفات تعريف الارتباط داخل الموقع (يمكن الحصول على مزيد من المعلومات في (/https://arc.io/about)\n\n\nيخضع هذا للتغيير، وإذا كان الأمر كذلك، فسيطلب منك مراجعة الشروط.",
+    "@tosDialogContent": {
+        "description": "The terms of service of Uploadgram"
+    },
+    "tosErrorDisagree": "يجب عليك قبول TOS لتحميل الملفات.",
+    "tosDialogOK": "يمكنك الآن بدء تحميل الملفات!",
+    "tosDialogAgree": "حسناً!",
+    "@tosDialogAgree": {
+        "description": "The 'GOT IT!' button in the TOS dialog, must be all uppercase."
+    },
+    "tosDialogDisagree": "أنا أعترض",
+    "@tosDialogDisagree": {
+        "description": "The 'I DISAGREE' button in the TOS dialog, must be all uppercase."
+    },
+    "dialogPermissionsNotGranted": "لم يتم منح الأذونات. انقر على الزر للمحاولة مرة أخرى، أو منحهم في الإعدادات.",
+    "errorText": "خطأ",
+    "dialogDownloadAppTitle": "مرحباً!",
+    "dialogDownloadAppSubtitle": "يبدو أنّك تستمتع بـ Uploadgram! هل تعلم أنّ هناك تطبيقاً للأندرويد أيضاً؟\nيُمكنك تنزيل التطبيق بالنقر على الزرّ أدناه أو بالنقر على النقاط الثلاث!",
+    "dialogDownloadAppNo": "لا، شكرا",
+    "dialogDownloadAppYes": "تحميل التطبيق!",
+    "errorFileTooLarge": "الملف الذي اخترته كبير جداً. الحد الأقصى المسموح به للحجم هو {maxSize}",
+    "@errorFileTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "String"
+            }
+        }
+    },
+    "errorUploadgramDown": "{seconds,plural, zero {} one {الرفع أسفل. التحقق مرة أخرى في {seconds} ثواني.} two {الرفع أسفل. التحقق مرة أخرى في {seconds} ثواني.} few {الرفع أسفل. التحقق مرة أخرى في {seconds} ثواني.} many {الرفع أسفل. التحقق مرة أخرى في {seconds} ثواني.} =1{الرفع للأسفل. التحقق مرة أخرى في {seconds} ثانية} other{الرفع أسفل. التحقق مرة أخرى في {seconds} ثواني.}}",
+    "@errorUploadgramDown": {
+        "placeholders": {
+            "seconds": {}
+        }
+    },
+    "actionSnackbarTryNow": "جرّب الآن",
+    "actionSnackbarDismiss": "رفض",
+    "@actionSnackbarDismiss": {
+        "description": "A generic 'DISMISS' button in a snackbar, must be all uppercase."
+    },
+    "errorFileEmpty": "الرجاء تحديد ملف غير فارغ.",
+    "deleteAppbarTooltip": "حذف الملف (الملفات) المحددة",
+    "selectAllTooltip": "حدد كل الملفات",
+    "exportListTooltip": "تصدير الملف (الملفات) المحددة",
+    "exportingError": "لا يمكن تصدير الملفات.",
+    "sortTooltip": "ترتيب الملفات",
+    "importTileTitle": "استيراد قائمة الملفات",
+    "exportTileTitle": "تصدير قائمة الملفات",
+    "downloadAppTileTitle": "تحميل التطبيق",
+    "exportingErrorEmpty": "قائمة الملفات الخاصة بك فارغة. قم بتحميل بعض الملفات قبل تصديرها.",
+    "importingErrorInvalid": "الملف المرفوع غير صالح.",
+    "titleFilesSelected": "{count,plural, zero {} one {{count} الملفات المحددة} two {{count} الملفات المحددة} few {{count} الملفات المحددة} many {{count} الملفات المحددة} =1{{count} الملف المحدد} other{{count} الملفات المحددة}}",
+    "@titleFilesSelected": {
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "uploadExtendedFAB": "تحميل",
+    "@uploadExtendedFAB": {
+        "description": "The Floating Action Button's text, must be all uppercase."
+    },
+    "sortByDialogTitle": "رتب حسب",
+    "nameText": "الإسم",
+    "sizeText": "الحجم",
+    "uploadDateText": "تاريخ التحميل",
+    "linkText": "الرابط",
+    "sortByDialogAscending": "ترتيب تصاعدي",
+    "settingsTitle": "الإعدادات",
+    "uploadDateFormatted": "E', 'dd MMM yyy' عند 'HH:mm:ss",
+    "uploadedOnText": "تم الرفع في:",
+    "fileInfoTitle": "معلومات الملف:",
+    "renameFileTooltip": "إعادة تسمية الملف",
+    "shareLinkText": "شارك رابط هذا الملف",
+    "linkCopySuccessful": "تم نسخ الرابط إلى الحافظة بنجاح!",
+    "linkCopyError": "غير قادر على نسخ رابط الملف. يرجى نسخه يدويا.",
+    "deleteThisFileTile": "حذف هذا الملف",
+    "noFilesTitle": "لا يوجد شيء هنا حتى الآن.",
+    "noFilesSubtitle": "اضغط على الزر لبدء الرفع!",
+    "uploadButtonThemesCenterExtended": "في الوسط، مع النص (الاصلي)",
+    "filesListThemesGrid": "الشبكة (الاصلي)",
+    "filesListThemesGridCompact": "الشبكة المدمجة",
+    "filesListThemesList": "قائمة",
+    "appThemesSystem": "تلقائي (سمة الجهاز)",
+    "appThemesDark": "داكن",
+    "appThemesLight": "فاتح",
+    "sectionPersonalizationText": "التخصيص",
+    "@sectionPersonalizationText": {
+        "description": "Personalization section's title. Section titles MUST be all uppercase."
+    },
+    "uploadButtonTheme": "شكل زر التحميل",
+    "uploadButtonThemeTooltip": "حدد شكل زر الرفع",
+    "filesListTheme": "مظهر قائمة الملفات",
+    "filesListThemeTooltip": "تغيير مظهر قائمة الملفات",
+    "appThemeTileTitle": "ثيم التطبيق",
+    "appThemeTileTooltip": "تغيير ثيم التطبيق",
+    "sectionThumbnailsText": "صور مصغرة",
+    "@sectionThumbnailsText": {
+        "description": "Thumbnails section's title. Section titles MUST be all uppercase."
+    },
+    "toggleThumbnailGeneration": "تفعيل إنشاء الصور المصغرة",
+    "saveFullSizedPhotos": "حفظ الصور كاملة الحجم",
+    "smallThumbnailSize": "حجم الصورة صغير",
+    "smallThumbnailSizeSubtitle": "الحالي: {current}",
+    "@smallThumbnailSizeSubtitle": {
+        "placeholders": {
+            "current": {}
+        }
+    },
+    "clearThumbnailsData": "مسح بيانات الصور المصغرة",
+    "clearSmallThumbnails": "مسح الصور الصغيرة",
+    "clearBigThumbnails": "مسح الصور الكبيرة",
+    "clearAllThumbnails": "مسح جميع الصور",
+    "changeEndpoints": "تغيير نقاط النهاية",
+    "changeEndpointsSubtitle": "إذا كنت تستضيف بنفسك خادم Uploadgram، يمكنك تغيير نقاط النهاية هنا!",
+    "clearAppFilesCache": "مسح ذاكرة التخزين المؤقت لملفات التطبيق",
+    "clearAppFilesCacheSubtitle": "يستخدم عند تحميل ملف غير من ذاكرتك الداخلية",
+    "endpointsText": "نقاط النهاية",
+    "endpointsMain": "القائمة الرئيسية",
+    "endpointsDownload": "تنزيل",
+    "endpointsAPI": "واجهة برمجة التطبيقات (API)",
+    "endpointsDialogActionDefault": "تلقائي",
+    "@endpointsDialogActionDefault": {
+        "description": "DEFAULT button in the endpoints dialog, must be all uppercase."
+    },
+    "endpointsDialogActionSave": "حفظ",
+    "@endpointsDialogActionSave": {
+        "description": "SAVE button in the endpoints dialog, must be all uppercase."
+    },
+    "languageTileTitle": "اللغة",
+    "languageTileSubtitle": "الحالية: {language}",
+    "@languageTileSubtitle": {
+        "placeholders": {
+            "language": {
+                "type": "String"
+            }
+        }
+    },
+    "selectLanguageDialogTitle": "اختر لغتك",
+    "languageSystemText": "لغة النظام",
+    "aboutTranslatorsTitle": "المترجمون",
+    "dropzoneDropFilesHere": "ضع ملفاتك هنا!",
+    "deleteText": "حذف",
+    "@deleteText": {
+        "description": "\"Delete\", it is only used in the right click context menu for now."
+    },
+    "renameText": "إعادة التسمية",
+    "@renameText": {
+        "description": "\"Rename\", it is only used in the right click context menu for now."
+    },
+    "linkCopyText": "نسخ الرابط",
+    "@linkCopyText": {
+        "description": "\"Copy link\", it is only used in the right click context menu for now."
+    },
+    "exportText": "تصدير",
+    "@exportText": {
+        "description": "\"Export\", it is only used in the right click context menu for now."
+    },
+    "uploadProgressNotificationTitle": "جاري رفع الملف",
+    "@uploadProgressNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadProgressNotificationDetails": "اشعارات التحميل و حالة التقدم",
+    "@uploadProgressNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationTitle": "تم الرفع بنجاح",
+    "@uploadCompletedNotificationTitle": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadCompletedNotificationDetails": "تم رفع الملف",
+    "@uploadCompletedNotificationDetails": {
+        "description": "This is shown in the app's notification settings"
+    },
+    "uploadFailedNotification": "فشل رفع الملف!",
+    "uploadCompletedNotification": "اكتمل الرفع!",
+    "uploadPausedNotification": "تم ايقاف الرفع مؤقتا",
+    "secondsRemaining": "تبقي {relativeDateFormatted}",
+    "@secondsRemaining": {
+        "description": "The amount of time left formatted to \"X minutes Y seconds left\"",
+        "placeholders": {
+            "relativeDateFormatted": {
+                "type": "String"
+            }
+        }
+    },
+    "newUpdateNotificationBtnDownload": "تنزيل"
+}

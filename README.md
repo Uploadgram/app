@@ -2,14 +2,13 @@
 [![repo lines](https://img.shields.io/tokei/lines/github/pato05/uploadgram-app)](https://github.com/Pato05/uploadgram-app)
 [![framework: flutter](https://img.shields.io/badge/framework-flutter-blue)](https://flutter.io)
 [![Codemagic build status](https://api.codemagic.io/apps/604564acbe2f9fb72766d730/604564acbe2f9fb72766d72f/status_badge.svg)](https://codemagic.io/apps/604564acbe2f9fb72766d730/604564acbe2f9fb72766d72f/latest_build)
-[![uploadgram backend status](https://img.shields.io/website?down_color=red&down_message=down&label=backend&up_color=green&up_message=up&url=https%3A%2F%2Fapi.uploadgram.me%2F)](https://uploadgram.me)
-
 
 [![fdroid release](https://img.shields.io/f-droid/v/com.pato05.uploadgram)](https://f-droid.org/packages/com.pato05.uploadgram)
 [![github release](https://img.shields.io/github/v/release/pato05/uploadgram-app)](https://github.com/pato05/uploadgram-app/releases/latest)
 
 [![downloads](https://img.shields.io/github/downloads/pato05/uploadgram-app/total)](https://github.com/pato05/uploadgram-app/releases)
 [![downloads@latest](https://img.shields.io/github/downloads/pato05/uploadgram-app/latest/total)](https://github.com/pato05/uploadgram-app/releases/latest)
+
 # Uploadgram App
 Uploadgram frontend for Android (and web)
 
@@ -23,9 +22,15 @@ Just go to the [latest release](https://github.com/Pato05/uploadgram-app/release
 - `app-arm64-v8a-release.apk` is the ARM64 release (compatible with most new devices)
 - `app-armeabi-v7a-release.apk` is the ARM release
 
+## Before building
+You should run the build_runner to generate all the needed files, in short, run the commands below
+```bash
+flutter pub get
+flutter pub run build_runner build
+```
+
 ## How can I build the app for Web?
-The first thing you wanna do is change flutter's channel to dev (currently web support is not available in the stable channel), after that, just run `flutter build web` (if the message `"build web" is not currently supported.` is shown, running `flutter config --enable-web` might be needed).
-Finally, you need to patch the service worker, otherwise the progress is not going to be shown.
+You just need to run `flutter build web`
 
 ## How can I build the app for Android?
 To build the app for Android, simply clone this repository and run `flutter build apk --split-per-abi`

@@ -1,4 +1,7 @@
-import 'package:uploadgram/app_logic.dart';
+import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'api_definitions.g.dart';
 
 class RenameApiResponse {
   final bool ok;
@@ -21,7 +24,7 @@ class RenameApiResponse {
 
   @override
   String toString() {
-    return '${this.runtimeType.toString()}(ok: $ok, statusCode: $statusCode)';
+    return '${runtimeType.toString()}(ok: $ok, statusCode: $statusCode)';
   }
 }
 
@@ -38,64 +41,54 @@ class DeleteApiResponse {
       DeleteApiResponse(ok: json['ok'], statusCode: 200);
 }
 
-class UploadApiResponse {
-  final bool ok;
-  final String? url;
-  final String? delete;
-
-  final int statusCode;
-  final String? errorMessage;
-
-  UploadApiResponse(
-      {required this.ok,
-      this.url,
-      this.delete,
-      this.statusCode = 200,
-      this.errorMessage});
-
-  factory UploadApiResponse.fromJson(Map json) {
-    if (json['ok'])
-      return UploadApiResponse(
-          ok: json['ok'], url: json['url'], delete: json['delete']);
-    return UploadApiResponse(
-        ok: false,
-        statusCode: json['statusCode'],
-        errorMessage: json['message']);
-  }
-}
-
 enum UploadgramFileError { none, permissionNotGranted, abortedByUser }
 
-class UploadgramFile {
+class UploadgramFile<T> {
   final int size;
   final String name;
-  final realFile; // this should either be a web file or a io file
-
-  final UploadgramFileError error;
+  final T realFile; // this should either be a web file or a io file
 
   UploadgramFile({
-    this.size = 0,
-    this.name = '',
-    this.realFile,
-    this.error = UploadgramFileError.none,
-  }) : assert(error != UploadgramFileError.none ||
-            (name != '' && realFile != null));
+    required this.size,
+    required this.name,
+    required this.realFile,
+  });
 
-  bool hasError() => error != UploadgramFileError.none;
+  UploadgramFile copyWith({
+    int? size,
+    String? name,
+    Object? realFile,
+  }) =>
+      UploadgramFile(
+          name: name ?? this.name, size: size ?? this.size, realFile: realFile);
+
+  UploadgramFile withoutRealFile() =>
+      UploadgramFile(size: size, name: name, realFile: null);
 }
 
 class UploadingFile {
-  bool locked;
+  final String taskId;
+  final UploadgramFile file;
   Stream<UploadingEvent>? stream;
-  dynamic fileKey;
-  UploadgramFile uploadgramFile;
+  DateTime? startedUploadingAt;
 
   UploadingFile({
-    required this.uploadgramFile,
-    required this.fileKey,
+    required this.file,
+    required this.taskId,
     this.stream,
-    this.locked = false,
+    this.startedUploadingAt,
   });
+
+  UploadingFile copyWith(
+          {UploadgramFile? file,
+          String? taskId,
+          Stream<UploadingEvent>? stream}) =>
+      UploadingFile(
+          file: file ?? this.file,
+          taskId: taskId ?? this.taskId,
+          stream: stream ?? this.stream);
+  @override
+  String toString() => 'UploadingFile(${file.name} (${file.size}), $taskId)';
 }
 
 class UploadingEvent {}
@@ -110,12 +103,70 @@ class UploadingEventProgress extends UploadingEvent {
   });
 }
 
-class UploadingEventEnd extends UploadingEvent {
-  String delete;
-  UploadedFile file;
+enum UploadingEventErrorType {
+  generic,
+  canceled,
+}
 
-  UploadingEventEnd({
-    required this.delete,
-    required this.file,
+class UploadingEventError implements Exception {
+  final UploadingEventErrorType errorType;
+  final int? statusCode;
+  final String? message;
+  UploadingEventError({
+    required this.errorType,
+    required this.message,
+    this.statusCode,
   });
+}
+
+class UploadingEventResponse extends UploadingEvent with EquatableMixin {
+  final String url;
+  final String delete;
+
+  final int statusCode;
+
+  UploadingEventResponse({
+    required this.url,
+    required this.delete,
+    this.statusCode = 200,
+  });
+
+  factory UploadingEventResponse.fromJson(Map json,
+      {bool shouldAddFileToBox = true}) {
+    return UploadingEventResponse(
+        url: json['url'] as String, delete: json['delete'] as String);
+  }
+
+  @override
+  List<Object?> get props => [url, delete, statusCode];
+}
+
+@JsonSerializable()
+class Endpoint extends Equatable {
+  final String main;
+  final String download;
+  final String api;
+  const Endpoint({
+    required this.main,
+    required this.download,
+    required this.api,
+  });
+  const Endpoint.single(this.main)
+      : download = main,
+        api = main;
+
+  /// can return a [Map] or a [String]
+  Object toJson() {
+    if (main == download && download == api) return main;
+    return _$EndpointToJson(this);
+  }
+
+  factory Endpoint.fromJson(Object json) {
+    if (json is! String && json is! Map<String, dynamic>) throw Exception();
+    if (json is String) return Endpoint.single(json);
+    return _$EndpointFromJson(json as Map<String, dynamic>);
+  }
+
+  @override
+  List<Object?> get props => [main, download, api];
 }
