@@ -185,8 +185,8 @@ class _LoggingRouteState extends State<LoggingRoute> {
                         ],
                         FloatingActionButton(
                             onPressed: () => InternalAPIWrapper().saveLogs(),
-                            child: const Icon(Icons.save),
-                            tooltip: localizations.exportLogsTooltip),
+                            tooltip: localizations.exportLogsTooltip,
+                            child: const Icon(Icons.save)),
                       ]))
               : null,
     );
@@ -257,16 +257,15 @@ class __LogEntryTileState extends State<_LogEntryTile> {
 
   void showPopupMenu() async {
     if (_tapPosition == null) return;
-    final overlay =
-        Overlay?.of(context)?.context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     showMenu<_LogTileMenuEntry>(
         context: context,
         position: RelativeRect.fromSize(
             _tapPosition!.globalPosition & Size.zero, overlay.size),
         items: [
           PopupMenuItem(
-              child: Text(AppLocalizations.of(context).actionCopy),
-              value: _LogTileMenuEntry.copy),
+              value: _LogTileMenuEntry.copy,
+              child: Text(AppLocalizations.of(context).actionCopy)),
         ]).then((selected) {
       switch (selected) {
         case _LogTileMenuEntry.copy:

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:image/image.dart' as flt_image;
 import 'package:uploadgram/app_definitions.dart';
 import 'package:uploadgram/settings.dart';
@@ -21,7 +23,7 @@ abstract class ThumbnailDataImpl {
 }
 
 Future<List<int>?> generateThumbnail(
-    List<int> imageBytes, int finalImageSize) async {
+    Uint8List imageBytes, int finalImageSize) async {
   final image = flt_image.decodeImage(imageBytes);
   if (image == null) {
     return null;
@@ -35,10 +37,10 @@ Future<List<int>?> generateThumbnail(
       height: isLarger ? finalImageSize : null);
   final flt_image.Image finalImage = flt_image.copyCrop(
     resizedImage,
-    isLarger ? (resizedImage.width / 2 - finalImageSize / 2).toInt() : 0,
-    isLarger ? 0 : (resizedImage.height / 2 - finalImageSize / 2).toInt(),
-    finalImageSize,
-    finalImageSize,
+    x: isLarger ? (resizedImage.width / 2 - finalImageSize / 2).toInt() : 0,
+    y: isLarger ? 0 : (resizedImage.height / 2 - finalImageSize / 2).toInt(),
+    width: finalImageSize,
+    height: finalImageSize,
   );
   return flt_image.encodePng(finalImage);
 }

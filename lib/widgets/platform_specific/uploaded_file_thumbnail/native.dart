@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
@@ -198,7 +199,7 @@ class UploadedFileThumbnail extends StatelessWidget {
   static Future<void> _generateImages(_ThumbnailGeneratorData data) async {
     await InternalAPIWrapper().setupLoggerIsolate();
     final _logger = Logger('UploadedFileThumbnail Isolate');
-    List<int> imageBytes;
+    Uint8List imageBytes;
     if (data.file == null &&
         (data.thumbnailsData.thumbFull == null ||
             !data.thumbnailsData.thumbFull!.existsSync())) {
@@ -211,8 +212,8 @@ class UploadedFileThumbnail extends StatelessWidget {
           data.sendPort.send(false);
           return;
         }
-        imageBytes = response.data as List<int>;
-      } on DioError {
+        imageBytes = response.data as Uint8List;
+      } on DioException {
         data.sendPort.send(null);
         data.sendPort.send(false);
         return;

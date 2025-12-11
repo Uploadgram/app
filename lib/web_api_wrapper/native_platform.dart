@@ -47,7 +47,7 @@ class WebAPIWrapper {
 
   Future<Map?> getFile(String deleteId) async {
     final response =
-        await _dio.get('https://${settings.endpoint.api}/get/$deleteId');
+        await _dio.get('https://${settings.endpoint!.api}/get/$deleteId');
     try {
       return json.decode(response.data);
     } catch (e) {
@@ -64,7 +64,7 @@ class WebAPIWrapper {
 
   Future<DeleteApiResponse> deleteFile(String file) async {
     Response response =
-        await _dio.get('https://${settings.endpoint.api}/delete/$file');
+        await _dio.get('https://${settings.endpoint!.api}/delete/$file');
     if (response.statusCode != 200 || response.data is! Map) {
       return DeleteApiResponse(ok: false, statusCode: response.statusCode!);
     }
@@ -73,7 +73,7 @@ class WebAPIWrapper {
 
   Future<RenameApiResponse> renameFile(String file, String newName) async {
     Response response = await _dio.post(
-        'https://${settings.endpoint.api}/rename/$file',
+        'https://${settings.endpoint!.api}/rename/$file',
         data: {'new_filename': await Utils.parseName(newName)});
     if (response.statusCode != 200) {
       final altMessage =
@@ -91,7 +91,7 @@ class WebAPIWrapper {
   Future<bool> checkNetwork() async {
     try {
       Response response =
-          await _dio.head('https://${settings.endpoint.api}/status');
+          await _dio.head('https://${settings.endpoint!.api}/status');
       if (response.statusCode != 200) {
         return false;
       }
@@ -214,7 +214,7 @@ class _BackgroundUploaderImpl implements UploaderImpl {
   @override
   Future<void> enqueue(UploadgramFile file) async {
     String taskId = await FlutterUploader().enqueue(MultipartFormDataUpload(
-        url: 'https://${settings.endpoint.api}/upload',
+        url: 'https://${settings.endpoint!.api}/upload',
         method: UploadMethod.POST,
         data: {
           'file_size': file.size.toString()
@@ -395,19 +395,10 @@ class _BackgroundIsolateHandler {
     //     AndroidInitializationSettings('icon_64');
     // _flutterLocalNotifications.initialize(
     //     InitializationSettings(android: androidInitializationSettings));
-    AwesomeNotifications().actionStream.listen(onNotificationAction);
+    AwesomeNotifications()
+        .setListeners(onActionReceivedMethod: onNotificationAction);
 
     getApplicationSupportDirectory().then((value) => Hive.init(value.path));
-  }
-
-  void onNotificationAction(ReceivedAction action) {
-    if (action.buttonKeyPressed.startsWith('cancel_')) {
-      final taskId = action.buttonKeyPressed.substring('cancel_'.length);
-      _logger.info('canceling $taskId...');
-      FlutterUploader()
-          .cancel(taskId: taskId)
-          .then((value) => _logger.info('$taskId canceled successfully'));
-    }
   }
 
   SendPort? get _sendPort =>
@@ -492,7 +483,7 @@ class _BackgroundIsolateHandler {
           NotificationActionButton(
             key: 'cancel_${event.taskId}',
             label: 'Cancel',
-            buttonType: ActionButtonType.KeepOnTop,
+            actionType: ActionType.KeepOnTop,
           ),
         ]);
     // String stringRemaining = (secondsRemaining >= 3600
@@ -664,7 +655,7 @@ class _ForegroundUploaderImpl implements UploaderImpl {
     final initDate = DateTime.now().millisecondsSinceEpoch;
     Response response;
     try {
-      response = await _dio.post('https://${settings.endpoint.api}/upload',
+      response = await _dio.post('https://${settings.endpoint!.api}/upload',
           data: formData, cancelToken: token, onSendProgress: (loaded, total) {
         controller.add(UploadingEventProgress(
             progress: loaded / total,

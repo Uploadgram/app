@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -36,14 +34,14 @@ class SelectedFilesProvider extends ListNotifier<String> {
 class UploadgramRoute extends StatefulWidget {
   const UploadgramRoute({Key? key}) : super(key: key);
 
-  static _UploadgramRouteState? of(BuildContext context) =>
-      context.findAncestorStateOfType<_UploadgramRouteState>();
+  static UploadgramRouteState? of(BuildContext context) =>
+      context.findAncestorStateOfType<UploadgramRouteState>();
 
   @override
-  _UploadgramRouteState createState() => _UploadgramRouteState();
+  UploadgramRouteState createState() => UploadgramRouteState();
 }
 
-class _UploadgramRouteState extends State<UploadgramRoute>
+class UploadgramRouteState extends State<UploadgramRoute>
     with WidgetsBindingObserver {
   int _checkSeconds = 0;
   Timer? _lastConnectivityTimer;
@@ -66,6 +64,8 @@ class _UploadgramRouteState extends State<UploadgramRoute>
         break;
       case AppLifecycleState.resumed:
         checkConnection();
+        break;
+      default:
         break;
     }
     super.didChangeAppLifecycleState(state);
@@ -103,14 +103,14 @@ class _UploadgramRouteState extends State<UploadgramRoute>
       return showDialog(
           context: context,
           builder: (BuildContext context) {
-            String _text = '';
+            String text = '';
             return AlertDialog(
               title: Text(localizations.dialogRenameTitle),
               content: TextFormField(
                 initialValue: oldName,
                 maxLength: 255,
                 showCursor: true,
-                onChanged: (newText) => _text = newText,
+                onChanged: (newText) => text = newText,
                 decoration: const InputDecoration(filled: true),
               ),
               actions: [
@@ -123,7 +123,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    handleFileRename(delete, onDone: onDone, newName: _text);
+                    handleFileRename(delete, onDone: onDone, newName: text);
                     _selectedFiles.clear();
                   },
                   child: Text(localizations.dialogOK),
@@ -179,7 +179,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
             );
           });
     } else {
-      String? _message;
+      String? message;
       List<String> deletedFiles = [];
       final progressNotifier = ValueNotifier<double?>(null);
       AppLogic.showFullscreenLoader(context, progressNotifier);
@@ -189,21 +189,21 @@ class _UploadgramRouteState extends State<UploadgramRoute>
         try {
           DeleteApiResponse result = await WebAPIWrapper().deleteFile(delete);
           if (result.statusCode == 403) {
-            _message = localizations.errorFileNotFound;
+            message = localizations.errorFileNotFound;
           } else if (!result.ok) {
-            _message = localizations
+            message = localizations
                 .errorSomeFilesHaveNotBeenDeleted(result.statusCode);
             continue;
           }
 
           deletedFiles.add(delete);
         } on DioError catch (e) {
-          _message = localizations.errorUnknown(e.message);
+          message = localizations.errorUnknown(e.message ?? "null");
         } finally {
           progressNotifier.value = ++i / deleteList.length;
         }
       }
-      if (_message != null) ScaffoldMessenger.of(context).snack(_message);
+      if (message != null) ScaffoldMessenger.of(context).snack(message);
       for (String delete in deletedFiles) {
         await UploadedFiles().remove(delete);
         await ThumbnailsUtils.deleteThumbsForFile(delete);
@@ -308,12 +308,12 @@ class _UploadgramRouteState extends State<UploadgramRoute>
 
   @override
   void initState() {
-    SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       initializeOrRefreshNotifications(AppLocalizations.of(context));
     });
     _future = _initStateAsync();
     _canUploadNotifier.addListener(onOnlineChanged);
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
@@ -366,7 +366,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
   void dispose() {
     _connectivitySubscription?.cancel();
     _lastConnectivityTimer?.cancel();
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     _selectedFiles.dispose();
 
     _canUploadNotifier.removeListener(onOnlineChanged);
@@ -400,13 +400,12 @@ class _UploadgramRouteState extends State<UploadgramRoute>
           key: const Key('export'),
           icon: const Icon(Icons.get_app),
           onPressed: () async {
-            final Map<String, UploadedFile> _exportFiles = await Future.wait(
+            final Map<String, UploadedFile> exportFiles = await Future.wait(
                     _selectedFiles.value.map((e) => UploadedFiles()[e]
                         .then((value) => MapEntry(e, value!))))
                 .then((value) => Map.fromEntries(value));
-            final _result =
-                await InternalAPIWrapper().exportFiles(_exportFiles);
-            if (_result == false || _result == null) {
+            final result = await InternalAPIWrapper().exportFiles(exportFiles);
+            if (result == false || result == null) {
               ScaffoldMessenger.of(context).snack(localizations.exportingError);
             }
           },
@@ -471,21 +470,21 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                   }
                   break;
                 case UploadgramMoreSettingsAction.importFiles:
-                  Map? _importedFiles;
+                  Map? importedFiles;
                   try {
-                    _importedFiles = await InternalAPIWrapper().importFiles();
+                    importedFiles = await InternalAPIWrapper().importFiles();
                   } catch (e) {
                     _logger.finest(e);
-                    _importedFiles = null;
+                    importedFiles = null;
                   }
-                  if (_importedFiles == null) {
+                  if (importedFiles == null) {
                     ScaffoldMessenger.of(context)
                         .snack(localizations.importingErrorInvalid);
                     break;
                   }
                   UploadedFiles()
                       .addAll(
-                          _importedFiles.cast<String, Map<dynamic, dynamic>>())
+                          importedFiles.cast<String, Map<dynamic, dynamic>>())
                       .then((value) => refreshList());
                   break;
                 case UploadgramMoreSettingsAction.settingsTile:
@@ -493,7 +492,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                     settings.fabTheme,
                     settings.filesTheme
                   ];
-                  Endpoint previousEndpoints = settings.endpoint;
+                  Endpoint previousEndpoints = settings.endpoint!;
                   Navigator.pushNamed(context, '/settings').then((value) {
                     if (previousEndpoints != settings.endpoint) {
                       checkConnection();
@@ -515,29 +514,29 @@ class _UploadgramRouteState extends State<UploadgramRoute>
             itemBuilder: (BuildContext context) => [
                   PopupMenuItemIcon(
                     value: UploadgramMoreSettingsAction.importFiles,
-                    child: Text(localizations.importTileTitle),
                     icon: const Icon(Icons.publish),
+                    child: Text(localizations.importTileTitle),
                   ),
                   PopupMenuItemIcon(
                     value: UploadgramMoreSettingsAction.exportFiles,
-                    child: Text(localizations.exportTileTitle),
                     icon: const Icon(Icons.get_app),
+                    child: Text(localizations.exportTileTitle),
                   ),
                   PopupMenuItemIcon(
                     value: UploadgramMoreSettingsAction.settingsTile,
-                    child: Text(localizations.settingsTitle),
                     icon: const Icon(Icons.settings),
+                    child: Text(localizations.settingsTitle),
                   ),
                   if (InternalAPIWrapper().isWebAndroid() == true)
                     PopupMenuItemIcon(
                       value: UploadgramMoreSettingsAction.downloadApp,
-                      child: Text(localizations.downloadAppTileTitle),
                       icon: const Icon(Icons.android),
+                      child: Text(localizations.downloadAppTileTitle),
                     ),
                   PopupMenuItemIcon(
                     value: UploadgramMoreSettingsAction.aboutTile,
-                    child: Text(localizations.aboutTitle),
                     icon: const Icon(Icons.info),
+                    child: Text(localizations.aboutTitle),
                   ),
                 ]),
       ];
@@ -559,7 +558,6 @@ class _UploadgramRouteState extends State<UploadgramRoute>
     final localizations = AppLocalizations.of(context);
     final currentLocale = Localizations.localeOf(context);
 
-    final isLargeScreen = MediaQuery.of(context).size.width > 905;
     // ignore: unused_local_variable, will be used later on
     final isWideScreen = MediaQuery.of(context).size.width > 600;
 
@@ -574,6 +572,7 @@ class _UploadgramRouteState extends State<UploadgramRoute>
               value: _selectedFiles,
               child: Scaffold(
                 appBar: PreferredSize(
+                    preferredSize: AppBar().preferredSize,
                     child: FilesSelectedBuilder(
                         builder: (BuildContext context, int selected, _) =>
                             AppBar(
@@ -593,13 +592,11 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                                       onPressed: () => _selectedFiles.clear())
                                   : null,
                               actions: _buildAppBarActions(),
-                            )),
-                    preferredSize: AppBar().preferredSize),
+                            ))),
                 body: SafeArea(
                   child: snapshot.connectionState == ConnectionState.done
                       ? UploadedFiles().length > 0 || AppLogic.queue.isNotEmpty
                           ? Scrollbar(
-                              isAlwaysShown: isLargeScreen,
                               child: settings.filesTheme == FilesTheme.list
                                   ? FilesList(key: _key)
                                   : FilesGrid(key: _key))
@@ -626,19 +623,19 @@ class _UploadgramRouteState extends State<UploadgramRoute>
                 floatingActionButton: snapshot.connectionState ==
                         ConnectionState.done
                     ? ValueListenableBuilder(
-                        builder: (BuildContext context, bool _canUpload, _) =>
+                        builder: (BuildContext context, bool canUpload, _) =>
                             settings.fabTheme == FabTheme.centerExtended
                                 ? FloatingActionButton.extended(
                                     onPressed: _uploadFile,
                                     label:
                                         Text(localizations.uploadExtendedFAB),
-                                    icon: _canUpload
+                                    icon: canUpload
                                         ? const Icon(Icons.cloud_upload)
                                         : const CircularProgressIndicator(
                                             color: Colors.white))
                                 : FloatingActionButton(
                                     onPressed: _uploadFile,
-                                    child: _canUpload
+                                    child: canUpload
                                         ? const Icon(Icons.cloud_upload)
                                         : const CircularProgressIndicator(
                                             color: Colors.white)),

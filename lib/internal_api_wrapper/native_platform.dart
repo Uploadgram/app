@@ -50,6 +50,8 @@ class InternalAPIWrapper {
     if (decoded is Map) {
       return decoded.cast<String, Map<String, dynamic>>();
     }
+
+    return null;
   }
 
   Future<Map<String, Map<String, dynamic>>?> importFiles() async {
@@ -75,6 +77,8 @@ class InternalAPIWrapper {
         return importedFiles;
       }
     }
+
+    return null;
   }
 
   Future<String> getString(String name, String defaultValue) async =>

@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:collection/collection.dart';
 
 import 'package:uploadgram/app_definitions.dart';
 import 'package:uploadgram/settings.dart';
@@ -17,6 +17,7 @@ import 'package:uploadgram/routes/native_only/log_route.dart';
 import 'package:uploadgram/routes/settings_route.dart';
 import 'package:uploadgram/routes/uploadgram_route.dart';
 import 'package:uploadgram/internal_api_wrapper/platform_instance.dart';
+import 'package:uploadgram/web_api_wrapper/native_platform.dart';
 import 'package:uploadgram/widgets/platform_specific/uploaded_file_thumbnail/native.dart';
 
 Future<void> main() async {
@@ -36,6 +37,10 @@ Future<void> main() async {
       ..registerAdapter(LocaleAdapter());
     await settings.init();
     await setupLogger();
+
+    AwesomeNotifications()
+        .setListeners(onActionReceivedMethod: onNotificationAction);
+
     FlutterError.onError = (FlutterErrorDetails details) {
       assert(() {
         // ignore: avoid_print
@@ -45,11 +50,33 @@ Future<void> main() async {
       }());
       Logger('FlutterEngine').severe(details.exceptionAsString());
     };
+
     runApp(const UploadgramApp());
   }, (error, stacktrace) {
     Logger('Error').severe(error.toString() + '\n\n' + stacktrace.toString());
     throw error;
   });
+}
+
+@pragma("vm:entry-point")
+Future<void> onNotificationAction(ReceivedAction action) async {
+  switch (action.buttonKeyPressed) {
+    case 'download_update':
+      Updater().downloadAndInstallUpdate();
+      break;
+    case 'ignore_update':
+      Updater().ignoreCurrentUpdate();
+      AwesomeNotifications().cancel(action.id!);
+      break;
+  }
+
+  if (action.buttonKeyPressed.startsWith('cancel_')) {
+    final taskId = action.buttonKeyPressed.substring('cancel_'.length);
+    Logger('NotificationHandler').info('canceling $taskId...');
+    await UploaderImpl().cancelUpload(taskId);
+    Logger('NotificationHandler').info('$taskId canceled successfully');
+    AwesomeNotifications().cancel(action.id!);
+  }
 }
 
 class UploadgramApp extends StatefulWidget {
@@ -69,68 +96,63 @@ class UploadgramAppState extends State<UploadgramApp> {
         orElse: () => _fallbackLocale);
   }
 
-  late StreamSubscription _notificationSubscription;
-
-  @override
-  void initState() {
-    _notificationSubscription =
-        AwesomeNotifications().actionStream.listen((action) {
-      switch (action.buttonKeyInput) {
-        case 'download_update':
-          Updater().downloadAndInstallUpdate();
-          break;
-        case 'ignore_update':
-          Updater().ignoreCurrentUpdate();
-          AwesomeNotifications().cancel(action.id!);
-          break;
-      }
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _notificationSubscription.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<AppRebuildNotification>(
-        child: MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Uploadgram',
-            darkTheme: settings.appTheme == Themes.system
-                ? themes[Themes.dark]
-                : themes[settings.appTheme],
-            theme: settings.appTheme == Themes.system
-                ? themes[Themes.light]
-                : themes[settings.appTheme],
-            localeListResolutionCallback: _getLocale,
-            locale: settings.locale,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            initialRoute: '/',
-            routes: {
-              '/': (BuildContext context) => const UploadgramRoute(),
-              '/settings': (BuildContext context) => const SettingsRoute(),
-              '/about': (BuildContext context) => const AboutRoute(),
-              if (InternalAPIWrapper.isNative)
-                '/logs': (BuildContext context) => const LoggingRoute(),
-            },
-            onGenerateRoute: kIsWeb
-                ? (RouteSettings settings) {
-                    if (settings.name != null) {
-                      InternalAPIWrapper.lastUri = settings.name;
+    if (settings.endpoint == null) {
+      return MaterialApp(
+        home: PopScope(
+          canPop: false,
+          onPopInvoked: (h) => setState(() {}),
+          child: const Center(child: EndpointDialog()),
+        ),
+        darkTheme: ThemeData.dark(useMaterial3: true),
+        theme: ThemeData.light(useMaterial3: true),
+      );
+    }
+
+    return DynamicColorBuilder(builder: (lightScheme, darkScheme) {
+      final theme = ThemeData(
+        useMaterial3: true,
+        colorScheme: darkScheme,
+        brightness: Brightness.light,
+      );
+      return NotificationListener<AppRebuildNotification>(
+          child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Uploadgram',
+              darkTheme: settings.appTheme == Themes.system
+                  ? theme.copyWith(brightness: Brightness.dark)
+                  : null,
+              theme: settings.appTheme == Themes.system ||
+                      settings.appTheme == Themes.light
+                  ? theme
+                  : theme.copyWith(brightness: Brightness.dark),
+              localeListResolutionCallback: _getLocale,
+              locale: settings.locale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              initialRoute: '/',
+              routes: {
+                '/': (BuildContext context) => const UploadgramRoute(),
+                '/settings': (BuildContext context) => const SettingsRoute(),
+                '/about': (BuildContext context) => const AboutRoute(),
+                if (InternalAPIWrapper.isNative)
+                  '/logs': (BuildContext context) => const LoggingRoute(),
+              },
+              onGenerateRoute: kIsWeb
+                  ? (RouteSettings settings) {
+                      if (settings.name != null) {
+                        InternalAPIWrapper.lastUri = settings.name;
+                      }
+                      return null;
                     }
-                    return null;
-                  }
-                : null),
-        onNotification: (_) {
-          Logger('AppRebuildNotification').info('rebuiding entire app...');
-          setState(() {});
-          return true;
-        });
+                  : null),
+          onNotification: (_) {
+            Logger('AppRebuildNotification').info('rebuiding entire app...');
+            setState(() {});
+            return true;
+          });
+    });
   }
 }
 

@@ -128,6 +128,8 @@ class Updater {
     if (apkFallbackId != null && sha256FallbackId != null) {
       return _Release(apkId: apkFallbackId!, sha256Id: sha256FallbackId!);
     }
+
+    return null;
   }
 
   Future<bool?> checkForUpdates({

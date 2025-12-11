@@ -55,7 +55,7 @@ class InternalAPIWrapper {
       element.listen((event) {
         event.preventDefault();
         if (!overlayMounted) {
-          Overlay?.of(context)?.insert(dropOverlay);
+          Overlay.of(context).insert(dropOverlay);
           overlayMounted = true;
         }
       });
@@ -106,6 +106,8 @@ class InternalAPIWrapper {
           await Utils.parseFragment(Uri.decodeComponent(lastUri!));
       return importedFiles;
     }
+
+    return null;
   }
 
   Future<String> getString(String name, String defaultValue) async {

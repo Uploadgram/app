@@ -72,6 +72,8 @@ class Utils {
       }
       return files;
     }
+
+    return null;
   }
 
   /// Gets when the file was uploaded, based on the file's url.

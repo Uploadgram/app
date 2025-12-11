@@ -137,7 +137,6 @@ class _SettingsRouteState extends State<SettingsRoute> {
                           (_) => AppRebuildNotification().dispatch(context));
                     })),
           ),
-
           ListTile(
               title: Text(localizations.languageTileTitle),
               subtitle: Text(
@@ -328,14 +327,13 @@ class _SettingsRouteState extends State<SettingsRoute> {
               onTap: () => Navigator.pushNamed(context, '/logs'),
             ),
           ],
-          // TODO: uncomment
-          // ListTile(
-          //   title: Text(localizations.changeEndpoints),
-          //   subtitle: Text(localizations.changeEndpointsSubtitle),
-          //   leading: Icon(Icons.dns),
-          //   onTap: () => showDialog(
-          //       context: context, builder: (context) => EndpointDialog()),
-          // ),
+          ListTile(
+            title: Text(localizations.changeEndpoints),
+            subtitle: Text(localizations.changeEndpointsSubtitle),
+            leading: const Icon(Icons.dns),
+            onTap: () => showDialog(
+                context: context, builder: (context) => EndpointDialog()),
+          ),
           ListTile(
             title: Text(localizations.clearAppFilesCache),
             subtitle: Text(localizations.clearAppFilesCacheSubtitle),
@@ -422,10 +420,12 @@ class _EndpointDialogState extends State<EndpointDialog> {
 
   @override
   void initState() {
-    _mainTextController.value = TextEditingValue(text: settings.endpoint.main);
+    _mainTextController.value =
+        TextEditingValue(text: settings.endpoint?.main ?? '');
     _downloadTextController.value =
-        TextEditingValue(text: settings.endpoint.download);
-    _apiTextController.value = TextEditingValue(text: settings.endpoint.api);
+        TextEditingValue(text: settings.endpoint?.download ?? '');
+    _apiTextController.value =
+        TextEditingValue(text: settings.endpoint?.api ?? '');
 
     _mainTextController.addListener(() {
       if (!hasEdited && isEditing) {
@@ -460,7 +460,7 @@ class _EndpointDialogState extends State<EndpointDialog> {
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               filled: true,
-              hintText: defaultEndpoint.main,
+              hintText: defaultEndpoint?.main,
               labelText: localizations.endpointsMain,
             )),
         const SizedBox(height: 15.0),
@@ -469,7 +469,7 @@ class _EndpointDialogState extends State<EndpointDialog> {
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               filled: true,
-              hintText: defaultEndpoint.download,
+              hintText: defaultEndpoint?.download,
               labelText: localizations.endpointsDownload,
             )),
         const SizedBox(height: 15.0),
@@ -478,7 +478,7 @@ class _EndpointDialogState extends State<EndpointDialog> {
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               filled: true,
-              hintText: defaultEndpoint.api,
+              hintText: defaultEndpoint?.api,
               labelText: localizations.endpointsAPI,
             )),
       ]),

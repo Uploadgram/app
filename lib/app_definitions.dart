@@ -31,6 +31,7 @@ enum FilesTheme {
   @HiveField(2)
   list
 }
+
 @HiveType(typeId: 3)
 enum FabTheme {
   @HiveField(0)
@@ -157,7 +158,7 @@ class FileRightClickListener extends StatelessWidget {
           ? (PointerDownEvent event) {
               if (event.buttons != kSecondaryMouseButton) return;
               final overlay =
-                  Overlay?.of(context)?.context.findRenderObject() as RenderBox;
+                  Overlay.of(context).context.findRenderObject() as RenderBox;
               final localizations = AppLocalizations.of(context);
               showMenu<RightClickContextMenuActions>(
                   context: context,
@@ -246,40 +247,40 @@ MaterialColor get _primarySwatch => MaterialColor(Settings.themeAccent.value, {
       900: Settings.themeAccent.withOpacity(1),
     });
 
-Map<Themes, ThemeData> get themes => {
-      Themes.dark: ThemeData(
-        primaryColor: Settings.themeAccent,
-        appBarTheme: const AppBarTheme(color: Color(0xFF222222)),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: Color(0xFF222222), foregroundColor: Colors.white),
-        primarySwatch: _primarySwatch,
-        colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: _primarySwatch,
-            accentColor: Settings.themeAccent,
-            brightness: Brightness.dark),
-        primaryColorDark: Colors.grey[900],
-        primaryColorLight: Settings.themeAccent,
-        primaryIconTheme: const IconThemeData(color: Colors.white),
-        primaryColorBrightness: Brightness.dark,
-        brightness: Brightness.dark,
-        canvasColor: Colors.black,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        toggleableActiveColor: Settings.themeAccent,
-      ),
-      Themes.light: ThemeData(
-        primarySwatch: _primarySwatch,
-        primaryColorDark: Colors.grey[300],
-        colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: _primarySwatch,
-            accentColor: Settings.themeAccent,
-            brightness: Brightness.light),
-        primaryColorLight: Settings.themeAccent,
-        brightness: Brightness.light,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        toggleableActiveColor: Settings.themeAccent,
-      ),
-    };
-
+//Map<Themes, ThemeData> get themes => {
+//      Themes.dark: ThemeData(
+//        primaryColor: Settings.themeAccent,
+//        appBarTheme: const AppBarTheme(color: Color(0xFF222222)),
+//        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//            backgroundColor: Color(0xFF222222), foregroundColor: Colors.white),
+//        primarySwatch: _primarySwatch,
+//        colorScheme: ColorScheme.fromSwatch(
+//            primarySwatch: _primarySwatch,
+//            accentColor: Settings.themeAccent,
+//            brightness: Brightness.dark),
+//        primaryColorDark: Colors.grey[900],
+//        primaryColorLight: Settings.themeAccent,
+//        primaryIconTheme: const IconThemeData(color: Colors.white),
+//        primaryColorBrightness: Brightness.dark,
+//        brightness: Brightness.dark,
+//        canvasColor: Colors.black,
+//        visualDensity: VisualDensity.adaptivePlatformDensity,
+//        toggleableActiveColor: Settings.themeAccent,
+//      ),
+//      Themes.light: ThemeData(
+//        primarySwatch: _primarySwatch,
+//        primaryColorDark: Colors.grey[300],
+//        colorScheme: ColorScheme.fromSwatch(
+//            primarySwatch: _primarySwatch,
+//            accentColor: Settings.themeAccent,
+//            brightness: Brightness.light),
+//        primaryColorLight: Settings.themeAccent,
+//        brightness: Brightness.light,
+//        visualDensity: VisualDensity.adaptivePlatformDensity,
+//        toggleableActiveColor: Settings.themeAccent,
+//      ),
+//    };
+//
 class AppRebuildNotification extends Notification {}
 
 enum UploadgramMoreSettingsAction {
@@ -289,6 +290,7 @@ enum UploadgramMoreSettingsAction {
   aboutTile,
   downloadApp,
 }
+
 @HiveType(typeId: 4)
 enum SortBy {
   @HiveField(0)
@@ -482,15 +484,17 @@ Future<bool?> checkForUpdates(
               ),
               actionButtons: [
                 NotificationActionButton(
-                    key: 'ignore_update',
-                    label: AppLocalizations.of(context)
-                        .newUpdateNotificationBtnIgnore,
-                    buttonType: ActionButtonType.KeepOnTop),
+                  key: 'ignore_update',
+                  label: AppLocalizations.of(context)
+                      .newUpdateNotificationBtnIgnore,
+                  actionType: ActionType.KeepOnTop,
+                ),
                 NotificationActionButton(
-                    key: 'download_update',
-                    label: AppLocalizations.of(context)
-                        .newUpdateNotificationBtnDownload,
-                    buttonType: ActionButtonType.KeepOnTop),
+                  key: 'download_update',
+                  label: AppLocalizations.of(context)
+                      .newUpdateNotificationBtnDownload,
+                  actionType: ActionType.Default,
+                ),
               ]);
         }
         final localizations = AppLocalizations.of(context);
